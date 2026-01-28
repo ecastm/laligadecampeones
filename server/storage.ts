@@ -20,9 +20,14 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
 
   // Tournaments
+  getTournaments(): Promise<Tournament[]>;
   getActiveTournament(): Promise<Tournament | undefined>;
+  getCompletedTournaments(): Promise<Tournament[]>;
   getTournament(id: string): Promise<Tournament | undefined>;
+  createTournament(tournament: InsertTournament): Promise<Tournament>;
   updateTournament(id: string, data: Partial<InsertTournament>): Promise<Tournament | undefined>;
+  finishTournament(id: string, championTeamId: string): Promise<Tournament | undefined>;
+  deleteTournament(id: string): Promise<void>;
 
   // Teams
   getTeams(tournamentId?: string): Promise<Team[]>;
@@ -118,12 +123,39 @@ export class MemStorage implements IStorage {
   }
 
   // Tournaments
+  async getTournaments(): Promise<Tournament[]> {
+    return Array.from(this.tournaments.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
   async getActiveTournament(): Promise<Tournament | undefined> {
-    return Array.from(this.tournaments.values()).find(t => t.active);
+    return Array.from(this.tournaments.values()).find(t => t.status === "ACTIVO");
+  }
+
+  async getCompletedTournaments(): Promise<Tournament[]> {
+    return Array.from(this.tournaments.values())
+      .filter(t => t.status === "FINALIZADO")
+      .sort((a, b) => new Date(b.endDate || b.createdAt).getTime() - new Date(a.endDate || a.createdAt).getTime());
   }
 
   async getTournament(id: string): Promise<Tournament | undefined> {
     return this.tournaments.get(id);
+  }
+
+  async createTournament(tournament: InsertTournament): Promise<Tournament> {
+    const id = randomUUID();
+    const newTournament: Tournament = {
+      id,
+      name: tournament.name,
+      seasonName: tournament.seasonName,
+      location: tournament.location,
+      startDate: tournament.startDate,
+      status: tournament.status || "ACTIVO",
+      createdAt: new Date().toISOString(),
+    };
+    this.tournaments.set(id, newTournament);
+    return newTournament;
   }
 
   async updateTournament(id: string, data: Partial<InsertTournament>): Promise<Tournament | undefined> {
@@ -134,11 +166,62 @@ export class MemStorage implements IStorage {
     return updated;
   }
 
-  createTournament(tournament: InsertTournament): Tournament {
-    const id = randomUUID();
-    const newTournament: Tournament = { id, ...tournament };
-    this.tournaments.set(id, newTournament);
-    return newTournament;
+  async finishTournament(id: string, championTeamId: string): Promise<Tournament | undefined> {
+    const tournament = this.tournaments.get(id);
+    if (!tournament) return undefined;
+    
+    // Get champion team name
+    const championTeam = this.teams.get(championTeamId);
+    const championTeamName = championTeam?.name || "Desconocido";
+    
+    // Calculate final standings
+    const finalStandings = await this.calculateStandings(id);
+    
+    const updated: Tournament = {
+      ...tournament,
+      status: "FINALIZADO",
+      endDate: new Date().toISOString(),
+      championTeamId,
+      championTeamName,
+      finalStandings,
+    };
+    this.tournaments.set(id, updated);
+    return updated;
+  }
+
+  async deleteTournament(id: string): Promise<void> {
+    this.tournaments.delete(id);
+    // Also delete related teams, players, matches
+    const teamEntries = Array.from(this.teams.entries());
+    for (const [teamId, team] of teamEntries) {
+      if (team.tournamentId === id) {
+        this.teams.delete(teamId);
+        const playerEntries = Array.from(this.players.entries());
+        for (const [playerId, player] of playerEntries) {
+          if (player.teamId === teamId) {
+            this.players.delete(playerId);
+          }
+        }
+      }
+    }
+    const matchEntries = Array.from(this.matches.entries());
+    for (const [matchId, match] of matchEntries) {
+      if (match.tournamentId === id) {
+        this.matches.delete(matchId);
+        const eventEntries = Array.from(this.matchEvents.entries());
+        for (const [eventId, event] of eventEntries) {
+          if (event.matchId === matchId) {
+            this.matchEvents.delete(eventId);
+          }
+        }
+      }
+    }
+    const newsEntries = Array.from(this.news.entries());
+    for (const [newsId, newsItem] of newsEntries) {
+      if (newsItem.tournamentId === id) {
+        this.news.delete(newsId);
+      }
+    }
   }
 
   // Teams
@@ -176,7 +259,8 @@ export class MemStorage implements IStorage {
   async deleteTeam(id: string): Promise<void> {
     this.teams.delete(id);
     // Also delete players of this team
-    for (const [playerId, player] of this.players) {
+    const playerEntries = Array.from(this.players.entries());
+    for (const [playerId, player] of playerEntries) {
       if (player.teamId === id) {
         this.players.delete(playerId);
       }
@@ -310,7 +394,8 @@ export class MemStorage implements IStorage {
   }
 
   async deleteMatchEvents(matchId: string): Promise<void> {
-    for (const [id, event] of this.matchEvents) {
+    const eventEntries = Array.from(this.matchEvents.entries());
+    for (const [id, event] of eventEntries) {
       if (event.matchId === matchId) {
         this.matchEvents.delete(id);
       }

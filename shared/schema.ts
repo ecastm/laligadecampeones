@@ -14,6 +14,12 @@ export const MatchStatus = {
 } as const;
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 
+export const TournamentStatus = {
+  ACTIVO: "ACTIVO",
+  FINALIZADO: "FINALIZADO",
+} as const;
+export type TournamentStatus = (typeof TournamentStatus)[keyof typeof TournamentStatus];
+
 export const EventType = {
   GOAL: "GOAL",
   YELLOW: "YELLOW",
@@ -66,15 +72,29 @@ export interface Tournament {
   id: string;
   name: string;
   seasonName: string;
-  active: boolean;
+  location: string;
+  startDate: string;
+  endDate?: string;
+  status: TournamentStatus;
+  championTeamId?: string;
+  championTeamName?: string;
+  finalStandings?: Standing[];
+  createdAt: string;
 }
 
 export const insertTournamentSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   seasonName: z.string().min(2, "La temporada debe tener al menos 2 caracteres"),
-  active: z.boolean().default(true),
+  location: z.string().min(2, "El lugar es requerido"),
+  startDate: z.string(),
+  status: z.enum(["ACTIVO", "FINALIZADO"]).default("ACTIVO"),
 });
 export type InsertTournament = z.infer<typeof insertTournamentSchema>;
+
+export const finishTournamentSchema = z.object({
+  championTeamId: z.string().min(1, "Debe seleccionar un campeón"),
+});
+export type FinishTournament = z.infer<typeof finishTournamentSchema>;
 
 // Team
 export interface Team {

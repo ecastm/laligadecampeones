@@ -6,10 +6,12 @@ export async function seedDatabase() {
   console.log("==========================================\n");
 
   // Create tournament
-  const tournament = (storage as any).createTournament({
+  const tournament = await storage.createTournament({
     name: "Torneo Demo 2026",
     seasonName: "Temporada Primavera 2026",
-    active: true,
+    location: "Ciudad Central",
+    startDate: new Date().toISOString(),
+    status: "ACTIVO",
   });
   console.log("✅ Torneo creado:", tournament.name);
 
