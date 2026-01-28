@@ -106,10 +106,10 @@ export default function TeamsManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Gestión de Equipos</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold">Gestión de Equipos</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Administra los equipos del torneo
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function TeamsManagement() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-team">
+            <Button data-testid="button-add-team" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Equipo
             </Button>
@@ -215,24 +215,24 @@ export default function TeamsManagement() {
           ) : teams.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">No hay equipos registrados</p>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               {teams.map((team) => (
                 <div
                   key={team.id}
-                  className="flex items-start justify-between rounded-md border p-4"
+                  className="flex items-start justify-between rounded-md border p-3 sm:p-4"
                   data-testid={`card-team-${team.id}`}
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
                       {team.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-semibold">{team.name}</p>
-                      <p className="text-sm text-muted-foreground">{team.colors}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{team.homeField}</p>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{team.colors}</p>
+                      <p className="text-xs text-muted-foreground mt-1 truncate">{team.homeField}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
                       size="icon"

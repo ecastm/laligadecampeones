@@ -148,7 +148,7 @@ export default function PlayersManagement() {
                       </FormItem>
                     )}
                   />
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="firstName"
@@ -176,7 +176,7 @@ export default function PlayersManagement() {
                       )}
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
                       control={form.control}
                       name="jerseyNumber"
@@ -245,19 +245,19 @@ export default function PlayersManagement() {
               {filteredPlayers.map((player) => (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between rounded-md border p-4"
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between"
                   data-testid={`row-player-${player.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base shrink-0">
                       {player.jerseyNumber}
                     </div>
-                    <div>
-                      <p className="font-medium">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">
                         {player.firstName} {player.lastName}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{getTeamName(player.teamId)}</span>
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <span className="truncate">{getTeamName(player.teamId)}</span>
                         {player.position && (
                           <>
                             <span>·</span>
@@ -267,8 +267,8 @@ export default function PlayersManagement() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={player.active ? "default" : "secondary"}>
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <Badge variant={player.active ? "default" : "secondary"} className="text-xs">
                       {player.active ? "Activo" : "Inactivo"}
                     </Badge>
                     <AlertDialog>

@@ -158,10 +158,10 @@ function RefereeMatches({
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold">
+        <h2 className="text-lg sm:text-xl font-bold">
           {status === "PROGRAMADO" ? "Partidos Pendientes" : "Partidos Completados"}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs sm:text-sm text-muted-foreground">
           {status === "PROGRAMADO"
             ? "Partidos asignados que aún no tienen resultado"
             : "Partidos con resultado registrado"}
@@ -195,25 +195,25 @@ function RefereeMatches({
               {filteredMatches.map((match) => (
                 <div
                   key={match.id}
-                  className="rounded-md border p-4"
+                  className="rounded-md border p-3 sm:p-4"
                   data-testid={`row-match-${match.id}`}
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-4">
-                      <Badge variant="outline">J{match.roundNumber}</Badge>
-                      <div>
-                        <p className="font-medium">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm sm:text-base">
                           {match.homeTeam?.name} vs {match.awayTeam?.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between sm:justify-end gap-2">
                       {match.status === "JUGADO" && (
                         <>
-                          <Badge variant="default" className="text-lg px-3 py-1">
+                          <Badge variant="default" className="text-base sm:text-lg px-2 sm:px-3 py-1">
                             {match.homeScore} - {match.awayScore}
                           </Badge>
                           <Button

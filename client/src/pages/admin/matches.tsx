@@ -141,10 +141,10 @@ export default function MatchesManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Gestión de Partidos</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold">Gestión de Partidos</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Programa y administra los partidos del torneo
           </p>
         </div>
@@ -158,7 +158,7 @@ export default function MatchesManagement() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-match">
+            <Button data-testid="button-add-match" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Partido
             </Button>
@@ -188,7 +188,7 @@ export default function MatchesManagement() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="homeTeamId"
@@ -325,32 +325,36 @@ export default function MatchesManagement() {
               {matches.map((match) => (
                 <div
                   key={match.id}
-                  className="flex flex-col gap-3 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:p-4"
                   data-testid={`row-match-${match.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline">J{match.roundNumber}</Badge>
-                    <div>
-                      <p className="font-medium">
-                        {getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Árbitro: {getRefereeName(match.refereeUserId)}
-                      </p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3 sm:gap-4">
+                      <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm sm:text-base">
+                          {getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}
+                        </p>
+                        <p className="text-xs sm:text-sm text-muted-foreground">
+                          {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Árbitro: {getRefereeName(match.refereeUserId)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {match.status === "JUGADO" && (
-                      <Badge>
-                        {match.homeScore} - {match.awayScore}
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <div className="flex items-center gap-2">
+                      {match.status === "JUGADO" && (
+                        <Badge className="text-xs">
+                          {match.homeScore} - {match.awayScore}
+                        </Badge>
+                      )}
+                      <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-xs">
+                        {match.status === "JUGADO" ? "Jugado" : "Programado"}
                       </Badge>
-                    )}
-                    <Badge variant={match.status === "JUGADO" ? "default" : "secondary"}>
-                      {match.status === "JUGADO" ? "Jugado" : "Programado"}
-                    </Badge>
+                    </div>
                     <Button
                       variant="ghost"
                       size="icon"

@@ -82,16 +82,16 @@ export default function UsersManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-lg sm:text-xl font-bold">Gestión de Usuarios</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Administra los usuarios del sistema
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-user">
+            <Button data-testid="button-add-user" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Usuario
             </Button>
@@ -217,19 +217,19 @@ export default function UsersManagement() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between rounded-md border p-4"
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between"
                   data-testid={`row-user-${user.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm sm:text-base">
                       {user.name.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{user.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
                     <Badge
                       variant={
                         user.role === "ADMIN"
@@ -238,6 +238,7 @@ export default function UsersManagement() {
                           ? "secondary"
                           : "outline"
                       }
+                      className="text-xs"
                     >
                       {user.role === "ADMIN" ? "Admin" : user.role === "CAPITAN" ? "Capitán" : "Árbitro"}
                     </Badge>

@@ -257,17 +257,17 @@ function TeamInfo() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-2xl">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xl sm:text-2xl shrink-0">
               {team.name.substring(0, 2).toUpperCase()}
             </div>
-            <div>
-              <CardTitle data-testid="text-team-name">{team.name}</CardTitle>
-              <CardDescription>{team.colors}</CardDescription>
+            <div className="min-w-0">
+              <CardTitle data-testid="text-team-name" className="text-base sm:text-lg truncate">{team.name}</CardTitle>
+              <CardDescription className="text-xs sm:text-sm truncate">{team.colors}</CardDescription>
             </div>
           </div>
-          <Button variant="outline" onClick={() => setIsEditing(true)} data-testid="button-edit-team">
+          <Button variant="outline" onClick={() => setIsEditing(true)} data-testid="button-edit-team" className="w-full sm:w-auto">
             <Edit className="mr-2 h-4 w-4" />
             Editar
           </Button>
@@ -352,14 +352,14 @@ function TeamPlayers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-bold">Jugadores del Equipo</h2>
-          <p className="text-sm text-muted-foreground">Gestiona los jugadores de tu equipo</p>
+          <h2 className="text-lg sm:text-xl font-bold">Jugadores del Equipo</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gestiona los jugadores de tu equipo</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-player">
+            <Button data-testid="button-add-player" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Agregar Jugador
             </Button>
@@ -370,7 +370,7 @@ function TeamPlayers() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="firstName"
@@ -398,7 +398,7 @@ function TeamPlayers() {
                     )}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
                     name="jerseyNumber"
@@ -461,20 +461,20 @@ function TeamPlayers() {
               {players.map((player) => (
                 <div
                   key={player.id}
-                  className="flex items-center justify-between rounded-md border p-4"
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:p-4 sm:flex-row sm:items-center sm:justify-between"
                   data-testid={`row-player-${player.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base shrink-0">
                       {player.jerseyNumber}
                     </div>
-                    <div>
-                      <p className="font-medium">{player.firstName} {player.lastName}</p>
-                      <p className="text-sm text-muted-foreground">{player.position || "Sin posición"}</p>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base truncate">{player.firstName} {player.lastName}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{player.position || "Sin posición"}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={player.active ? "default" : "secondary"}>
+                  <div className="flex items-center justify-between sm:justify-end gap-2">
+                    <Badge variant={player.active ? "default" : "secondary"} className="text-xs">
                       {player.active ? "Activo" : "Inactivo"}
                     </Badge>
                     <AlertDialog>
@@ -525,8 +525,8 @@ function TeamSchedule() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold">Calendario del Equipo</h2>
-        <p className="text-sm text-muted-foreground">Partidos programados y resultados</p>
+        <h2 className="text-lg sm:text-xl font-bold">Calendario del Equipo</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">Partidos programados y resultados</p>
       </div>
 
       <Card>
@@ -548,27 +548,27 @@ function TeamSchedule() {
               {matches.map((match) => (
                 <div
                   key={match.id}
-                  className="flex flex-col gap-2 rounded-md border p-4 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-md border p-3 sm:p-4"
                   data-testid={`row-match-${match.id}`}
                 >
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline">J{match.roundNumber}</Badge>
-                    <div>
-                      <p className="font-medium">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base">
                         {match.homeTeam?.name} vs {match.awayTeam?.name}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     {match.status === "JUGADO" && (
-                      <Badge variant="default">
+                      <Badge variant="default" className="text-xs">
                         {match.homeScore} - {match.awayScore}
                       </Badge>
                     )}
-                    <Badge variant={match.status === "JUGADO" ? "default" : "secondary"}>
+                    <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-xs">
                       {match.status === "JUGADO" ? "Jugado" : "Programado"}
                     </Badge>
                   </div>

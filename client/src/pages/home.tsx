@@ -45,7 +45,7 @@ export default function Home() {
     enabled: !!tournament,
   });
 
-  const rounds = [...new Set(schedule.map(m => m.roundNumber))].sort((a, b) => a - b);
+  const rounds = Array.from(new Set(schedule.map(m => m.roundNumber))).sort((a, b) => a - b);
   const filteredSchedule = schedule.filter(m => {
     const matchRound = selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
     const matchTeam = selectedTeam === "all" || m.homeTeamId === selectedTeam || m.awayTeamId === selectedTeam;
@@ -98,36 +98,36 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="calendario" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
-            <TabsTrigger value="calendario" data-testid="tab-calendario" className="gap-2">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="calendario" data-testid="tab-calendario" className="flex flex-col gap-1 px-2 py-2 sm:flex-row sm:gap-2 sm:px-4">
               <Calendar className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendario</span>
+              <span className="text-xs sm:text-sm">Calendario</span>
             </TabsTrigger>
-            <TabsTrigger value="posiciones" data-testid="tab-posiciones" className="gap-2">
+            <TabsTrigger value="posiciones" data-testid="tab-posiciones" className="flex flex-col gap-1 px-2 py-2 sm:flex-row sm:gap-2 sm:px-4">
               <Trophy className="h-4 w-4" />
-              <span className="hidden sm:inline">Posiciones</span>
+              <span className="text-xs sm:text-sm">Posiciones</span>
             </TabsTrigger>
-            <TabsTrigger value="resultados" data-testid="tab-resultados" className="gap-2">
+            <TabsTrigger value="resultados" data-testid="tab-resultados" className="flex flex-col gap-1 px-2 py-2 sm:flex-row sm:gap-2 sm:px-4">
               <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Resultados</span>
+              <span className="text-xs sm:text-sm">Resultados</span>
             </TabsTrigger>
-            <TabsTrigger value="noticias" data-testid="tab-noticias" className="gap-2">
+            <TabsTrigger value="noticias" data-testid="tab-noticias" className="flex flex-col gap-1 px-2 py-2 sm:flex-row sm:gap-2 sm:px-4">
               <Newspaper className="h-4 w-4" />
-              <span className="hidden sm:inline">Noticias</span>
+              <span className="text-xs sm:text-sm">Noticias</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendario" className="space-y-4">
             <Card>
-              <CardHeader>
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col gap-4">
                   <CardTitle className="flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-primary" />
                     Calendario de Partidos
                   </CardTitle>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                     <Select value={selectedRound} onValueChange={setSelectedRound}>
-                      <SelectTrigger className="w-[140px]" data-testid="select-round">
+                      <SelectTrigger className="w-full sm:w-[140px]" data-testid="select-round">
                         <SelectValue placeholder="Jornada" />
                       </SelectTrigger>
                       <SelectContent>
@@ -138,7 +138,7 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                     <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                      <SelectTrigger className="w-[160px]" data-testid="select-team">
+                      <SelectTrigger className="w-full sm:w-[160px]" data-testid="select-team">
                         <SelectValue placeholder="Equipo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -166,34 +166,37 @@ export default function Home() {
                     {filteredSchedule.map(match => (
                       <div
                         key={match.id}
-                        className="flex flex-col gap-3 rounded-md border p-4 hover-elevate cursor-pointer sm:flex-row sm:items-center sm:justify-between"
+                        className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
                         onClick={() => setSelectedMatch(match.id)}
                         data-testid={`card-match-${match.id}`}
                       >
-                        <div className="flex items-center gap-4">
-                          <Badge variant="outline">J{match.roundNumber}</Badge>
-                          <div className="flex flex-1 items-center gap-2 text-sm">
-                            <span className="font-medium" data-testid={`text-home-team-${match.id}`}>
-                              {match.homeTeam?.name || "Equipo Local"}
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
+                              <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-xs">
+                                {match.status === "JUGADO" ? "Jugado" : "Programado"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span className="hidden sm:inline">{format(new Date(match.dateTime), "d MMM, HH:mm", { locale: es })}</span>
+                              <span className="sm:hidden">{format(new Date(match.dateTime), "d/MM HH:mm", { locale: es })}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-center gap-2 sm:gap-4">
+                            <span className="flex-1 text-right text-sm font-medium truncate" data-testid={`text-home-team-${match.id}`}>
+                              {match.homeTeam?.name || "Local"}
                             </span>
-                            <span className="text-muted-foreground">vs</span>
-                            <span className="font-medium" data-testid={`text-away-team-${match.id}`}>
-                              {match.awayTeam?.name || "Equipo Visitante"}
+                            <span className="text-xs text-muted-foreground px-2">vs</span>
+                            <span className="flex-1 text-left text-sm font-medium truncate" data-testid={`text-away-team-${match.id}`}>
+                              {match.awayTeam?.name || "Visitante"}
                             </span>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {format(new Date(match.dateTime), "d MMM, HH:mm", { locale: es })}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-4 w-4" />
-                            {match.field}
-                          </span>
-                          <Badge variant={match.status === "JUGADO" ? "default" : "secondary"}>
-                            {match.status === "JUGADO" ? "Jugado" : "Programado"}
-                          </Badge>
+                          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                            <MapPin className="h-3 w-3" />
+                            <span className="truncate">{match.field}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -220,46 +223,77 @@ export default function Home() {
                     <p className="mt-4">No hay datos de posiciones disponibles</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b text-left text-muted-foreground">
-                          <th className="pb-3 pr-4">#</th>
-                          <th className="pb-3 pr-4">Equipo</th>
-                          <th className="pb-3 pr-2 text-center">PJ</th>
-                          <th className="pb-3 pr-2 text-center">PG</th>
-                          <th className="pb-3 pr-2 text-center">PE</th>
-                          <th className="pb-3 pr-2 text-center">PP</th>
-                          <th className="pb-3 pr-2 text-center">GF</th>
-                          <th className="pb-3 pr-2 text-center">GC</th>
-                          <th className="pb-3 pr-2 text-center">DG</th>
-                          <th className="pb-3 text-center font-bold">PTS</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {standings.map((team, index) => (
-                          <tr
-                            key={team.teamId}
-                            className={`border-b ${index < 3 ? "bg-accent/30" : ""}`}
-                            data-testid={`row-standing-${team.teamId}`}
-                          >
-                            <td className="py-3 pr-4 font-medium">
+                  <div>
+                    {/* Mobile view - cards */}
+                    <div className="space-y-2 sm:hidden">
+                      {standings.map((team, index) => (
+                        <div
+                          key={team.teamId}
+                          className={`flex items-center justify-between rounded-md border p-3 ${index < 3 ? "bg-accent/30" : ""}`}
+                          data-testid={`row-standing-mobile-${team.teamId}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-bold">
                               {index + 1}
-                              {index === 0 && <span className="ml-1 text-yellow-500">🏆</span>}
-                            </td>
-                            <td className="py-3 pr-4 font-medium">{team.teamName}</td>
-                            <td className="py-3 pr-2 text-center">{team.played}</td>
-                            <td className="py-3 pr-2 text-center text-green-600">{team.won}</td>
-                            <td className="py-3 pr-2 text-center text-yellow-600">{team.drawn}</td>
-                            <td className="py-3 pr-2 text-center text-red-600">{team.lost}</td>
-                            <td className="py-3 pr-2 text-center">{team.goalsFor}</td>
-                            <td className="py-3 pr-2 text-center">{team.goalsAgainst}</td>
-                            <td className="py-3 pr-2 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
-                            <td className="py-3 text-center font-bold text-primary">{team.points}</td>
+                            </span>
+                            <span className="font-medium text-sm truncate max-w-[120px]">{team.teamName}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground">PJ</p>
+                              <p className="font-medium text-sm">{team.played}</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-xs text-muted-foreground">DG</p>
+                              <p className="font-medium text-sm">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</p>
+                            </div>
+                            <div className="text-center min-w-[32px]">
+                              <p className="text-xs text-muted-foreground">PTS</p>
+                              <p className="font-bold text-primary">{team.points}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Desktop view - table */}
+                    <div className="hidden sm:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b text-left text-muted-foreground">
+                            <th className="pb-3 pr-4">#</th>
+                            <th className="pb-3 pr-4">Equipo</th>
+                            <th className="pb-3 pr-2 text-center">PJ</th>
+                            <th className="pb-3 pr-2 text-center">PG</th>
+                            <th className="pb-3 pr-2 text-center">PE</th>
+                            <th className="pb-3 pr-2 text-center">PP</th>
+                            <th className="pb-3 pr-2 text-center">GF</th>
+                            <th className="pb-3 pr-2 text-center">GC</th>
+                            <th className="pb-3 pr-2 text-center">DG</th>
+                            <th className="pb-3 text-center font-bold">PTS</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {standings.map((team, index) => (
+                            <tr
+                              key={team.teamId}
+                              className={`border-b ${index < 3 ? "bg-accent/30" : ""}`}
+                              data-testid={`row-standing-${team.teamId}`}
+                            >
+                              <td className="py-3 pr-4 font-medium">{index + 1}</td>
+                              <td className="py-3 pr-4 font-medium">{team.teamName}</td>
+                              <td className="py-3 pr-2 text-center">{team.played}</td>
+                              <td className="py-3 pr-2 text-center text-green-600">{team.won}</td>
+                              <td className="py-3 pr-2 text-center text-yellow-600">{team.drawn}</td>
+                              <td className="py-3 pr-2 text-center text-red-600">{team.lost}</td>
+                              <td className="py-3 pr-2 text-center">{team.goalsFor}</td>
+                              <td className="py-3 pr-2 text-center">{team.goalsAgainst}</td>
+                              <td className="py-3 pr-2 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
+                              <td className="py-3 text-center font-bold text-primary">{team.points}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -289,33 +323,33 @@ export default function Home() {
                     {results.map(match => (
                       <div
                         key={match.id}
-                        className="rounded-md border p-4 hover-elevate cursor-pointer"
+                        className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
                         onClick={() => setSelectedMatch(match.id)}
                         data-testid={`card-result-${match.id}`}
                       >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex items-center gap-3">
-                            <Badge variant="outline">J{match.roundNumber}</Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
-                            </span>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
                           </div>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
+                          </span>
                         </div>
-                        <div className="mt-3 flex items-center justify-center gap-4">
+                        <div className="flex items-center justify-center gap-2 sm:gap-4">
                           <div className="flex-1 text-right">
-                            <span className="font-medium">{match.homeTeam?.name}</span>
+                            <span className="text-sm sm:text-base font-medium truncate block">{match.homeTeam?.name}</span>
                           </div>
-                          <div className="flex items-center gap-2 rounded-md bg-primary/10 px-4 py-2">
-                            <span className="text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
+                          <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
+                            <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
                               {match.homeScore ?? 0}
                             </span>
-                            <span className="text-muted-foreground">-</span>
-                            <span className="text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
+                            <span className="text-muted-foreground text-sm">-</span>
+                            <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
                               {match.awayScore ?? 0}
                             </span>
                           </div>
                           <div className="flex-1">
-                            <span className="font-medium">{match.awayTeam?.name}</span>
+                            <span className="text-sm sm:text-base font-medium truncate block">{match.awayTeam?.name}</span>
                           </div>
                         </div>
                       </div>
@@ -345,35 +379,35 @@ export default function Home() {
                     <p className="mt-4">No hay noticias publicadas</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {news.map(item => (
                       <article
                         key={item.id}
-                        className="rounded-md border p-6"
+                        className="rounded-md border p-4 sm:p-6"
                         data-testid={`card-news-${item.id}`}
                       >
-                        <div className="flex flex-col gap-4">
-                          <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-col gap-3 sm:gap-4">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                             {item.match && (
-                              <Badge variant="default">
+                              <Badge variant="default" className="text-xs sm:text-sm w-fit">
                                 {item.match.homeTeam?.name} {item.match.homeScore} - {item.match.awayScore} {item.match.awayTeam?.name}
                               </Badge>
                             )}
                             <span className="text-xs text-muted-foreground">
-                              {format(new Date(item.createdAt), "d MMMM yyyy, HH:mm", { locale: es })}
+                              {format(new Date(item.createdAt), "d MMM yyyy", { locale: es })}
                             </span>
                           </div>
-                          <h3 className="text-xl font-bold">{item.title}</h3>
-                          <p className="text-muted-foreground whitespace-pre-wrap">{item.content}</p>
+                          <h3 className="text-lg sm:text-xl font-bold">{item.title}</h3>
+                          <p className="text-sm sm:text-base text-muted-foreground whitespace-pre-wrap">{item.content}</p>
                           {item.imageUrl && (
                             <img
                               src={item.imageUrl}
                               alt={item.title}
-                              className="rounded-md max-h-64 object-cover w-full"
+                              className="rounded-md max-h-48 sm:max-h-64 object-cover w-full"
                             />
                           )}
                           <p className="text-xs text-muted-foreground">
-                            Publicado por {item.author.name}
+                            Por {item.author.name}
                           </p>
                         </div>
                       </article>
