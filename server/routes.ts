@@ -10,6 +10,7 @@ import {
   insertPlayerSchema,
   insertMatchSchema,
   insertTournamentSchema,
+  finishTournamentSchema,
   matchResultSchema,
   insertNewsSchema,
 } from "@shared/schema";
@@ -206,7 +207,93 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== PUBLIC TOURNAMENTS ====================
+  app.get("/api/tournaments/completed", async (req, res) => {
+    try {
+      const tournaments = await storage.getCompletedTournaments();
+      res.json(tournaments);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/tournaments/:id", async (req, res) => {
+    try {
+      const tournament = await storage.getTournament(req.params.id);
+      if (!tournament) {
+        return res.status(404).json({ message: "Torneo no encontrado" });
+      }
+      res.json(tournament);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   // ==================== ADMIN ====================
+  // Tournaments
+  app.get("/api/admin/tournaments", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      res.json(tournaments);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/tournaments", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertTournamentSchema.parse(req.body);
+      const tournament = await storage.createTournament(data);
+      res.status(201).json(tournament);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/tournaments/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertTournamentSchema.partial().parse(req.body);
+      const tournament = await storage.updateTournament(req.params.id, data);
+      if (!tournament) {
+        return res.status(404).json({ message: "Torneo no encontrado" });
+      }
+      res.json(tournament);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/tournaments/:id/finish", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = finishTournamentSchema.parse(req.body);
+      const tournament = await storage.finishTournament(req.params.id, data.championTeamId);
+      if (!tournament) {
+        return res.status(404).json({ message: "Torneo no encontrado" });
+      }
+      res.json(tournament);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/tournaments/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      await storage.deleteTournament(req.params.id);
+      res.status(204).send();
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   // Users
   app.get("/api/admin/users", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
