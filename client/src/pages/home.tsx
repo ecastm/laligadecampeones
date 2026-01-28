@@ -172,39 +172,39 @@ export default function Home() {
                     <p className="mt-4">No hay partidos programados</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {filteredSchedule.map(match => (
                       <div
                         key={match.id}
-                        className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
+                        className="rounded-md border p-2 sm:p-3 hover-elevate cursor-pointer"
                         onClick={() => setSelectedMatch(match.id)}
                         data-testid={`card-match-${match.id}`}
                       >
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
-                              <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-xs">
-                                {match.status === "JUGADO" ? "Jugado" : "Programado"}
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1">
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">J{match.roundNumber}</Badge>
+                              <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
+                                {match.status === "JUGADO" ? "Jugado" : "Prog."}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <Clock className="h-3 w-3" />
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              <Clock className="h-2.5 w-2.5" />
                               <span className="hidden sm:inline">{format(new Date(match.dateTime), "d MMM, HH:mm", { locale: es })}</span>
                               <span className="sm:hidden">{format(new Date(match.dateTime), "d/MM HH:mm", { locale: es })}</span>
                             </div>
                           </div>
-                          <div className="flex items-center justify-center gap-2 sm:gap-4">
-                            <span className="flex-1 text-right text-sm font-medium truncate" data-testid={`text-home-team-${match.id}`}>
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="flex-1 text-right text-xs font-medium truncate" data-testid={`text-home-team-${match.id}`}>
                               {match.homeTeam?.name || "Local"}
                             </span>
-                            <span className="text-xs text-muted-foreground px-2">vs</span>
-                            <span className="flex-1 text-left text-sm font-medium truncate" data-testid={`text-away-team-${match.id}`}>
+                            <span className="text-[10px] text-muted-foreground">vs</span>
+                            <span className="flex-1 text-left text-xs font-medium truncate" data-testid={`text-away-team-${match.id}`}>
                               {match.awayTeam?.name || "Visitante"}
                             </span>
                           </div>
-                          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                            <MapPin className="h-3 w-3" />
+                          <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                            <MapPin className="h-2.5 w-2.5" />
                             <span className="truncate">{match.field}</span>
                           </div>
                         </div>
