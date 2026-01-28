@@ -1,0 +1,132 @@
+import { useQuery } from "@tanstack/react-query";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Clock, MapPin, User, CircleDot } from "lucide-react";
+import type { MatchWithTeams } from "@shared/schema";
+
+interface MatchDetailDialogProps {
+  matchId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDialogProps) {
+  const { data: match, isLoading } = useQuery<MatchWithTeams>({
+    queryKey: ["/api/matches", matchId],
+    enabled: open && !!matchId,
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CircleDot className="h-5 w-5 text-primary" />
+            Detalle del Partido
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-32" />
+          </div>
+        ) : !match ? (
+          <p className="text-center text-muted-foreground">Partido no encontrado</p>
+        ) : (
+          <div className="space-y-6">
+            <div className="text-center">
+              <Badge variant="outline" className="mb-3">
+                Jornada {match.roundNumber}
+              </Badge>
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  {format(new Date(match.dateTime), "d MMMM yyyy, HH:mm", { locale: es })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {match.field}
+                </span>
+              </div>
+              {match.referee && (
+                <div className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  Árbitro: {match.referee.name}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center gap-6 rounded-lg bg-card p-6 border">
+              <div className="flex-1 text-center">
+                <p className="text-lg font-semibold" data-testid="text-detail-home-team">
+                  {match.homeTeam?.name}
+                </p>
+                <p className="text-sm text-muted-foreground">Local</p>
+              </div>
+              {match.status === "JUGADO" ? (
+                <div className="flex items-center gap-3 rounded-md bg-primary/10 px-6 py-4">
+                  <span className="text-4xl font-bold" data-testid="text-detail-home-score">
+                    {match.homeScore ?? 0}
+                  </span>
+                  <span className="text-2xl text-muted-foreground">-</span>
+                  <span className="text-4xl font-bold" data-testid="text-detail-away-score">
+                    {match.awayScore ?? 0}
+                  </span>
+                </div>
+              ) : (
+                <div className="px-4">
+                  <Badge variant="secondary">Programado</Badge>
+                </div>
+              )}
+              <div className="flex-1 text-center">
+                <p className="text-lg font-semibold" data-testid="text-detail-away-team">
+                  {match.awayTeam?.name}
+                </p>
+                <p className="text-sm text-muted-foreground">Visitante</p>
+              </div>
+            </div>
+
+            {match.status === "JUGADO" && match.events && match.events.length > 0 && (
+              <div>
+                <h4 className="mb-3 font-medium">Eventos del Partido</h4>
+                <div className="space-y-2">
+                  {match.events.map((event, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-3 rounded-md border p-3"
+                      data-testid={`event-${event.id}`}
+                    >
+                      <Badge
+                        variant={
+                          event.type === "GOAL"
+                            ? "default"
+                            : event.type === "YELLOW"
+                            ? "outline"
+                            : "destructive"
+                        }
+                        className={event.type === "YELLOW" ? "bg-yellow-500 text-white border-yellow-600" : ""}
+                      >
+                        {event.type === "GOAL" ? "Gol" : event.type === "YELLOW" ? "Amarilla" : "Roja"}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{event.minute}'</span>
+                      <span className="flex-1 text-sm">
+                        {event.player?.firstName} {event.player?.lastName}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {event.team?.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
