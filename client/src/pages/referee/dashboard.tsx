@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, type MatchResult, type MatchWithTeams, type Player } from "@shared/schema";
+import { matchResultSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -34,6 +34,7 @@ export default function RefereeDashboard() {
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<RefereeSection>("pending");
   const [selectedMatch, setSelectedMatch] = useState<MatchWithTeams | null>(null);
+  const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -109,6 +110,7 @@ export default function RefereeDashboard() {
             <RefereeMatches
               status={activeSection === "pending" ? "PROGRAMADO" : "JUGADO"}
               onSelectMatch={setSelectedMatch}
+              onViewMatch={setViewingMatch}
             />
           </main>
         </div>
@@ -121,6 +123,14 @@ export default function RefereeDashboard() {
           onOpenChange={(open) => !open && setSelectedMatch(null)}
         />
       )}
+
+      {viewingMatch && (
+        <MatchDetailsDialog
+          match={viewingMatch}
+          open={!!viewingMatch}
+          onOpenChange={(open) => !open && setViewingMatch(null)}
+        />
+      )}
     </SidebarProvider>
   );
 }
@@ -128,9 +138,11 @@ export default function RefereeDashboard() {
 function RefereeMatches({
   status,
   onSelectMatch,
+  onViewMatch,
 }: {
   status: "PROGRAMADO" | "JUGADO";
   onSelectMatch: (match: MatchWithTeams) => void;
+  onViewMatch: (match: MatchWithTeams) => void;
 }) {
   const { data: matches = [], isLoading } = useQuery<MatchWithTeams[]>({
     queryKey: ["/api/referee/matches"],
@@ -200,9 +212,20 @@ function RefereeMatches({
                     </div>
                     <div className="flex items-center gap-2">
                       {match.status === "JUGADO" && (
-                        <Badge variant="default" className="text-lg px-3 py-1">
-                          {match.homeScore} - {match.awayScore}
-                        </Badge>
+                        <>
+                          <Badge variant="default" className="text-lg px-3 py-1">
+                            {match.homeScore} - {match.awayScore}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onViewMatch(match)}
+                            data-testid={`button-view-details-${match.id}`}
+                          >
+                            <Eye className="mr-1 h-4 w-4" />
+                            Ver Detalles
+                          </Button>
+                        </>
                       )}
                       {match.status === "PROGRAMADO" && (
                         <Button
@@ -495,6 +518,180 @@ function MatchResultDialog({
             </Button>
           </form>
         </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MatchDetailsDialog({
+  match,
+  open,
+  onOpenChange,
+}: {
+  match: MatchWithTeams;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { data: matchDetails, isLoading } = useQuery<MatchWithTeams>({
+    queryKey: ["/api/matches", match.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/matches/${match.id}`);
+      if (!response.ok) throw new Error("Error al cargar detalles del partido");
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  const events: MatchEventWithPlayer[] = matchDetails?.events || [];
+  const goals = events.filter((e: MatchEventWithPlayer) => e.type === "GOAL");
+  const yellowCards = events.filter((e: MatchEventWithPlayer) => e.type === "YELLOW");
+  const redCards = events.filter((e: MatchEventWithPlayer) => e.type === "RED");
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case "GOAL":
+        return <Goal className="h-4 w-4 text-primary" />;
+      case "YELLOW":
+        return <div className="h-4 w-3 rounded-sm bg-yellow-400" />;
+      case "RED":
+        return <div className="h-4 w-3 rounded-sm bg-red-500" />;
+      default:
+        return <CircleAlert className="h-4 w-4" />;
+    }
+  };
+
+  const getEventLabel = (type: string) => {
+    switch (type) {
+      case "GOAL":
+        return "Gol";
+      case "YELLOW":
+        return "Tarjeta Amarilla";
+      case "RED":
+        return "Tarjeta Roja";
+      default:
+        return type;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="h-5 w-5" />
+            Detalle del Partido
+          </DialogTitle>
+          <CardDescription>
+            Jornada {match.roundNumber} · {format(new Date(match.dateTime), "d MMMM yyyy", { locale: es })}
+          </CardDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-20" />
+            <Skeleton className="h-32" />
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-center gap-6 text-center">
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">{match.homeTeam?.name}</p>
+                    <p className="text-xs text-muted-foreground">Local</p>
+                  </div>
+                  <div className="text-4xl font-bold text-primary">
+                    {match.homeScore} - {match.awayScore}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-lg">{match.awayTeam?.name}</p>
+                    <p className="text-xs text-muted-foreground">Visitante</p>
+                  </div>
+                </div>
+                <div className="mt-4 text-center text-sm text-muted-foreground">
+                  {match.field}
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <Goal className="h-4 w-4 text-primary" />
+                    Goles
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">{goals.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <div className="h-4 w-3 rounded-sm bg-yellow-400" />
+                    Amarillas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">{yellowCards.length}</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-sm">
+                    <div className="h-4 w-3 rounded-sm bg-red-500" />
+                    Rojas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">{redCards.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {events.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <Flag className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No se registraron eventos en este partido</p>
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">Cronología de Eventos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {events
+                      .sort((a: MatchEventWithPlayer, b: MatchEventWithPlayer) => a.minute - b.minute)
+                      .map((event: MatchEventWithPlayer, index: number) => (
+                        <div
+                          key={event.id || index}
+                          className="flex items-center gap-3 rounded-md border p-3"
+                          data-testid={`event-${event.type.toLowerCase()}-${index}`}
+                        >
+                          <Badge variant="outline" className="shrink-0">
+                            {event.minute}'
+                          </Badge>
+                          {getEventIcon(event.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {event.player
+                                ? `${event.player.firstName} ${event.player.lastName}`
+                                : "Jugador desconocido"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {getEventLabel(event.type)} · {event.teamId === match.homeTeamId ? match.homeTeam?.name : match.awayTeam?.name}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
