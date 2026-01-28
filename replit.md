@@ -84,6 +84,7 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Autenticación
 - `POST /api/auth/login` - Iniciar sesión
+- `POST /api/auth/register` - Registrar nuevo usuario (rol CAPITAN por defecto)
 - `GET /api/auth/me` - Usuario actual
 
 ### Admin (requiere rol ADMIN)

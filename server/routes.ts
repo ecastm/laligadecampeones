@@ -1,9 +1,10 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { authenticate, authorizeRoles, generateToken, verifyPassword, type AuthRequest } from "./auth";
+import { authenticate, authorizeRoles, generateToken, verifyPassword, hashPassword, type AuthRequest } from "./auth";
 import {
   loginSchema,
+  registerSchema,
   insertUserSchema,
   insertTeamSchema,
   insertPlayerSchema,
@@ -50,6 +51,31 @@ export async function registerRoutes(
       const { passwordHash, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const data = registerSchema.parse(req.body);
+      const existingUser = await storage.getUserByEmail(data.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "Este correo ya está registrado" });
+      }
+      const passwordHash = await hashPassword(data.password);
+      const user = await storage.createUser({
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role: "CAPITAN",
+      });
+      const token = generateToken({ userId: user.id, email: user.email, role: user.role });
+      const { passwordHash: _, ...userWithoutPassword } = user;
+      res.status(201).json({ token, user: userWithoutPassword });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

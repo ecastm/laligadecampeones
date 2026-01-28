@@ -5,6 +5,7 @@ interface AuthContextType {
   user: Omit<User, 'passwordHash'> | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -66,6 +67,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
+  const register = async (name: string, email: string, password: string) => {
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password, confirmPassword: password }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Error al crear la cuenta");
+    }
+
+    const data: AuthResponse = await response.json();
+    localStorage.setItem("auth_token", data.token);
+    setToken(data.token);
+    setUser(data.user);
+  };
+
   const logout = () => {
     localStorage.removeItem("auth_token");
     setToken(null);
@@ -73,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,43 +2,46 @@ import { useState } from "react";
 import { useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginCredentials } from "@shared/schema";
+import { registerSchema, type RegisterCredentials } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Eye, EyeOff } from "lucide-react";
+import { Trophy, Eye, EyeOff, UserPlus } from "lucide-react";
 
-export default function Login() {
+export default function Register() {
   const [, setLocation] = useLocation();
-  const { login } = useAuth();
+  const { register: registerUser } = useAuth();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<LoginCredentials>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RegisterCredentials>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
+      confirmPassword: "",
     },
   });
 
-  const onSubmit = async (data: LoginCredentials) => {
+  const onSubmit = async (data: RegisterCredentials) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      await registerUser(data.name, data.email, data.password);
       toast({
-        title: "Bienvenido",
-        description: "Has iniciado sesión correctamente",
+        title: "Cuenta creada",
+        description: "Tu cuenta ha sido creada exitosamente",
       });
       setLocation("/dashboard");
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Error al iniciar sesión",
+        description: error instanceof Error ? error.message : "Error al crear la cuenta",
         variant: "destructive",
       });
     } finally {
@@ -51,18 +54,36 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-            <Trophy className="h-8 w-8 text-primary-foreground" />
+            <UserPlus className="h-8 w-8 text-primary-foreground" />
           </div>
           <div>
-            <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+            <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
             <CardDescription>
-              Ingresa a tu cuenta para gestionar el torneo
+              Regístrate para gestionar tu equipo
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre completo</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Tu nombre"
+                        data-testid="input-name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"
@@ -115,25 +136,59 @@ export default function Login() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar contraseña</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          placeholder="••••••••"
+                          data-testid="input-confirm-password"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          data-testid="button-toggle-confirm-password"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button
                 type="submit"
                 className="w-full"
                 disabled={isLoading}
-                data-testid="button-login"
+                data-testid="button-register"
               >
-                {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
+                {isLoading ? "Creando cuenta..." : "Crear Cuenta"}
               </Button>
             </form>
           </Form>
           <div className="mt-6 space-y-2">
             <p className="text-center text-sm text-muted-foreground">
-              ¿No tienes cuenta?{" "}
+              ¿Ya tienes cuenta?{" "}
               <Link
-                href="/register"
+                href="/login"
                 className="text-primary hover:underline"
-                data-testid="link-register"
+                data-testid="link-login"
               >
-                Crear cuenta
+                Iniciar sesión
               </Link>
             </p>
             <Link
