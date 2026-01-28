@@ -334,6 +334,11 @@ export async function registerRoutes(
   // Teams
   app.get("/api/admin/teams", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
+      const tournamentId = req.query.tournamentId as string | undefined;
+      if (tournamentId) {
+        const teams = await storage.getTeams(tournamentId);
+        return res.json(teams);
+      }
       const tournament = await storage.getActiveTournament();
       const teams = await storage.getTeams(tournament?.id);
       res.json(teams);

@@ -76,6 +76,8 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Públicos
 - `GET /api/tournaments/active` - Torneo activo
+- `GET /api/tournaments/completed` - Torneos finalizados (historial)
+- `GET /api/tournaments/:id` - Detalle de torneo específico
 - `GET /api/home/schedule` - Calendario de partidos
 - `GET /api/home/standings` - Tabla de posiciones
 - `GET /api/home/results` - Resultados recientes
@@ -91,10 +93,11 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Admin (requiere rol ADMIN)
 - `/api/admin/users` - CRUD usuarios
-- `/api/admin/teams` - CRUD equipos
+- `/api/admin/teams` - CRUD equipos (soporta ?tournamentId= para filtrar)
 - `/api/admin/players` - CRUD jugadores
 - `/api/admin/matches` - CRUD partidos
-- `/api/admin/tournaments/:id` - Actualizar torneo
+- `/api/admin/tournaments` - CRUD torneos
+- `/api/admin/tournaments/:id/finish` - Finalizar torneo con campeón
 - `/api/admin/news` - CRUD noticias
 
 ### Capitán (requiere rol CAPITAN)
@@ -117,7 +120,9 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Panel Admin
 - Gestión completa de usuarios, equipos, jugadores y partidos
-- Configuración del torneo
+- **Gestión de múltiples torneos**: crear, editar, finalizar y eliminar
+- Al finalizar un torneo: guarda campeón, fecha fin y tabla de posiciones final
+- Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 
 ### Panel Capitán
@@ -135,3 +140,13 @@ La aplicación estará disponible en el puerto 5000.
 - Empate: 1 punto
 - Derrota: 0 puntos
 - Ordenamiento: PTS > DG > GF
+
+## Gestión de Torneos
+- Los torneos tienen estados: ACTIVO o FINALIZADO
+- Al crear un torneo se define: nombre, temporada, lugar y fecha de inicio
+- Al finalizar un torneo:
+  - Se selecciona el equipo campeón
+  - Se guarda la tabla de posiciones final
+  - Se registra la fecha de finalización
+- Los torneos finalizados se muestran en el historial público (/historial)
+- Cada torneo conserva su tabla de posiciones archivada para consulta futura

@@ -85,13 +85,23 @@ export default function Home() {
                 </p>
               </div>
             </div>
-            <a
-              href="/login"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover-elevate active-elevate-2"
-              data-testid="link-login"
-            >
-              Iniciar Sesión
-            </a>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="/historial"
+                className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover-elevate active-elevate-2"
+                data-testid="link-history"
+              >
+                <Trophy className="mr-2 h-4 w-4" />
+                Historial
+              </a>
+              <a
+                href="/login"
+                className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover-elevate active-elevate-2"
+                data-testid="link-login"
+              >
+                Iniciar Sesión
+              </a>
+            </div>
           </div>
         </div>
       </header>
