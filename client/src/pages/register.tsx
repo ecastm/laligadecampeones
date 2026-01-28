@@ -8,8 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Shield, Users, Flag } from "lucide-react";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -26,13 +27,14 @@ export default function Register() {
       email: "",
       password: "",
       confirmPassword: "",
+      role: undefined,
     },
   });
 
   const onSubmit = async (data: RegisterCredentials) => {
     setIsLoading(true);
     try {
-      await registerUser(data.name, data.email, data.password);
+      await registerUser(data.name, data.email, data.password, data.role);
       toast({
         title: "Cuenta creada",
         description: "Tu cuenta ha sido creada exitosamente",
@@ -49,6 +51,27 @@ export default function Register() {
     }
   };
 
+  const roleOptions = [
+    {
+      value: "ADMIN",
+      label: "Administrador",
+      description: "Gestión completa del torneo",
+      icon: Shield,
+    },
+    {
+      value: "CAPITAN",
+      label: "Capitán",
+      description: "Gestiona tu equipo y jugadores",
+      icon: Users,
+    },
+    {
+      value: "ARBITRO",
+      label: "Árbitro",
+      description: "Registra resultados de partidos",
+      icon: Flag,
+    },
+  ];
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -59,7 +82,7 @@ export default function Register() {
           <div>
             <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
             <CardDescription>
-              Regístrate para gestionar tu equipo
+              Regístrate para participar en el torneo
             </CardDescription>
           </div>
         </CardHeader>
@@ -97,6 +120,43 @@ export default function Register() {
                         data-testid="input-email"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Selecciona tu rol</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="grid gap-2"
+                        data-testid="radio-role"
+                      >
+                        {roleOptions.map((option) => (
+                          <label
+                            key={option.value}
+                            className={`flex items-center gap-3 rounded-md border p-3 cursor-pointer transition-colors hover-elevate ${
+                              field.value === option.value
+                                ? "border-primary bg-primary/5"
+                                : "border-border"
+                            }`}
+                            data-testid={`role-${option.value.toLowerCase()}`}
+                          >
+                            <RadioGroupItem value={option.value} />
+                            <option.icon className="h-5 w-5 text-muted-foreground" />
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{option.label}</p>
+                              <p className="text-xs text-muted-foreground">{option.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
