@@ -4,11 +4,12 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer } from "@shared/schema";
+import { matchResultSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -18,15 +19,17 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-type RefereeSection = "pending" | "completed";
+type RefereeSection = "pending" | "completed" | "standings" | "results";
 
 const menuItems = [
   { id: "pending" as const, title: "Pendientes", icon: Calendar },
   { id: "completed" as const, title: "Completados", icon: CircleDot },
+  { id: "standings" as const, title: "Posiciones", icon: Trophy },
+  { id: "results" as const, title: "Resultados", icon: ListOrdered },
 ];
 
 export default function RefereeDashboard() {
@@ -107,11 +110,15 @@ export default function RefereeDashboard() {
           </header>
 
           <main className="flex-1 overflow-auto p-6">
-            <RefereeMatches
-              status={activeSection === "pending" ? "PROGRAMADO" : "JUGADO"}
-              onSelectMatch={setSelectedMatch}
-              onViewMatch={setViewingMatch}
-            />
+            {(activeSection === "pending" || activeSection === "completed") && (
+              <RefereeMatches
+                status={activeSection === "pending" ? "PROGRAMADO" : "JUGADO"}
+                onSelectMatch={setSelectedMatch}
+                onViewMatch={setViewingMatch}
+              />
+            )}
+            {activeSection === "standings" && <StandingsSection />}
+            {activeSection === "results" && <ResultsSection />}
           </main>
         </div>
       </div>
@@ -695,5 +702,144 @@ function MatchDetailsDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function StandingsSection() {
+  const { data: standings = [], isLoading } = useQuery<Standing[]>({
+    queryKey: ["/api/home/standings"],
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold">Tabla de Posiciones</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Clasificación actual del torneo
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-primary" />
+            Posiciones
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-12" />)}
+            </div>
+          ) : standings.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">
+              No hay datos de posiciones disponibles
+            </p>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Equipo</TableHead>
+                    <TableHead className="text-center w-10">PJ</TableHead>
+                    <TableHead className="text-center w-10">PG</TableHead>
+                    <TableHead className="text-center w-10">PE</TableHead>
+                    <TableHead className="text-center w-10">PP</TableHead>
+                    <TableHead className="text-center w-10">GF</TableHead>
+                    <TableHead className="text-center w-10">GC</TableHead>
+                    <TableHead className="text-center w-10">DG</TableHead>
+                    <TableHead className="text-center w-12">PTS</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {standings.map((team, index) => (
+                    <TableRow key={team.teamId} data-testid={`row-standing-${team.teamId}`}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell className="font-medium">{team.teamName}</TableCell>
+                      <TableCell className="text-center">{team.played}</TableCell>
+                      <TableCell className="text-center">{team.won}</TableCell>
+                      <TableCell className="text-center">{team.drawn}</TableCell>
+                      <TableCell className="text-center">{team.lost}</TableCell>
+                      <TableCell className="text-center">{team.goalsFor}</TableCell>
+                      <TableCell className="text-center">{team.goalsAgainst}</TableCell>
+                      <TableCell className="text-center">{team.goalDifference}</TableCell>
+                      <TableCell className="text-center font-bold">{team.points}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ResultsSection() {
+  const { data: results = [], isLoading } = useQuery<MatchWithTeams[]>({
+    queryKey: ["/api/home/results"],
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold">Resultados Recientes</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Últimos partidos jugados en el torneo
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ListOrdered className="h-5 w-5 text-primary" />
+            Resultados ({results.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
+            </div>
+          ) : results.length === 0 ? (
+            <p className="py-8 text-center text-muted-foreground">
+              No hay resultados disponibles
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {results.map((match) => (
+                <div
+                  key={match.id}
+                  className="rounded-md border p-3"
+                  data-testid={`row-result-${match.id}`}
+                >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-center gap-3">
+                      <span className="flex-1 text-right text-sm font-medium truncate">
+                        {match.homeTeam?.name}
+                      </span>
+                      <Badge variant="default" className="text-base px-3 py-1">
+                        {match.homeScore} - {match.awayScore}
+                      </Badge>
+                      <span className="flex-1 text-left text-sm font-medium truncate">
+                        {match.awayTeam?.name}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
