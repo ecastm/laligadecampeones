@@ -4,14 +4,15 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
 import MatchesManagement from "./matches";
 import TournamentManagement from "./tournament";
+import NewsManagement from "./news";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -20,6 +21,7 @@ const menuItems = [
   { id: "players" as const, title: "Jugadores", icon: Users },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
   { id: "tournament" as const, title: "Torneo", icon: Trophy },
+  { id: "news" as const, title: "Noticias", icon: Newspaper },
 ];
 
 export default function AdminDashboard() {
@@ -106,6 +108,7 @@ export default function AdminDashboard() {
             {activeSection === "players" && <PlayersManagement />}
             {activeSection === "matches" && <MatchesManagement />}
             {activeSection === "tournament" && <TournamentManagement />}
+            {activeSection === "news" && <NewsManagement />}
           </main>
         </div>
       </div>
@@ -129,6 +132,7 @@ function AdminOverview() {
           { title: "Equipos", icon: Shield, description: "Administra los equipos del torneo" },
           { title: "Jugadores", icon: Users, description: "Gestiona los jugadores de cada equipo" },
           { title: "Partidos", icon: Calendar, description: "Programa y administra los partidos" },
+          { title: "Noticias", icon: Newspaper, description: "Publica reseñas y noticias del torneo" },
         ].map((card) => (
           <div
             key={card.title}

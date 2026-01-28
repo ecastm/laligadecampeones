@@ -5,10 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Trophy, Users, Clock, MapPin } from "lucide-react";
+import { Calendar, Trophy, Users, Clock, MapPin, Newspaper } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { MatchWithTeams, Standing, Team, Tournament } from "@shared/schema";
+import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 
 export default function Home() {
@@ -37,6 +37,11 @@ export default function Home() {
 
   const { data: teams = [] } = useQuery<Team[]>({
     queryKey: ["/api/home/teams"],
+    enabled: !!tournament,
+  });
+
+  const { data: news = [], isLoading: loadingNews } = useQuery<NewsWithAuthor[]>({
+    queryKey: ["/api/home/news"],
     enabled: !!tournament,
   });
 
@@ -93,7 +98,7 @@ export default function Home() {
 
       <main className="container mx-auto px-4 py-8">
         <Tabs defaultValue="calendario" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-flex">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
             <TabsTrigger value="calendario" data-testid="tab-calendario" className="gap-2">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Calendario</span>
@@ -105,6 +110,10 @@ export default function Home() {
             <TabsTrigger value="resultados" data-testid="tab-resultados" className="gap-2">
               <Users className="h-4 w-4" />
               <span className="hidden sm:inline">Resultados</span>
+            </TabsTrigger>
+            <TabsTrigger value="noticias" data-testid="tab-noticias" className="gap-2">
+              <Newspaper className="h-4 w-4" />
+              <span className="hidden sm:inline">Noticias</span>
             </TabsTrigger>
           </TabsList>
 
@@ -310,6 +319,64 @@ export default function Home() {
                           </div>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="noticias" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Newspaper className="h-5 w-5 text-primary" />
+                  Noticias del Torneo
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingNews ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-32" />)}
+                  </div>
+                ) : news.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <Newspaper className="mx-auto h-12 w-12 opacity-50" />
+                    <p className="mt-4">No hay noticias publicadas</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {news.map(item => (
+                      <article
+                        key={item.id}
+                        className="rounded-md border p-6"
+                        data-testid={`card-news-${item.id}`}
+                      >
+                        <div className="flex flex-col gap-4">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.match && (
+                              <Badge variant="default">
+                                {item.match.homeTeam?.name} {item.match.homeScore} - {item.match.awayScore} {item.match.awayTeam?.name}
+                              </Badge>
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(item.createdAt), "d MMMM yyyy, HH:mm", { locale: es })}
+                            </span>
+                          </div>
+                          <h3 className="text-xl font-bold">{item.title}</h3>
+                          <p className="text-muted-foreground whitespace-pre-wrap">{item.content}</p>
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title}
+                              className="rounded-md max-h-64 object-cover w-full"
+                            />
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Publicado por {item.author.name}
+                          </p>
+                        </div>
+                      </article>
                     ))}
                   </div>
                 )}

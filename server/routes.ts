@@ -11,6 +11,7 @@ import {
   insertMatchSchema,
   insertTournamentSchema,
   matchResultSchema,
+  insertNewsSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -174,6 +175,32 @@ export async function registerRoutes(
     try {
       const players = await storage.getPlayers(req.params.id);
       res.json(players);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== NEWS (PUBLIC) ====================
+  app.get("/api/home/news", async (req, res) => {
+    try {
+      const tournament = await storage.getActiveTournament();
+      if (!tournament) {
+        return res.json([]);
+      }
+      const news = await storage.getNews(tournament.id);
+      res.json(news);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/home/news/:id", async (req, res) => {
+    try {
+      const news = await storage.getNewsItem(req.params.id);
+      if (!news) {
+        return res.status(404).json({ message: "Noticia no encontrada" });
+      }
+      res.json(news);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
@@ -361,6 +388,54 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // News (Admin)
+  app.get("/api/admin/news", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const news = await storage.getNews();
+      res.json(news);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/news", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertNewsSchema.parse(req.body);
+      const news = await storage.createNews(data, req.user!.userId);
+      res.status(201).json(news);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertNewsSchema.partial().parse(req.body);
+      const news = await storage.updateNews(req.params.id, data);
+      if (!news) {
+        return res.status(404).json({ message: "Noticia no encontrada" });
+      }
+      res.json(news);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      await storage.deleteNews(req.params.id);
+      res.status(204).send();
+    } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

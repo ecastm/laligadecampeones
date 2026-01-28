@@ -80,6 +80,8 @@ La aplicación estará disponible en el puerto 5000.
 - `GET /api/home/standings` - Tabla de posiciones
 - `GET /api/home/results` - Resultados recientes
 - `GET /api/home/teams` - Equipos del torneo
+- `GET /api/home/news` - Noticias del torneo
+- `GET /api/home/news/:id` - Detalle de noticia
 - `GET /api/matches/:id` - Detalle de partido
 
 ### Autenticación
@@ -93,6 +95,7 @@ La aplicación estará disponible en el puerto 5000.
 - `/api/admin/players` - CRUD jugadores
 - `/api/admin/matches` - CRUD partidos
 - `/api/admin/tournaments/:id` - Actualizar torneo
+- `/api/admin/news` - CRUD noticias
 
 ### Capitán (requiere rol CAPITAN)
 - `GET/PUT /api/captain/team` - Mi equipo
@@ -109,11 +112,13 @@ La aplicación estará disponible en el puerto 5000.
 - Calendario de partidos con filtros por jornada y equipo
 - Tabla de posiciones (PJ, PG, PE, PP, GF, GC, DG, PTS)
 - Resultados recientes
+- Noticias del torneo (reseñas de partidos, blog informativo)
 - Detalle de partidos con eventos
 
 ### Panel Admin
 - Gestión completa de usuarios, equipos, jugadores y partidos
 - Configuración del torneo
+- Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 
 ### Panel Capitán
 - Editar datos de su equipo

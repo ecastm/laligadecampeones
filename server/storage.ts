@@ -5,6 +5,7 @@ import {
   type Player, type InsertPlayer,
   type Match, type InsertMatch,
   type MatchEvent, type InsertMatchEvent,
+  type News, type InsertNews, type NewsWithAuthor,
   type Standing, type MatchWithTeams, type MatchEventWithPlayer
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -55,6 +56,13 @@ export interface IStorage {
 
   // Standings
   calculateStandings(tournamentId: string): Promise<Standing[]>;
+
+  // News
+  getNews(tournamentId?: string): Promise<NewsWithAuthor[]>;
+  getNewsItem(id: string): Promise<NewsWithAuthor | undefined>;
+  createNews(news: InsertNews, authorId: string): Promise<News>;
+  updateNews(id: string, data: Partial<InsertNews>): Promise<News | undefined>;
+  deleteNews(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -64,6 +72,7 @@ export class MemStorage implements IStorage {
   private players: Map<string, Player>;
   private matches: Map<string, Match>;
   private matchEvents: Map<string, MatchEvent>;
+  private news: Map<string, News>;
 
   constructor() {
     this.users = new Map();
@@ -72,6 +81,7 @@ export class MemStorage implements IStorage {
     this.players = new Map();
     this.matches = new Map();
     this.matchEvents = new Map();
+    this.news = new Map();
   }
 
   // Users
@@ -368,6 +378,76 @@ export class MemStorage implements IStorage {
       if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
       return b.goalsFor - a.goalsFor;
     });
+  }
+
+  // News
+  async getNews(tournamentId?: string): Promise<NewsWithAuthor[]> {
+    let newsItems = Array.from(this.news.values());
+    if (tournamentId) {
+      newsItems = newsItems.filter(n => n.tournamentId === tournamentId);
+    }
+    newsItems.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    const result: NewsWithAuthor[] = [];
+    for (const item of newsItems) {
+      const author = await this.getUser(item.authorId);
+      if (!author) continue;
+      const { passwordHash, ...authorData } = author;
+      let match: MatchWithTeams | undefined;
+      if (item.matchId) {
+        match = await this.getMatchWithTeams(item.matchId);
+      }
+      result.push({ ...item, author: authorData, match });
+    }
+    return result;
+  }
+
+  async getNewsItem(id: string): Promise<NewsWithAuthor | undefined> {
+    const item = this.news.get(id);
+    if (!item) return undefined;
+    const author = await this.getUser(item.authorId);
+    if (!author) return undefined;
+    const { passwordHash, ...authorData } = author;
+    let match: MatchWithTeams | undefined;
+    if (item.matchId) {
+      match = await this.getMatchWithTeams(item.matchId);
+    }
+    return { ...item, author: authorData, match };
+  }
+
+  async createNews(insertNews: InsertNews, authorId: string): Promise<News> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const news: News = {
+      id,
+      tournamentId: insertNews.tournamentId,
+      matchId: insertNews.matchId,
+      title: insertNews.title,
+      content: insertNews.content,
+      imageUrl: insertNews.imageUrl || undefined,
+      authorId,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.news.set(id, news);
+    return news;
+  }
+
+  async updateNews(id: string, data: Partial<InsertNews>): Promise<News | undefined> {
+    const news = this.news.get(id);
+    if (!news) return undefined;
+    const updated: News = {
+      ...news,
+      ...data,
+      imageUrl: data.imageUrl === "" ? undefined : (data.imageUrl || news.imageUrl),
+      updatedAt: new Date().toISOString(),
+    };
+    this.news.set(id, updated);
+    return updated;
+  }
+
+  async deleteNews(id: string): Promise<void> {
+    this.news.delete(id);
   }
 }
 

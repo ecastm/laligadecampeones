@@ -211,6 +211,33 @@ export interface TeamWithPlayers extends Team {
   captain?: User;
 }
 
+// News (Blog posts for match summaries)
+export interface News {
+  id: string;
+  tournamentId: string;
+  matchId?: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertNewsSchema = z.object({
+  tournamentId: z.string(),
+  matchId: z.string().optional(),
+  title: z.string().min(5, "El título debe tener al menos 5 caracteres"),
+  content: z.string().min(20, "El contenido debe tener al menos 20 caracteres"),
+  imageUrl: z.string().url().optional().or(z.literal("")),
+});
+export type InsertNews = z.infer<typeof insertNewsSchema>;
+
+export interface NewsWithAuthor extends News {
+  author: Omit<User, 'passwordHash'>;
+  match?: MatchWithTeams;
+}
+
 // Auth response
 export interface AuthResponse {
   token: string;
