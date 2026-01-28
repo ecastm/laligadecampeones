@@ -300,6 +300,7 @@ function MatchResultDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/referee/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
       toast({ title: "Resultado registrado correctamente" });
       onOpenChange(false);
     },
