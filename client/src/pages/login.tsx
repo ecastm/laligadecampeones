@@ -34,14 +34,14 @@ export default function Login() {
         title: "Bienvenido",
         description: "Has iniciado sesión correctamente",
       });
-      setLocation("/dashboard");
+      // Use window.location for more reliable redirect
+      window.location.href = "/dashboard";
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al iniciar sesión",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };

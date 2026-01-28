@@ -39,14 +39,14 @@ export default function Register() {
         title: "Cuenta creada",
         description: "Tu cuenta ha sido creada exitosamente",
       });
-      setLocation("/dashboard");
+      // Use window.location for more reliable redirect
+      window.location.href = "/dashboard";
     } catch (error) {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Error al crear la cuenta",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };
