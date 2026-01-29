@@ -131,9 +131,12 @@ La aplicación estará disponible en el puerto 5000.
 - Ver calendario de partidos
 
 ### Panel Árbitro
+- **Perfil obligatorio**: Al primer acceso debe completar datos generales
 - Ver partidos pendientes y completados
 - Cargar resultados con marcador
 - Registrar eventos (goles, tarjetas)
+- Ver tabla de posiciones y resultados
+- Gestionar perfil personal (nombre, identificación, teléfono, email, etc.)
 
 ## Cálculo de Posiciones
 - Victoria: 3 puntos
@@ -150,3 +153,10 @@ La aplicación estará disponible en el puerto 5000.
   - Se registra la fecha de finalización
 - Los torneos finalizados se muestran en el historial público (/historial)
 - Cada torneo conserva su tabla de posiciones archivada para consulta futura
+
+## Perfil del Árbitro
+- Datos obligatorios: nombre completo, número de identificación, teléfono, email
+- Datos opcionales: asociación/liga, años de experiencia, observaciones
+- Estado: activo/inactivo
+- El nombre del árbitro se muestra en el detalle del partido
+- Trazabilidad: identifica quién registró cada resultado

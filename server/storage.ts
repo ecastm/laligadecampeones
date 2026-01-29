@@ -327,6 +327,7 @@ export class MemStorage implements IStorage {
     const homeTeam = await this.getTeam(match.homeTeamId);
     const awayTeam = await this.getTeam(match.awayTeamId);
     const referee = match.refereeUserId ? await this.getUser(match.refereeUserId) : undefined;
+    const refereeProfile = match.refereeUserId ? await this.getRefereeProfile(match.refereeUserId) : undefined;
     const events = await this.getMatchEvents(id);
 
     return {
@@ -334,6 +335,7 @@ export class MemStorage implements IStorage {
       homeTeam: homeTeam!,
       awayTeam: awayTeam!,
       referee: referee ? { ...referee, passwordHash: undefined } as any : undefined,
+      refereeProfile,
       events,
     };
   }

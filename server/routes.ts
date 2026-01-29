@@ -632,8 +632,16 @@ export async function registerRoutes(
   });
 
   // ==================== REFEREE ====================
+  // Helper function to check profile completion
+  const requireRefereeProfile = async (userId: string): Promise<boolean> => {
+    const profile = await storage.getRefereeProfile(userId);
+    return !!profile;
+  };
+
   app.get("/api/referee/matches", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
     try {
+      // Allow viewing matches without profile (so they can see what's assigned)
+      // but profile is required for mutations
       const matches = await storage.getMatchesByReferee(req.user!.userId);
       matches.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
       res.json(matches);
@@ -644,6 +652,12 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/result", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
     try {
+      // Enforce mandatory profile completion before allowing result submission
+      const refereeProfile = await storage.getRefereeProfile(req.user!.userId);
+      if (!refereeProfile) {
+        return res.status(403).json({ message: "Debes completar tu perfil antes de cargar resultados" });
+      }
+
       const match = await storage.getMatch(req.params.id);
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
@@ -657,11 +671,12 @@ export async function registerRoutes(
 
       const data = matchResultSchema.parse(req.body);
 
-      // Update match with result
+      // Update match with result and confirm refereeUserId for traceability
       await storage.updateMatch(match.id, {
         homeScore: data.homeScore,
         awayScore: data.awayScore,
         status: "JUGADO",
+        refereeUserId: req.user!.userId, // Confirm/lock referee who registered the result
       });
 
       // Delete old events and create new ones

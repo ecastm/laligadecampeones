@@ -52,10 +52,10 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
                   {match.field}
                 </span>
               </div>
-              {match.referee && (
+              {(match.refereeProfile || match.referee) && (
                 <div className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
                   <User className="h-4 w-4" />
-                  Árbitro: {match.referee.name}
+                  Árbitro: {match.refereeProfile?.fullName || match.referee?.name}
                 </div>
               )}
             </div>

@@ -218,6 +218,7 @@ export interface MatchWithTeams extends Match {
   homeTeam: Team;
   awayTeam: Team;
   referee?: User;
+  refereeProfile?: RefereeProfile;
   events?: MatchEventWithPlayer[];
 }
 

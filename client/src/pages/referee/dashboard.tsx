@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -19,25 +19,39 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-type RefereeSection = "pending" | "completed" | "standings" | "results";
+type RefereeSection = "pending" | "completed" | "standings" | "results" | "profile";
 
 const menuItems = [
   { id: "pending" as const, title: "Pendientes", icon: Calendar },
   { id: "completed" as const, title: "Completados", icon: CircleDot },
   { id: "standings" as const, title: "Posiciones", icon: Trophy },
   { id: "results" as const, title: "Resultados", icon: ListOrdered },
+  { id: "profile" as const, title: "Mi Perfil", icon: User },
 ];
 
 export default function RefereeDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [activeSection, setActiveSection] = useState<RefereeSection>("pending");
   const [selectedMatch, setSelectedMatch] = useState<MatchWithTeams | null>(null);
   const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
+
+  const { data: refereeProfile, isLoading: loadingProfile } = useQuery<RefereeProfile | null>({
+    queryKey: ["/api/referee/profile"],
+    queryFn: async () => {
+      const response = await fetch("/api/referee/profile", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar perfil");
+      return response.json();
+    },
+  });
+
+  // Force profile section if no profile exists
+  const [activeSection, setActiveSection] = useState<RefereeSection>("pending");
+  const effectiveSection = (!loadingProfile && !refereeProfile) ? "profile" : activeSection;
 
   const handleLogout = () => {
     logout();
@@ -48,6 +62,8 @@ export default function RefereeDashboard() {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
   };
+
+  const showProfileRequired = !loadingProfile && !refereeProfile;
 
   return (
     <SidebarProvider style={style as React.CSSProperties}>
@@ -73,7 +89,7 @@ export default function RefereeDashboard() {
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
+                        isActive={effectiveSection === item.id}
                         data-testid={`nav-${item.id}`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -103,22 +119,23 @@ export default function RefereeDashboard() {
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">
-                {menuItems.find(i => i.id === activeSection)?.title || "Mis Partidos"}
+                {menuItems.find(i => i.id === effectiveSection)?.title || "Mis Partidos"}
               </h1>
             </div>
             <ThemeToggle />
           </header>
 
           <main className="flex-1 overflow-auto p-6">
-            {(activeSection === "pending" || activeSection === "completed") && (
+            {(effectiveSection === "pending" || effectiveSection === "completed") && (
               <RefereeMatches
-                status={activeSection === "pending" ? "PROGRAMADO" : "JUGADO"}
+                status={effectiveSection === "pending" ? "PROGRAMADO" : "JUGADO"}
                 onSelectMatch={setSelectedMatch}
                 onViewMatch={setViewingMatch}
               />
             )}
-            {activeSection === "standings" && <StandingsSection />}
-            {activeSection === "results" && <ResultsSection />}
+            {effectiveSection === "standings" && <StandingsSection />}
+            {effectiveSection === "results" && <ResultsSection />}
+            {effectiveSection === "profile" && <ProfileSection profile={refereeProfile} />}
           </main>
         </div>
       </div>
@@ -136,6 +153,14 @@ export default function RefereeDashboard() {
           match={viewingMatch}
           open={!!viewingMatch}
           onOpenChange={(open) => !open && setViewingMatch(null)}
+        />
+      )}
+
+      {showProfileRequired && (
+        <ProfileRequiredDialog
+          open={showProfileRequired}
+          userEmail={user?.email || ""}
+          userName={user?.name || ""}
         />
       )}
     </SidebarProvider>
@@ -841,5 +866,362 @@ function ResultsSection() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ProfileSection({ profile }: { profile: RefereeProfile | null | undefined }) {
+  const { toast } = useToast();
+  const { user } = useAuth();
+
+  const form = useForm<InsertRefereeProfile>({
+    resolver: zodResolver(insertRefereeProfileSchema),
+    defaultValues: {
+      fullName: profile?.fullName || user?.name || "",
+      identificationNumber: profile?.identificationNumber || "",
+      phone: profile?.phone || "",
+      email: profile?.email || user?.email || "",
+      association: profile?.association || "",
+      yearsOfExperience: profile?.yearsOfExperience || 0,
+      observations: profile?.observations || "",
+      status: profile?.status || "ACTIVO",
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: InsertRefereeProfile) => {
+      const method = profile ? "PUT" : "POST";
+      return apiRequest(method, "/api/referee/profile", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/referee/profile"] });
+      toast({ title: profile ? "Perfil actualizado" : "Perfil creado" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg sm:text-xl font-bold">Mi Perfil de Árbitro</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Datos generales para identificación y trazabilidad
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-primary" />
+            Datos del Árbitro
+          </CardTitle>
+          <CardDescription>
+            {profile ? "Actualiza tu información de perfil" : "Completa tu perfil para continuar"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => updateMutation.mutate(data))} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre Completo *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-profile-fullname" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="identificationNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Identificación (DNI/CURP/ID) *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-profile-identification" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Teléfono *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-profile-phone" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} data-testid="input-profile-email" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="association"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Asociación o Liga (opcional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-profile-association" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="yearsOfExperience"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Años de Experiencia (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={0}
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          data-testid="input-profile-experience"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-profile-status">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ACTIVO">Activo</SelectItem>
+                          <SelectItem value="INACTIVO">Inactivo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="observations"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observaciones (opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Notas adicionales..."
+                        data-testid="input-profile-observations"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save-profile">
+                {updateMutation.isPending ? "Guardando..." : profile ? "Actualizar Perfil" : "Guardar Perfil"}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ProfileRequiredDialog({
+  open,
+  userEmail,
+  userName,
+}: {
+  open: boolean;
+  userEmail: string;
+  userName: string;
+}) {
+  const { toast } = useToast();
+
+  const form = useForm<InsertRefereeProfile>({
+    resolver: zodResolver(insertRefereeProfileSchema),
+    defaultValues: {
+      fullName: userName,
+      identificationNumber: "",
+      phone: "",
+      email: userEmail,
+      association: "",
+      yearsOfExperience: 0,
+      observations: "",
+      status: "ACTIVO",
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertRefereeProfile) => {
+      return apiRequest("POST", "/api/referee/profile", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/referee/profile"] });
+      toast({ title: "Perfil creado correctamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => e.preventDefault()}>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Completa tu Perfil de Árbitro
+          </DialogTitle>
+          <CardDescription>
+            Antes de continuar, es obligatorio completar tus datos generales.
+          </CardDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre Completo *</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-required-fullname" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="identificationNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Número de Identificación (DNI/CURP/ID) *</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-required-identification" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-required-phone" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} data-testid="input-required-email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="association"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Asociación o Liga (opcional)</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-required-association" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="yearsOfExperience"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Años de Experiencia (opcional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        data-testid="input-required-experience"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <FormField
+              control={form.control}
+              name="observations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observaciones (opcional)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Notas adicionales..."
+                      data-testid="input-required-observations"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-create-profile">
+              {createMutation.isPending ? "Guardando..." : "Completar Perfil y Continuar"}
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
