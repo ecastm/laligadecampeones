@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, type InsertTeam, type Team, type Tournament } from "@shared/schema";
+import { insertTeamSchema, type InsertTeam, type Team, type Tournament, type User } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Shield, Edit } from "lucide-react";
+import { Plus, Trash2, Shield, Edit, User as UserIcon, Award } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function TeamsManagement() {
@@ -33,6 +33,21 @@ export default function TeamsManagement() {
     },
   });
 
+  const { data: users = [] } = useQuery<Omit<User, 'passwordHash'>[]>({
+    queryKey: ["/api/admin/users"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/users", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar usuarios");
+      return response.json();
+    },
+  });
+
+  const getCaptainName = (captainUserId?: string) => {
+    if (!captainUserId) return null;
+    const captain = users.find(u => u.id === captainUserId);
+    return captain?.name || null;
+  };
+
   const form = useForm<Omit<InsertTeam, 'tournamentId'>>({
     resolver: zodResolver(insertTeamSchema.omit({ tournamentId: true })),
     defaultValues: {
@@ -40,6 +55,7 @@ export default function TeamsManagement() {
       colors: "",
       homeField: "",
       logoUrl: "",
+      coachName: "",
     },
   });
 
@@ -93,6 +109,7 @@ export default function TeamsManagement() {
       colors: team.colors,
       homeField: team.homeField,
       logoUrl: team.logoUrl || "",
+      coachName: team.coachName || "",
     });
   };
 
@@ -175,6 +192,19 @@ export default function TeamsManagement() {
                 />
                 <FormField
                   control={form.control}
+                  name="coachName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Entrenador</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nombre del entrenador" data-testid="input-team-coach" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="logoUrl"
                   render={({ field }) => (
                     <FormItem>
@@ -226,10 +256,24 @@ export default function TeamsManagement() {
                     <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
                       {team.name.substring(0, 2).toUpperCase()}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
                       <p className="text-xs sm:text-sm text-muted-foreground truncate">{team.colors}</p>
                       <p className="text-xs text-muted-foreground mt-1 truncate">{team.homeField}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs">
+                        {getCaptainName(team.captainUserId) && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <UserIcon className="h-3 w-3" />
+                            <span>Capitán: {getCaptainName(team.captainUserId)}</span>
+                          </span>
+                        )}
+                        {team.coachName && (
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Award className="h-3 w-3" />
+                            <span>DT: {team.coachName}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">

@@ -30,10 +30,10 @@ export async function seedDatabase() {
 
   // Create 4 teams
   const teamsData = [
-    { name: "Águilas FC", colors: "Azul y Blanco", homeField: "Estadio Municipal" },
-    { name: "Leones Unidos", colors: "Rojo y Negro", homeField: "Campo Norte" },
-    { name: "Tigres del Valle", colors: "Amarillo y Negro", homeField: "Cancha Central" },
-    { name: "Dragones Rojos", colors: "Rojo y Dorado", homeField: "Estadio Sur" },
+    { name: "Águilas FC", colors: "Azul y Blanco", homeField: "Estadio Municipal", coachName: "Ricardo Fernández" },
+    { name: "Leones Unidos", colors: "Rojo y Negro", homeField: "Campo Norte", coachName: "Alberto Morales" },
+    { name: "Tigres del Valle", colors: "Amarillo y Negro", homeField: "Cancha Central", coachName: "Héctor Vargas" },
+    { name: "Dragones Rojos", colors: "Rojo y Dorado", homeField: "Estadio Sur", coachName: "Sergio Ramírez" },
   ];
 
   const teams: any[] = [];

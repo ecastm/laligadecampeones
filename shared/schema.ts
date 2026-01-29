@@ -105,6 +105,7 @@ export interface Team {
   homeField: string;
   logoUrl?: string;
   captainUserId?: string;
+  coachName?: string;
 }
 
 export const insertTeamSchema = z.object({
@@ -114,6 +115,7 @@ export const insertTeamSchema = z.object({
   homeField: z.string().min(2, "La sede es requerida"),
   logoUrl: z.string().optional(),
   captainUserId: z.string().optional(),
+  coachName: z.string().optional(),
 });
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 
