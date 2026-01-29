@@ -4,19 +4,21 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
 import MatchesManagement from "./matches";
 import TournamentManagement from "./tournament";
 import NewsManagement from "./news";
+import RefereesManagement from "./referees";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
   { id: "users" as const, title: "Usuarios", icon: UserCog },
+  { id: "referees" as const, title: "Árbitros", icon: ClipboardList },
   { id: "teams" as const, title: "Equipos", icon: Shield },
   { id: "players" as const, title: "Jugadores", icon: Users },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
@@ -104,6 +106,7 @@ export default function AdminDashboard() {
           <main className="flex-1 overflow-auto p-6">
             {activeSection === "dashboard" && <AdminOverview />}
             {activeSection === "users" && <UsersManagement />}
+            {activeSection === "referees" && <RefereesManagement />}
             {activeSection === "teams" && <TeamsManagement />}
             {activeSection === "players" && <PlayersManagement />}
             {activeSection === "matches" && <MatchesManagement />}
@@ -129,6 +132,7 @@ function AdminOverview() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { title: "Usuarios", icon: UserCog, description: "Gestiona administradores, capitanes y árbitros" },
+          { title: "Árbitros", icon: ClipboardList, description: "Catálogo completo de árbitros registrados" },
           { title: "Equipos", icon: Shield, description: "Administra los equipos del torneo" },
           { title: "Jugadores", icon: Users, description: "Gestiona los jugadores de cada equipo" },
           { title: "Partidos", icon: Calendar, description: "Programa y administra los partidos" },

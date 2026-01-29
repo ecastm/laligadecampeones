@@ -99,6 +99,7 @@ La aplicación estará disponible en el puerto 5000.
 - `/api/admin/tournaments` - CRUD torneos
 - `/api/admin/tournaments/:id/finish` - Finalizar torneo con campeón
 - `/api/admin/news` - CRUD noticias
+- `/api/admin/referees` - Gestión de perfiles de árbitros (ver, editar, eliminar)
 
 ### Capitán (requiere rol CAPITAN)
 - `GET/PUT /api/captain/team` - Mi equipo
@@ -120,6 +121,7 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Panel Admin
 - Gestión completa de usuarios, equipos, jugadores y partidos
+- **Catálogo de árbitros**: ver, editar y eliminar perfiles de árbitros registrados
 - **Gestión de múltiples torneos**: crear, editar, finalizar y eliminar
 - Al finalizar un torneo: guarda campeón, fecha fin y tabla de posiciones final
 - Historial de torneos completados con tabla de posiciones archivada

@@ -71,9 +71,13 @@ export interface IStorage {
   deleteNews(id: string): Promise<void>;
 
   // Referee Profiles
+  getRefereeProfiles(): Promise<RefereeProfile[]>;
   getRefereeProfile(userId: string): Promise<RefereeProfile | undefined>;
+  getRefereeProfileById(id: string): Promise<RefereeProfile | undefined>;
   createRefereeProfile(userId: string, profile: InsertRefereeProfile): Promise<RefereeProfile>;
   updateRefereeProfile(userId: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined>;
+  updateRefereeProfileById(id: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined>;
+  deleteRefereeProfile(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -581,6 +585,30 @@ export class MemStorage implements IStorage {
     };
     this.refereeProfiles.set(profile.id, updated);
     return updated;
+  }
+
+  async getRefereeProfiles(): Promise<RefereeProfile[]> {
+    return Array.from(this.refereeProfiles.values());
+  }
+
+  async getRefereeProfileById(id: string): Promise<RefereeProfile | undefined> {
+    return this.refereeProfiles.get(id);
+  }
+
+  async updateRefereeProfileById(id: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined> {
+    const profile = this.refereeProfiles.get(id);
+    if (!profile) return undefined;
+    const updated: RefereeProfile = {
+      ...profile,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.refereeProfiles.set(id, updated);
+    return updated;
+  }
+
+  async deleteRefereeProfile(id: string): Promise<void> {
+    this.refereeProfiles.delete(id);
   }
 }
 

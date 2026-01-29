@@ -617,6 +617,67 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== ADMIN REFEREE PROFILES ====================
+  app.get("/api/admin/referees", authenticate, authorizeRoles("ADMIN"), async (_req: AuthRequest, res) => {
+    try {
+      const profiles = await storage.getRefereeProfiles();
+      // Enrich with user info
+      const enrichedProfiles = await Promise.all(
+        profiles.map(async (profile) => {
+          const user = await storage.getUser(profile.userId);
+          return {
+            ...profile,
+            user: user ? { id: user.id, name: user.name, email: user.email } : null,
+          };
+        })
+      );
+      res.json(enrichedProfiles);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const profile = await storage.getRefereeProfileById(req.params.id);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil de árbitro no encontrado" });
+      }
+      const user = await storage.getUser(profile.userId);
+      res.json({
+        ...profile,
+        user: user ? { id: user.id, name: user.name, email: user.email } : null,
+      });
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertRefereeProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateRefereeProfileById(req.params.id, data);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil de árbitro no encontrado" });
+      }
+      res.json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteRefereeProfile(req.params.id);
+      res.status(204).send();
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/captain/matches", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
     try {
       const user = await storage.getUser(req.user!.userId);
