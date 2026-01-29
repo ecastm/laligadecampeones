@@ -13,6 +13,7 @@ import {
   finishTournamentSchema,
   matchResultSchema,
   insertNewsSchema,
+  insertRefereeProfileSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -677,6 +678,50 @@ export async function registerRoutes(
 
       const updatedMatch = await storage.getMatchWithTeams(match.id);
       res.json(updatedMatch);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Referee Profile endpoints
+  app.get("/api/referee/profile", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
+    try {
+      const profile = await storage.getRefereeProfile(req.user!.userId);
+      res.json(profile || null);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/referee/profile", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
+    try {
+      const existing = await storage.getRefereeProfile(req.user!.userId);
+      if (existing) {
+        return res.status(400).json({ message: "Ya tienes un perfil registrado" });
+      }
+      const data = insertRefereeProfileSchema.parse(req.body);
+      const profile = await storage.createRefereeProfile(req.user!.userId, data);
+      res.status(201).json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/referee/profile", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
+    try {
+      const existing = await storage.getRefereeProfile(req.user!.userId);
+      if (!existing) {
+        return res.status(404).json({ message: "Perfil no encontrado" });
+      }
+      const data = insertRefereeProfileSchema.partial().parse(req.body);
+      const updated = await storage.updateRefereeProfile(req.user!.userId, data);
+      res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
