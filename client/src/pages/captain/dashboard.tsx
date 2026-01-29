@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -606,16 +606,31 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
   const form = useForm<InsertCaptainProfile>({
     resolver: zodResolver(insertCaptainProfileSchema),
     defaultValues: {
-      fullName: profile?.fullName || "",
-      identificationNumber: profile?.identificationNumber || "",
-      phone: profile?.phone || "",
-      email: profile?.email || "",
-      address: profile?.address || "",
-      emergencyContact: profile?.emergencyContact || "",
-      emergencyPhone: profile?.emergencyPhone || "",
-      observations: profile?.observations || "",
+      fullName: "",
+      identificationNumber: "",
+      phone: "",
+      email: "",
+      address: "",
+      emergencyContact: "",
+      emergencyPhone: "",
+      observations: "",
     },
   });
+
+  useEffect(() => {
+    if (profile) {
+      form.reset({
+        fullName: profile.fullName,
+        identificationNumber: profile.identificationNumber,
+        phone: profile.phone,
+        email: profile.email,
+        address: profile.address || "",
+        emergencyContact: profile.emergencyContact || "",
+        emergencyPhone: profile.emergencyPhone || "",
+        observations: profile.observations || "",
+      });
+    }
+  }, [profile, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertCaptainProfile) => {
@@ -670,17 +685,7 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {!profile && !isEditing ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground mb-4">
-                Debes completar tu perfil para poder gestionar tu equipo
-              </p>
-              <Button onClick={() => setIsEditing(true)} data-testid="button-create-profile">
-                <Plus className="h-4 w-4 mr-2" />
-                Completar Perfil
-              </Button>
-            </div>
-          ) : isEditing || !profile ? (
+          {isEditing || !profile ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-2">
@@ -861,25 +866,21 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
 }
 
 function ProfileRequiredDialog({ open }: { open: boolean }) {
+  if (!open) return null;
+  
   return (
-    <Dialog open={open}>
-      <DialogContent
-        className="sm:max-w-md"
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader>
-          <DialogTitle>Perfil Requerido</DialogTitle>
-          <DialogDescription>
-            Antes de continuar, debes completar tu perfil de capitán con tus datos personales.
-            Esta información es necesaria para la identificación y contacto.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex justify-center pt-4">
-          <Badge variant="secondary">Completa el formulario en la sección de perfil</Badge>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 pointer-events-none">
+      <Card className="max-w-md pointer-events-auto shadow-lg border-primary/20">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <User className="h-4 w-4" />
+            Perfil Requerido
+          </CardTitle>
+          <CardDescription>
+            Completa tu perfil de capitán con tus datos personales antes de continuar.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    </div>
   );
 }
