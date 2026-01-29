@@ -2,23 +2,27 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, type InsertTeam, type Team, type Tournament, type User } from "@shared/schema";
+import { insertTeamSchema, insertPlayerSchema, type InsertTeam, type InsertPlayer, type Team, type Tournament, type User, type Player } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Shield, Edit, User as UserIcon, Award } from "lucide-react";
+import { Plus, Trash2, Shield, Edit, User as UserIcon, Award, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function TeamsManagement() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
+  const [playerDialogTeamId, setPlayerDialogTeamId] = useState<string | null>(null);
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -29,6 +33,15 @@ export default function TeamsManagement() {
     queryFn: async () => {
       const response = await fetch("/api/admin/teams", { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar equipos");
+      return response.json();
+    },
+  });
+
+  const { data: allPlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/admin/players"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/players", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar jugadores");
       return response.json();
     },
   });
@@ -46,6 +59,22 @@ export default function TeamsManagement() {
     if (!captainUserId) return null;
     const captain = users.find(u => u.id === captainUserId);
     return captain?.name || null;
+  };
+
+  const getTeamPlayers = (teamId: string) => {
+    return allPlayers.filter(p => p.teamId === teamId);
+  };
+
+  const toggleTeamExpanded = (teamId: string) => {
+    setExpandedTeams(prev => {
+      const next = new Set(prev);
+      if (next.has(teamId)) {
+        next.delete(teamId);
+      } else {
+        next.add(teamId);
+      }
+      return next;
+    });
   };
 
   const form = useForm<Omit<InsertTeam, 'tournamentId'>>({
@@ -101,6 +130,62 @@ export default function TeamsManagement() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const playerForm = useForm<InsertPlayer>({
+    resolver: zodResolver(insertPlayerSchema),
+    defaultValues: {
+      teamId: "",
+      firstName: "",
+      lastName: "",
+      jerseyNumber: 1,
+      position: "",
+      active: true,
+    },
+  });
+
+  const createPlayerMutation = useMutation({
+    mutationFn: async (data: InsertPlayer) => {
+      return apiRequest("POST", "/api/admin/players", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/players"] });
+      toast({ title: "Jugador agregado correctamente" });
+      setPlayerDialogTeamId(null);
+      playerForm.reset();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deletePlayerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/players/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/players"] });
+      toast({ title: "Jugador eliminado" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const openPlayerDialog = (teamId: string) => {
+    playerForm.reset({
+      teamId,
+      firstName: "",
+      lastName: "",
+      jerseyNumber: 1,
+      position: "",
+      active: true,
+    });
+    setPlayerDialogTeamId(teamId);
+  };
+
+  const handlePlayerSubmit = (data: InsertPlayer) => {
+    createPlayerMutation.mutate(data);
+  };
 
   const openEditDialog = (team: Team) => {
     setEditingTeam(team);
@@ -245,77 +330,247 @@ export default function TeamsManagement() {
           ) : teams.length === 0 ? (
             <p className="py-8 text-center text-muted-foreground">No hay equipos registrados</p>
           ) : (
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              {teams.map((team) => (
-                <div
-                  key={team.id}
-                  className="flex items-start justify-between rounded-md border p-3 sm:p-4"
-                  data-testid={`card-team-${team.id}`}
-                >
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
-                      {team.name.substring(0, 2).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{team.colors}</p>
-                      <p className="text-xs text-muted-foreground mt-1 truncate">{team.homeField}</p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs">
-                        {getCaptainName(team.captainUserId) && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <UserIcon className="h-3 w-3" />
-                            <span>Capitán: {getCaptainName(team.captainUserId)}</span>
-                          </span>
-                        )}
-                        {team.coachName && (
-                          <span className="flex items-center gap-1 text-muted-foreground">
-                            <Award className="h-3 w-3" />
-                            <span>DT: {team.coachName}</span>
-                          </span>
-                        )}
+            <div className="grid gap-3 sm:gap-4">
+              {teams.map((team) => {
+                const teamPlayers = getTeamPlayers(team.id);
+                const isExpanded = expandedTeams.has(team.id);
+                
+                return (
+                  <Collapsible
+                    key={team.id}
+                    open={isExpanded}
+                    onOpenChange={() => toggleTeamExpanded(team.id)}
+                  >
+                    <div
+                      className="rounded-md border p-3 sm:p-4"
+                      data-testid={`card-team-${team.id}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
+                            {team.name.substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
+                            <p className="text-xs sm:text-sm text-muted-foreground truncate">{team.colors}</p>
+                            <p className="text-xs text-muted-foreground mt-1 truncate">{team.homeField}</p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs">
+                              {getCaptainName(team.captainUserId) && (
+                                <span className="flex items-center gap-1 text-muted-foreground">
+                                  <UserIcon className="h-3 w-3" />
+                                  <span>Capitán: {getCaptainName(team.captainUserId)}</span>
+                                </span>
+                              )}
+                              {team.coachName && (
+                                <span className="flex items-center gap-1 text-muted-foreground">
+                                  <Award className="h-3 w-3" />
+                                  <span>DT: {team.coachName}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditDialog(team)}
+                            data-testid={`button-edit-team-${team.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" data-testid={`button-delete-team-${team.id}`}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Eliminar equipo</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  ¿Estás seguro de que deseas eliminar a {team.name}? Esta acción no se puede deshacer.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteMutation.mutate(team.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Eliminar
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="w-full justify-between" data-testid={`button-toggle-players-${team.id}`}>
+                            <span className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              <span>Jugadores ({teamPlayers.length})</span>
+                            </span>
+                            {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
+                        </CollapsibleTrigger>
+
+                        <CollapsibleContent className="mt-2">
+                          <div className="space-y-2">
+                            {teamPlayers.length === 0 ? (
+                              <p className="text-sm text-muted-foreground text-center py-2">No hay jugadores registrados</p>
+                            ) : (
+                              <div className="grid gap-1">
+                                {teamPlayers.map((player) => (
+                                  <div
+                                    key={player.id}
+                                    className="flex items-center justify-between py-1 px-2 rounded bg-muted/50"
+                                    data-testid={`row-player-${player.id}`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline" className="text-xs">#{player.jerseyNumber}</Badge>
+                                      <span className="text-sm">{player.firstName} {player.lastName}</span>
+                                      {player.position && (
+                                        <span className="text-xs text-muted-foreground">({player.position})</span>
+                                      )}
+                                    </div>
+                                    <AlertDialog>
+                                      <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`button-delete-player-${player.id}`}>
+                                          <Trash2 className="h-3 w-3 text-destructive" />
+                                        </Button>
+                                      </AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                          <AlertDialogTitle>Eliminar jugador</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                            ¿Estás seguro de que deseas eliminar a {player.firstName} {player.lastName}?
+                                          </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction
+                                            onClick={() => deletePlayerMutation.mutate(player.id)}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                          >
+                                            Eliminar
+                                          </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                    </AlertDialog>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                              onClick={() => openPlayerDialog(team.id)}
+                              data-testid={`button-add-player-${team.id}`}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Agregar Jugador
+                            </Button>
+                          </div>
+                        </CollapsibleContent>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => openEditDialog(team)}
-                      data-testid={`button-edit-team-${team.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" data-testid={`button-delete-team-${team.id}`}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Eliminar equipo</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            ¿Estás seguro de que deseas eliminar a {team.name}? Esta acción no se puede deshacer.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => deleteMutation.mutate(team.id)}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-              ))}
+                  </Collapsible>
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={playerDialogTeamId !== null} onOpenChange={(open) => !open && setPlayerDialogTeamId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agregar Jugador</DialogTitle>
+            <DialogDescription>
+              Agregar un nuevo jugador al equipo
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...playerForm}>
+            <form onSubmit={playerForm.handleSubmit(handlePlayerSubmit)} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={playerForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nombre" data-testid="input-player-firstName" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={playerForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Apellido</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Apellido" data-testid="input-player-lastName" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={playerForm.control}
+                  name="jerseyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Camiseta</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={99}
+                          data-testid="input-player-jerseyNumber"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={playerForm.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Posición</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: Delantero, Portero" data-testid="input-player-position" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={createPlayerMutation.isPending}
+                data-testid="button-submit-player"
+              >
+                {createPlayerMutation.isPending ? "Guardando..." : "Agregar Jugador"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
