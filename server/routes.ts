@@ -619,20 +619,29 @@ export async function registerRoutes(
   });
 
   // ==================== ADMIN REFEREE PROFILES ====================
+  // Returns ALL users with ARBITRO role, enriched with profile data if available
   app.get("/api/admin/referees", authenticate, authorizeRoles("ADMIN"), async (_req: AuthRequest, res) => {
     try {
+      // Get all users and filter by ARBITRO role
+      const allUsers = await storage.getUsers();
+      const refereeUsers = allUsers.filter(u => u.role === "ARBITRO");
+      
+      // Get all referee profiles
       const profiles = await storage.getRefereeProfiles();
-      // Enrich with user info
-      const enrichedProfiles = await Promise.all(
-        profiles.map(async (profile) => {
-          const user = await storage.getUser(profile.userId);
-          return {
-            ...profile,
-            user: user ? { id: user.id, name: user.name, email: user.email } : null,
-          };
-        })
-      );
-      res.json(enrichedProfiles);
+      const profilesByUserId = new Map(profiles.map(p => [p.userId, p]));
+      
+      // Combine users with their profiles (if they exist)
+      const enrichedReferees = refereeUsers.map(user => {
+        const profile = profilesByUserId.get(user.id);
+        return {
+          userId: user.id,
+          user: { id: user.id, name: user.name, email: user.email },
+          profile: profile || null,
+          hasProfile: !!profile,
+        };
+      });
+      
+      res.json(enrichedReferees);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
