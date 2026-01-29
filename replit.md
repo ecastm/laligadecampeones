@@ -105,6 +105,7 @@ La aplicación estará disponible en el puerto 5000.
 - `GET/PUT /api/captain/team` - Mi equipo
 - `GET/POST/DELETE /api/captain/players` - Jugadores de mi equipo
 - `GET /api/captain/matches` - Partidos de mi equipo
+- `GET/POST/PUT /api/captain/profile` - Perfil del capitán (obligatorio)
 
 ### Árbitro (requiere rol ARBITRO)
 - `GET /api/referee/matches` - Mis partidos asignados
@@ -128,9 +129,11 @@ La aplicación estará disponible en el puerto 5000.
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 
 ### Panel Capitán
+- **Perfil obligatorio**: Al primer acceso debe completar datos personales
 - Editar datos de su equipo
 - Gestionar plantilla de jugadores
 - Ver calendario de partidos
+- Gestionar perfil personal (nombre, identificación, teléfono, email, contacto emergencia)
 
 ### Panel Árbitro
 - **Perfil obligatorio**: Al primer acceso debe completar datos generales
@@ -162,3 +165,8 @@ La aplicación estará disponible en el puerto 5000.
 - Estado: activo/inactivo
 - El nombre del árbitro se muestra en el detalle del partido
 - Trazabilidad: identifica quién registró cada resultado
+
+## Perfil del Capitán
+- Datos obligatorios: nombre completo, número de identificación, teléfono, email
+- Datos opcionales: dirección, contacto de emergencia, teléfono de emergencia, observaciones
+- Trazabilidad: identifica al capitán de cada equipo
