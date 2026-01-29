@@ -172,41 +172,33 @@ export default function Home() {
                     <p className="mt-4">No hay partidos programados</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                     {filteredSchedule.map(match => (
                       <div
                         key={match.id}
-                        className="rounded-md border p-2 sm:p-3 hover-elevate cursor-pointer"
+                        className="rounded border p-1.5 hover-elevate cursor-pointer"
                         onClick={() => setSelectedMatch(match.id)}
                         data-testid={`card-match-${match.id}`}
                       >
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between gap-1">
-                            <div className="flex items-center gap-1">
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0">J{match.roundNumber}</Badge>
-                              <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-[10px] px-1.5 py-0">
-                                {match.status === "JUGADO" ? "Jugado" : "Prog."}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                              <Clock className="h-2.5 w-2.5" />
-                              <span className="hidden sm:inline">{format(new Date(match.dateTime), "d MMM, HH:mm", { locale: es })}</span>
-                              <span className="sm:hidden">{format(new Date(match.dateTime), "d/MM HH:mm", { locale: es })}</span>
-                            </div>
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <div className="flex items-center gap-0.5">
+                            <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">J{match.roundNumber}</Badge>
+                            <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-[9px] px-1 py-0 h-4">
+                              {match.status === "JUGADO" ? "Fin" : "Prog"}
+                            </Badge>
                           </div>
-                          <div className="flex items-center justify-center gap-2">
-                            <span className="flex-1 text-right text-xs font-medium truncate" data-testid={`text-home-team-${match.id}`}>
-                              {match.homeTeam?.name || "Local"}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">vs</span>
-                            <span className="flex-1 text-left text-xs font-medium truncate" data-testid={`text-away-team-${match.id}`}>
-                              {match.awayTeam?.name || "Visitante"}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground">
-                            <MapPin className="h-2.5 w-2.5" />
-                            <span className="truncate">{match.field}</span>
-                          </div>
+                          <span className="text-[9px] text-muted-foreground">
+                            {format(new Date(match.dateTime), "d/MM HH:mm", { locale: es })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px]">
+                          <span className="flex-1 text-right font-medium truncate" data-testid={`text-home-team-${match.id}`}>
+                            {match.homeTeam?.name || "Local"}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground px-0.5">vs</span>
+                          <span className="flex-1 text-left font-medium truncate" data-testid={`text-away-team-${match.id}`}>
+                            {match.awayTeam?.name || "Visitante"}
+                          </span>
                         </div>
                       </div>
                     ))}
