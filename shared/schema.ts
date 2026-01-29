@@ -258,8 +258,43 @@ export interface NewsWithAuthor extends News {
   match?: MatchWithTeams;
 }
 
+// Referee Profile
+export const RefereeStatus = {
+  ACTIVO: "ACTIVO",
+  INACTIVO: "INACTIVO",
+} as const;
+export type RefereeStatus = (typeof RefereeStatus)[keyof typeof RefereeStatus];
+
+export interface RefereeProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  identificationNumber: string;
+  phone: string;
+  email: string;
+  association?: string;
+  yearsOfExperience?: number;
+  observations?: string;
+  status: RefereeStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertRefereeProfileSchema = z.object({
+  fullName: z.string().min(3, "El nombre completo debe tener al menos 3 caracteres"),
+  identificationNumber: z.string().min(5, "El número de identificación es requerido"),
+  phone: z.string().min(8, "El teléfono debe tener al menos 8 caracteres"),
+  email: z.string().email("Email inválido"),
+  association: z.string().optional(),
+  yearsOfExperience: z.number().min(0).optional(),
+  observations: z.string().optional(),
+  status: z.enum(["ACTIVO", "INACTIVO"]).default("ACTIVO"),
+});
+export type InsertRefereeProfile = z.infer<typeof insertRefereeProfileSchema>;
+
 // Auth response
 export interface AuthResponse {
   token: string;
   user: Omit<User, 'passwordHash'>;
+  refereeProfile?: RefereeProfile;
 }
