@@ -6,7 +6,8 @@ import {
   type Match, type InsertMatch,
   type MatchEvent, type InsertMatchEvent,
   type News, type InsertNews, type NewsWithAuthor,
-  type Standing, type MatchWithTeams, type MatchEventWithPlayer
+  type Standing, type MatchWithTeams, type MatchEventWithPlayer,
+  type RefereeProfile, type InsertRefereeProfile
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -68,6 +69,11 @@ export interface IStorage {
   createNews(news: InsertNews, authorId: string): Promise<News>;
   updateNews(id: string, data: Partial<InsertNews>): Promise<News | undefined>;
   deleteNews(id: string): Promise<void>;
+
+  // Referee Profiles
+  getRefereeProfile(userId: string): Promise<RefereeProfile | undefined>;
+  createRefereeProfile(userId: string, profile: InsertRefereeProfile): Promise<RefereeProfile>;
+  updateRefereeProfile(userId: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -78,6 +84,7 @@ export class MemStorage implements IStorage {
   private matches: Map<string, Match>;
   private matchEvents: Map<string, MatchEvent>;
   private news: Map<string, News>;
+  private refereeProfiles: Map<string, RefereeProfile>;
 
   constructor() {
     this.users = new Map();
@@ -87,6 +94,7 @@ export class MemStorage implements IStorage {
     this.matches = new Map();
     this.matchEvents = new Map();
     this.news = new Map();
+    this.refereeProfiles = new Map();
   }
 
   // Users
@@ -533,6 +541,44 @@ export class MemStorage implements IStorage {
 
   async deleteNews(id: string): Promise<void> {
     this.news.delete(id);
+  }
+
+  // Referee Profiles
+  async getRefereeProfile(userId: string): Promise<RefereeProfile | undefined> {
+    return Array.from(this.refereeProfiles.values()).find(p => p.userId === userId);
+  }
+
+  async createRefereeProfile(userId: string, profile: InsertRefereeProfile): Promise<RefereeProfile> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const refereeProfile: RefereeProfile = {
+      id,
+      userId,
+      fullName: profile.fullName,
+      identificationNumber: profile.identificationNumber,
+      phone: profile.phone,
+      email: profile.email,
+      association: profile.association,
+      yearsOfExperience: profile.yearsOfExperience,
+      observations: profile.observations,
+      status: profile.status || "ACTIVO",
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.refereeProfiles.set(id, refereeProfile);
+    return refereeProfile;
+  }
+
+  async updateRefereeProfile(userId: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined> {
+    const profile = await this.getRefereeProfile(userId);
+    if (!profile) return undefined;
+    const updated: RefereeProfile = {
+      ...profile,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.refereeProfiles.set(profile.id, updated);
+    return updated;
   }
 }
 
