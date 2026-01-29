@@ -7,7 +7,8 @@ import {
   type MatchEvent, type InsertMatchEvent,
   type News, type InsertNews, type NewsWithAuthor,
   type Standing, type MatchWithTeams, type MatchEventWithPlayer,
-  type RefereeProfile, type InsertRefereeProfile
+  type RefereeProfile, type InsertRefereeProfile,
+  type CaptainProfile, type InsertCaptainProfile
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -78,6 +79,15 @@ export interface IStorage {
   updateRefereeProfile(userId: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined>;
   updateRefereeProfileById(id: string, data: Partial<InsertRefereeProfile>): Promise<RefereeProfile | undefined>;
   deleteRefereeProfile(id: string): Promise<void>;
+
+  // Captain Profiles
+  getCaptainProfiles(): Promise<CaptainProfile[]>;
+  getCaptainProfile(userId: string): Promise<CaptainProfile | undefined>;
+  getCaptainProfileById(id: string): Promise<CaptainProfile | undefined>;
+  createCaptainProfile(userId: string, profile: InsertCaptainProfile): Promise<CaptainProfile>;
+  updateCaptainProfile(userId: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined>;
+  updateCaptainProfileById(id: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined>;
+  deleteCaptainProfile(id: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -89,6 +99,7 @@ export class MemStorage implements IStorage {
   private matchEvents: Map<string, MatchEvent>;
   private news: Map<string, News>;
   private refereeProfiles: Map<string, RefereeProfile>;
+  private captainProfiles: Map<string, CaptainProfile>;
 
   constructor() {
     this.users = new Map();
@@ -99,6 +110,7 @@ export class MemStorage implements IStorage {
     this.matchEvents = new Map();
     this.news = new Map();
     this.refereeProfiles = new Map();
+    this.captainProfiles = new Map();
   }
 
   // Users
@@ -609,6 +621,68 @@ export class MemStorage implements IStorage {
 
   async deleteRefereeProfile(id: string): Promise<void> {
     this.refereeProfiles.delete(id);
+  }
+
+  // Captain Profiles
+  async getCaptainProfiles(): Promise<CaptainProfile[]> {
+    return Array.from(this.captainProfiles.values());
+  }
+
+  async getCaptainProfile(userId: string): Promise<CaptainProfile | undefined> {
+    return Array.from(this.captainProfiles.values()).find(p => p.userId === userId);
+  }
+
+  async getCaptainProfileById(id: string): Promise<CaptainProfile | undefined> {
+    return this.captainProfiles.get(id);
+  }
+
+  async createCaptainProfile(userId: string, profile: InsertCaptainProfile): Promise<CaptainProfile> {
+    const id = randomUUID();
+    const now = new Date().toISOString();
+    const captainProfile: CaptainProfile = {
+      id,
+      userId,
+      fullName: profile.fullName,
+      identificationNumber: profile.identificationNumber,
+      phone: profile.phone,
+      email: profile.email,
+      address: profile.address,
+      emergencyContact: profile.emergencyContact,
+      emergencyPhone: profile.emergencyPhone,
+      observations: profile.observations,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.captainProfiles.set(id, captainProfile);
+    return captainProfile;
+  }
+
+  async updateCaptainProfile(userId: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined> {
+    const profile = await this.getCaptainProfile(userId);
+    if (!profile) return undefined;
+    const updated: CaptainProfile = {
+      ...profile,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.captainProfiles.set(profile.id, updated);
+    return updated;
+  }
+
+  async updateCaptainProfileById(id: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined> {
+    const profile = this.captainProfiles.get(id);
+    if (!profile) return undefined;
+    const updated: CaptainProfile = {
+      ...profile,
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
+    this.captainProfiles.set(id, updated);
+    return updated;
+  }
+
+  async deleteCaptainProfile(id: string): Promise<void> {
+    this.captainProfiles.delete(id);
   }
 }
 

@@ -295,9 +295,38 @@ export const insertRefereeProfileSchema = z.object({
 });
 export type InsertRefereeProfile = z.infer<typeof insertRefereeProfileSchema>;
 
+// Captain Profile
+export interface CaptainProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  identificationNumber: string;
+  phone: string;
+  email: string;
+  address?: string;
+  emergencyContact?: string;
+  emergencyPhone?: string;
+  observations?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertCaptainProfileSchema = z.object({
+  fullName: z.string().min(3, "El nombre completo debe tener al menos 3 caracteres"),
+  identificationNumber: z.string().min(5, "El número de identificación es requerido"),
+  phone: z.string().min(8, "El teléfono debe tener al menos 8 caracteres"),
+  email: z.string().email("Email inválido"),
+  address: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  emergencyPhone: z.string().optional(),
+  observations: z.string().optional(),
+});
+export type InsertCaptainProfile = z.infer<typeof insertCaptainProfileSchema>;
+
 // Auth response
 export interface AuthResponse {
   token: string;
   user: Omit<User, 'passwordHash'>;
   refereeProfile?: RefereeProfile;
+  captainProfile?: CaptainProfile;
 }

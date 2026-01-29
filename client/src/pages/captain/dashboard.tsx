@@ -4,36 +4,50 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, insertPlayerSchema, type Team, type Player, type InsertPlayer, type MatchWithTeams } from "@shared/schema";
+import { insertTeamSchema, insertPlayerSchema, insertCaptainProfileSchema, type Team, type Player, type InsertPlayer, type MatchWithTeams, type CaptainProfile, type InsertCaptainProfile } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save } from "lucide-react";
+import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-type CaptainSection = "team" | "players" | "schedule";
+type CaptainSection = "team" | "players" | "schedule" | "profile";
 
 const menuItems = [
   { id: "team" as const, title: "Mi Equipo", icon: Shield },
   { id: "players" as const, title: "Jugadores", icon: Users },
   { id: "schedule" as const, title: "Calendario", icon: Calendar },
+  { id: "profile" as const, title: "Mi Perfil", icon: User },
 ];
 
 export default function CaptainDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<CaptainSection>("team");
+
+  const { data: captainProfile, isLoading: loadingProfile } = useQuery<CaptainProfile | null>({
+    queryKey: ["/api/captain/profile"],
+    queryFn: async () => {
+      const response = await fetch("/api/captain/profile", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar perfil");
+      return response.json();
+    },
+  });
+
+  const effectiveSection = (!loadingProfile && !captainProfile) ? "profile" : activeSection;
+  const showProfileRequired = !loadingProfile && !captainProfile;
 
   const handleLogout = () => {
     logout();
@@ -69,7 +83,7 @@ export default function CaptainDashboard() {
                     <SidebarMenuItem key={item.id}>
                       <SidebarMenuButton
                         onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
+                        isActive={effectiveSection === item.id}
                         data-testid={`nav-${item.id}`}
                       >
                         <item.icon className="h-4 w-4" />
@@ -99,19 +113,22 @@ export default function CaptainDashboard() {
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">
-                {menuItems.find(i => i.id === activeSection)?.title || "Mi Equipo"}
+                {menuItems.find(i => i.id === effectiveSection)?.title || "Mi Equipo"}
               </h1>
             </div>
             <ThemeToggle />
           </header>
 
           <main className="flex-1 overflow-auto p-6">
-            {activeSection === "team" && <TeamInfo />}
-            {activeSection === "players" && <TeamPlayers />}
-            {activeSection === "schedule" && <TeamSchedule />}
+            {effectiveSection === "team" && <TeamInfo />}
+            {effectiveSection === "players" && <TeamPlayers />}
+            {effectiveSection === "schedule" && <TeamSchedule />}
+            {effectiveSection === "profile" && <ProfileSection profile={captainProfile} />}
           </main>
         </div>
       </div>
+
+      <ProfileRequiredDialog open={showProfileRequired} />
     </SidebarProvider>
   );
 }
@@ -579,5 +596,290 @@ function TeamSchedule() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ProfileSection({ profile }: { profile: CaptainProfile | null | undefined }) {
+  const { toast } = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const form = useForm<InsertCaptainProfile>({
+    resolver: zodResolver(insertCaptainProfileSchema),
+    defaultValues: {
+      fullName: profile?.fullName || "",
+      identificationNumber: profile?.identificationNumber || "",
+      phone: profile?.phone || "",
+      email: profile?.email || "",
+      address: profile?.address || "",
+      emergencyContact: profile?.emergencyContact || "",
+      emergencyPhone: profile?.emergencyPhone || "",
+      observations: profile?.observations || "",
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: InsertCaptainProfile) => {
+      const response = await apiRequest("POST", "/api/captain/profile", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/captain/profile"] });
+      toast({ title: "Perfil creado exitosamente" });
+      setIsEditing(false);
+    },
+    onError: () => {
+      toast({ title: "Error al crear perfil", variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: Partial<InsertCaptainProfile>) => {
+      const response = await apiRequest("PUT", "/api/captain/profile", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/captain/profile"] });
+      toast({ title: "Perfil actualizado exitosamente" });
+      setIsEditing(false);
+    },
+    onError: () => {
+      toast({ title: "Error al actualizar perfil", variant: "destructive" });
+    },
+  });
+
+  const onSubmit = (data: InsertCaptainProfile) => {
+    if (profile) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Mi Perfil de Capitán
+          </CardTitle>
+          <CardDescription>
+            Información personal requerida para identificación y contacto
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!profile && !isEditing ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground mb-4">
+                Debes completar tu perfil para poder gestionar tu equipo
+              </p>
+              <Button onClick={() => setIsEditing(true)} data-testid="button-create-profile">
+                <Plus className="h-4 w-4 mr-2" />
+                Completar Perfil
+              </Button>
+            </div>
+          ) : isEditing || !profile ? (
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nombre Completo *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-fullName" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="identificationNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Identificación *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-identificationNumber" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Teléfono *</FormLabel>
+                        <FormControl>
+                          <Input {...field} data-testid="input-phone" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Correo Electrónico *</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} data-testid="input-email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Dirección</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ""} data-testid="input-address" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="emergencyContact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contacto de Emergencia</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ""} data-testid="input-emergencyContact" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="emergencyPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Teléfono de Emergencia</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value || ""} data-testid="input-emergencyPhone" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="observations"
+                    render={({ field }) => (
+                      <FormItem className="md:col-span-2">
+                        <FormLabel>Observaciones</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} value={field.value || ""} data-testid="input-observations" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  {profile && (
+                    <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button type="submit" disabled={isPending} data-testid="button-save-profile">
+                    <Save className="h-4 w-4 mr-2" />
+                    {isPending ? "Guardando..." : "Guardar Perfil"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className="text-sm text-muted-foreground">Nombre Completo</p>
+                  <p className="font-medium">{profile.fullName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Número de Identificación</p>
+                  <p className="font-medium">{profile.identificationNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Teléfono</p>
+                  <p className="font-medium">{profile.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Correo Electrónico</p>
+                  <p className="font-medium">{profile.email}</p>
+                </div>
+                {profile.address && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Dirección</p>
+                    <p className="font-medium">{profile.address}</p>
+                  </div>
+                )}
+                {profile.emergencyContact && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Contacto de Emergencia</p>
+                    <p className="font-medium">{profile.emergencyContact}</p>
+                  </div>
+                )}
+                {profile.emergencyPhone && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Teléfono de Emergencia</p>
+                    <p className="font-medium">{profile.emergencyPhone}</p>
+                  </div>
+                )}
+                {profile.observations && (
+                  <div className="md:col-span-2">
+                    <p className="text-sm text-muted-foreground">Observaciones</p>
+                    <p className="font-medium">{profile.observations}</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={() => setIsEditing(true)} variant="outline" data-testid="button-edit-profile">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Perfil
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function ProfileRequiredDialog({ open }: { open: boolean }) {
+  return (
+    <Dialog open={open}>
+      <DialogContent
+        className="sm:max-w-md"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <DialogHeader>
+          <DialogTitle>Perfil Requerido</DialogTitle>
+          <DialogDescription>
+            Antes de continuar, debes completar tu perfil de capitán con tus datos personales.
+            Esta información es necesaria para la identificación y contacto.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center pt-4">
+          <Badge variant="secondary">Completa el formulario en la sección de perfil</Badge>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

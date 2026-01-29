@@ -14,6 +14,7 @@ import {
   matchResultSchema,
   insertNewsSchema,
   insertRefereeProfileSchema,
+  insertCaptainProfileSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -688,6 +689,49 @@ export async function registerRoutes(
       matches.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
       res.json(matches);
     } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Captain Profile endpoints
+  app.get("/api/captain/profile", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
+    try {
+      const profile = await storage.getCaptainProfile(req.user!.userId);
+      res.json(profile || null);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/captain/profile", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
+    try {
+      const existingProfile = await storage.getCaptainProfile(req.user!.userId);
+      if (existingProfile) {
+        return res.status(400).json({ message: "Ya tienes un perfil creado" });
+      }
+      const data = insertCaptainProfileSchema.parse(req.body);
+      const profile = await storage.createCaptainProfile(req.user!.userId, data);
+      res.status(201).json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/captain/profile", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertCaptainProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateCaptainProfile(req.user!.userId, data);
+      if (!profile) {
+        return res.status(404).json({ message: "Perfil no encontrado" });
+      }
+      res.json(profile);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
