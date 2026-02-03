@@ -14,7 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Shield, Edit, User as UserIcon, Award, Users, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, Trash2, Shield, Edit, User as UserIcon, Award, Users, ChevronDown, ChevronUp, Camera, IdCard, ShieldCheck } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -156,6 +157,10 @@ export default function TeamsManagement() {
       lastName: "",
       jerseyNumber: 1,
       position: "",
+      identificationId: "",
+      photoUrls: [],
+      isFederated: false,
+      federationId: "",
       active: true,
     },
   });
@@ -195,6 +200,10 @@ export default function TeamsManagement() {
       lastName: "",
       jerseyNumber: 1,
       position: "",
+      identificationId: "",
+      photoUrls: [],
+      isFederated: false,
+      federationId: "",
       active: true,
     });
     setPlayerDialogTeamId(teamId);
@@ -480,15 +489,47 @@ export default function TeamsManagement() {
                                 {teamPlayers.map((player) => (
                                   <div
                                     key={player.id}
-                                    className="flex items-center justify-between py-1 px-2 rounded bg-muted/50"
+                                    className="flex items-center justify-between py-2 px-3 rounded bg-muted/50"
                                     data-testid={`row-player-${player.id}`}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <Badge variant="outline" className="text-xs">#{player.jerseyNumber}</Badge>
-                                      <span className="text-sm">{player.firstName} {player.lastName}</span>
-                                      {player.position && (
-                                        <span className="text-xs text-muted-foreground">({player.position})</span>
+                                    <div className="flex items-center gap-3">
+                                      {player.photoUrls && player.photoUrls.length > 0 ? (
+                                        <img 
+                                          src={player.photoUrls[0]} 
+                                          alt={`${player.firstName} ${player.lastName}`}
+                                          className="h-10 w-10 rounded-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                                          {player.jerseyNumber}
+                                        </div>
                                       )}
+                                      <div className="flex flex-col">
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="outline" className="text-xs">#{player.jerseyNumber}</Badge>
+                                          <span className="text-sm font-medium">{player.firstName} {player.lastName}</span>
+                                          {player.isFederated && (
+                                            <Badge variant="secondary" className="text-xs">
+                                              <ShieldCheck className="h-3 w-3 mr-1" />
+                                              Federado
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                                          {player.position && (
+                                            <span>{player.position}</span>
+                                          )}
+                                          {player.identificationId && (
+                                            <span className="flex items-center gap-1">
+                                              <IdCard className="h-3 w-3" />
+                                              {player.identificationId}
+                                            </span>
+                                          )}
+                                          {player.federationId && (
+                                            <span>Fed: {player.federationId}</span>
+                                          )}
+                                        </div>
+                                      </div>
                                     </div>
                                     <AlertDialog>
                                       <AlertDialogTrigger asChild>
@@ -607,6 +648,76 @@ export default function TeamsManagement() {
                       <FormLabel>Posición</FormLabel>
                       <FormControl>
                         <Input placeholder="Ej: Delantero, Portero" data-testid="input-player-position" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={playerForm.control}
+                name="identificationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <IdCard className="h-4 w-4" />
+                      Número de Identificación (DNI/INE)
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={playerForm.control}
+                name="photoUrls"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Camera className="h-4 w-4" />
+                      URL de Fotografía
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="https://ejemplo.com/foto.jpg" 
+                        data-testid="input-player-photo"
+                        value={field.value?.[0] || ""}
+                        onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={playerForm.control}
+                  name="isFederated"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-md border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>¿Federado?</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-player-federated"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={playerForm.control}
+                  name="federationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID Federación</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Número de federación" data-testid="input-player-federation" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
