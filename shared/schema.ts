@@ -10,6 +10,7 @@ export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const MatchStatus = {
   PROGRAMADO: "PROGRAMADO",
+  EN_CURSO: "EN_CURSO",
   JUGADO: "JUGADO",
 } as const;
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
@@ -24,8 +25,60 @@ export const EventType = {
   GOAL: "GOAL",
   YELLOW: "YELLOW",
   RED: "RED",
+  RED_DIRECT: "RED_DIRECT",
+  SUBSTITUTION: "SUBSTITUTION",
+  NOTE: "NOTE",
 } as const;
 export type EventType = (typeof EventType)[keyof typeof EventType];
+
+// Division - Primera / Segunda
+export const DivisionTheme = {
+  PRIMERA: "PRIMERA",
+  SEGUNDA: "SEGUNDA",
+} as const;
+export type DivisionTheme = (typeof DivisionTheme)[keyof typeof DivisionTheme];
+
+export interface Division {
+  id: string;
+  name: string;
+  theme: DivisionTheme;
+  description?: string;
+  createdAt: string;
+}
+
+export const insertDivisionSchema = z.object({
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  theme: z.enum(["PRIMERA", "SEGUNDA"]),
+  description: z.string().optional(),
+});
+export type InsertDivision = z.infer<typeof insertDivisionSchema>;
+
+// Tournament Types (Catalog)
+export const TournamentTypeAlgorithm = {
+  ROUND_ROBIN: "ROUND_ROBIN",
+  ROUND_ROBIN_DOUBLE: "ROUND_ROBIN_DOUBLE",
+  KNOCKOUT: "KNOCKOUT",
+  DOUBLE_ELIMINATION: "DOUBLE_ELIMINATION",
+  GROUPS_PLAYOFFS: "GROUPS_PLAYOFFS",
+  LEAGUE_FINAL: "LEAGUE_FINAL",
+} as const;
+export type TournamentTypeAlgorithm = (typeof TournamentTypeAlgorithm)[keyof typeof TournamentTypeAlgorithm];
+
+export interface TournamentType {
+  id: string;
+  name: string;
+  algorithm: TournamentTypeAlgorithm;
+  description: string;
+  supportsDoubleRound: boolean;
+}
+
+export const insertTournamentTypeSchema = z.object({
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  algorithm: z.enum(["ROUND_ROBIN", "ROUND_ROBIN_DOUBLE", "KNOCKOUT", "DOUBLE_ELIMINATION", "GROUPS_PLAYOFFS", "LEAGUE_FINAL"]),
+  description: z.string(),
+  supportsDoubleRound: z.boolean().default(false),
+});
+export type InsertTournamentType = z.infer<typeof insertTournamentTypeSchema>;
 
 // User
 export interface User {
@@ -70,6 +123,8 @@ export type RegisterCredentials = z.infer<typeof registerSchema>;
 // Tournament
 export interface Tournament {
   id: string;
+  divisionId?: string;
+  tournamentTypeId?: string;
   name: string;
   seasonName: string;
   location: string;
@@ -79,15 +134,30 @@ export interface Tournament {
   championTeamId?: string;
   championTeamName?: string;
   finalStandings?: Standing[];
+  feePerTeam?: number;
+  fineYellow?: number;
+  fineRed?: number;
+  fineRedDirect?: number;
+  maxFederatedPlayers?: number;
+  doubleRound?: boolean;
+  scheduleGenerated?: boolean;
   createdAt: string;
 }
 
 export const insertTournamentSchema = z.object({
+  divisionId: z.string().optional(),
+  tournamentTypeId: z.string().optional(),
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   seasonName: z.string().min(2, "La temporada debe tener al menos 2 caracteres"),
   location: z.string().min(2, "El lugar es requerido"),
   startDate: z.string(),
   status: z.enum(["ACTIVO", "FINALIZADO"]).default("ACTIVO"),
+  feePerTeam: z.number().min(0).optional(),
+  fineYellow: z.number().min(0).optional(),
+  fineRed: z.number().min(0).optional(),
+  fineRedDirect: z.number().min(0).optional(),
+  maxFederatedPlayers: z.number().min(0).optional(),
+  doubleRound: z.boolean().optional(),
 });
 export type InsertTournament = z.infer<typeof insertTournamentSchema>;
 
@@ -127,6 +197,10 @@ export interface Player {
   lastName: string;
   jerseyNumber: number;
   position?: string;
+  identificationId?: string;
+  photoUrls?: string[];
+  isFederated?: boolean;
+  federationId?: string;
   active: boolean;
 }
 
@@ -136,6 +210,10 @@ export const insertPlayerSchema = z.object({
   lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   jerseyNumber: z.number().min(1).max(99, "Número de camiseta entre 1 y 99"),
   position: z.string().optional(),
+  identificationId: z.string().optional(),
+  photoUrls: z.array(z.string()).optional(),
+  isFederated: z.boolean().optional(),
+  federationId: z.string().optional(),
   active: z.boolean().default(true),
 });
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
@@ -163,7 +241,7 @@ export const insertMatchSchema = z.object({
   homeTeamId: z.string(),
   awayTeamId: z.string(),
   refereeUserId: z.string().optional(),
-  status: z.enum(["PROGRAMADO", "JUGADO"]).default("PROGRAMADO"),
+  status: z.enum(["PROGRAMADO", "EN_CURSO", "JUGADO"]).default("PROGRAMADO"),
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
 });
@@ -177,26 +255,75 @@ export interface MatchEvent {
   minute: number;
   teamId: string;
   playerId: string;
+  relatedPlayerId?: string;
+  notes?: string;
 }
 
 export const insertMatchEventSchema = z.object({
   matchId: z.string(),
-  type: z.enum(["GOAL", "YELLOW", "RED"]),
-  minute: z.number().min(1).max(120, "El minuto debe estar entre 1 y 120"),
+  type: z.enum(["GOAL", "YELLOW", "RED", "RED_DIRECT", "SUBSTITUTION", "NOTE"]),
+  minute: z.number().min(0).max(120, "El minuto debe estar entre 0 y 120"),
   teamId: z.string(),
   playerId: z.string(),
+  relatedPlayerId: z.string().optional(),
+  notes: z.string().optional(),
 });
 export type InsertMatchEvent = z.infer<typeof insertMatchEventSchema>;
+
+// Match Lineup
+export interface MatchLineup {
+  id: string;
+  matchId: string;
+  teamId: string;
+  playerIds: string[];
+  createdAt: string;
+}
+
+export const insertMatchLineupSchema = z.object({
+  matchId: z.string(),
+  teamId: z.string(),
+  playerIds: z.array(z.string()),
+});
+export type InsertMatchLineup = z.infer<typeof insertMatchLineupSchema>;
+
+// Match Evidence (photos, videos, audio)
+export const EvidenceType = {
+  PHOTO: "PHOTO",
+  VIDEO: "VIDEO",
+  AUDIO: "AUDIO",
+} as const;
+export type EvidenceType = (typeof EvidenceType)[keyof typeof EvidenceType];
+
+export interface MatchEvidence {
+  id: string;
+  matchId: string;
+  eventId?: string;
+  type: EvidenceType;
+  url: string;
+  transcript?: string;
+  createdAt: string;
+}
+
+export const insertMatchEvidenceSchema = z.object({
+  matchId: z.string(),
+  eventId: z.string().optional(),
+  type: z.enum(["PHOTO", "VIDEO", "AUDIO"]),
+  url: z.string(),
+  transcript: z.string().optional(),
+});
+export type InsertMatchEvidence = z.infer<typeof insertMatchEvidenceSchema>;
 
 // Match result submission (for referees)
 export const matchResultSchema = z.object({
   homeScore: z.number().min(0, "El marcador no puede ser negativo"),
   awayScore: z.number().min(0, "El marcador no puede ser negativo"),
   events: z.array(z.object({
-    type: z.enum(["GOAL", "YELLOW", "RED"]),
-    minute: z.number().min(1).max(120),
+    type: z.enum(["GOAL", "YELLOW", "RED", "RED_DIRECT", "SUBSTITUTION", "NOTE"]),
+    minute: z.number().min(0).max(120),
     teamId: z.string(),
     playerId: z.string(),
+    relatedPlayerId: z.string().optional(),
+    notes: z.string().optional(),
   })),
 });
 export type MatchResult = z.infer<typeof matchResultSchema>;
@@ -329,4 +456,131 @@ export interface AuthResponse {
   user: Omit<User, 'passwordHash'>;
   refereeProfile?: RefereeProfile;
   captainProfile?: CaptainProfile;
+  activeDivision?: Division;
+}
+
+// Fines (Multas por tarjetas)
+export const FineStatus = {
+  PENDIENTE: "PENDIENTE",
+  PAGADA: "PAGADA",
+  PARCIAL: "PARCIAL",
+} as const;
+export type FineStatus = (typeof FineStatus)[keyof typeof FineStatus];
+
+export interface Fine {
+  id: string;
+  tournamentId: string;
+  matchId: string;
+  matchEventId?: string;
+  teamId: string;
+  playerId: string;
+  cardType: "YELLOW" | "RED" | "RED_DIRECT";
+  amount: number;
+  status: FineStatus;
+  paidAmount?: number;
+  paidAt?: string;
+  createdAt: string;
+}
+
+export const insertFineSchema = z.object({
+  tournamentId: z.string(),
+  matchId: z.string(),
+  matchEventId: z.string().optional(),
+  teamId: z.string(),
+  playerId: z.string(),
+  cardType: z.enum(["YELLOW", "RED", "RED_DIRECT"]),
+  amount: z.number().min(0),
+  status: z.enum(["PENDIENTE", "PAGADA", "PARCIAL"]).default("PENDIENTE"),
+});
+export type InsertFine = z.infer<typeof insertFineSchema>;
+
+// Team Payments (Abonos de inscripción)
+export interface TeamPayment {
+  id: string;
+  tournamentId: string;
+  teamId: string;
+  amount: number;
+  method?: string;
+  notes?: string;
+  paidAt: string;
+  createdAt: string;
+}
+
+export const insertTeamPaymentSchema = z.object({
+  tournamentId: z.string(),
+  teamId: z.string(),
+  amount: z.number().min(0),
+  method: z.string().optional(),
+  notes: z.string().optional(),
+  paidAt: z.string(),
+});
+export type InsertTeamPayment = z.infer<typeof insertTeamPaymentSchema>;
+
+// Fine Payments (Pagos de multas)
+export interface FinePayment {
+  id: string;
+  tournamentId: string;
+  teamId: string;
+  amount: number;
+  notes?: string;
+  paidAt: string;
+  createdAt: string;
+}
+
+export const insertFinePaymentSchema = z.object({
+  tournamentId: z.string(),
+  teamId: z.string(),
+  amount: z.number().min(0),
+  notes: z.string().optional(),
+  paidAt: z.string(),
+});
+export type InsertFinePayment = z.infer<typeof insertFinePaymentSchema>;
+
+// Expenses (Gastos del torneo)
+export interface Expense {
+  id: string;
+  tournamentId: string;
+  concept: string;
+  amount: number;
+  expenseAt: string;
+  notes?: string;
+  receiptUrl?: string;
+  createdAt: string;
+}
+
+export const insertExpenseSchema = z.object({
+  tournamentId: z.string(),
+  concept: z.string().min(2, "El concepto es requerido"),
+  amount: z.number().min(0),
+  expenseAt: z.string(),
+  notes: z.string().optional(),
+  receiptUrl: z.string().optional(),
+});
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+
+// Financial Summary (calculated)
+export interface FinancialSummary {
+  tournamentId: string;
+  totalFees: number;
+  totalCollected: number;
+  totalExpenses: number;
+  totalFines: number;
+  totalFinesPaid: number;
+  balance: number;
+  teamBalances: {
+    teamId: string;
+    teamName: string;
+    fee: number;
+    paid: number;
+    balance: number;
+    fines: number;
+    finesPaid: number;
+    finesBalance: number;
+  }[];
+}
+
+// Tournament with Division (extended type)
+export interface TournamentWithDivision extends Tournament {
+  division?: Division;
+  tournamentType?: TournamentType;
 }

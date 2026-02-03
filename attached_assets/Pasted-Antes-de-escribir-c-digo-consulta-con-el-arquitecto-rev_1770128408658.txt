@@ -1,0 +1,198 @@
+Antes de escribir código, consulta con el “arquitecto” revisando la estructura existente, convenciones, rutas, esquema de base de datos y UI. Propón un plan de trabajo detallado en pasos pequeños, y SOLO entonces implementa punto por punto. No elimines funcionalidades, refactoriza lo mínimo indispensable.
+
+CONTEXTO
+El prototipo existente para gestión de torneos de fútbol hay que complementarlo con:
+1) Manejo de divisiones (Primera / Segunda) con UI theming según división
+2) Generación de calendarios/jornadas (primera entrega: torneo tipo liga “todos contra todos”)
+3) Perfil Árbitro tipo “app móvil” (no navegación tradicional), con fotos/video, notas y voz a texto
+4) Datos de jugador: identificación (DNI/ID) y fotos
+5) Estadísticas para redes sociales (goleadores, más partidos, equipo con menos faltas, etc.)
+6) Finanzas: gastos por torneo, pagos por equipo (abonos), resumen de cobros vs gastos
+7) Multas por tarjetas (amarilla/roja/roja directa), montos definidos por torneo, control de pago por capitán
+8) Flujo árbitro: seleccionar partido asignado, iniciar partido, alineaciones iniciales, cambios, tarjetas, resultado final, evidencias y notas.
+
+REQUISITOS CLAVE
+A) DIVISIONES + THEMING
+- Dos divisiones: “Primera División” y “Segunda División”.
+- El usuario y el torneo debe estar asociado a una división. Al loguearse, el sistema sabe “en qué división está operando” y aplica el theme global.
+- Theme Primera: colores claros, verde y oro (más luminoso).
+- Theme Segunda: colores más oscuros, verde + marrón + blanco.
+- Implementa un sistema de “Design Tokens” o variables CSS (o equivalente en el stack actual) para que el cambio sea total y coherente.
+- Debe haber una forma de “cambiar división” para el administrador y para el perfil de árbitro. El perfil de capitan del equipo deberá solo acceder a la división en la que su equipo esté inscrito.
+
+B) TIPOS DE TORNEO (CATÁLOGO) + GENERACIÓN DE CALENDARIOS
+- Define y documenta tipos de torneo soportados (aunque la primera entrega implemente solo “Liga todos vs todos”):
+  1. LIGA (Round-robin a doble vuelta opcional): todos contra todos, puntos acumulados, campeón por puntos.
+  2. ROUND ROBIN + PLAYOFFS: fase de grupos (todos vs todos), pasan a eliminatorias (octavos/cuartos/semi/final).
+  3. ELIMINACIÓN DIRECTA (Single Elimination): llaves directas.
+  4. DOBLE ELIMINACIÓN (Double Elimination): winners/losers bracket.
+  5. LIGA + FINAL: liga regular y final entre top 2 o top 4.
+  6. GRUPOS + LIGUILLA: grupos, luego liguilla tipo bracket.
+- IMPORTANTE: Para programación de partidos, la FECHA/HORA se asigna manualmente por el usuario. El generador crea “jornadas y emparejamientos” sin fecha/hora, o con placeholders.
+
+- PRIMERA ENTREGA A IMPLEMENTAR: “Liga todos contra todos” (single round-robin).
+  * Si hay N equipos:
+    - Si N es impar: agrega un “BYE” (descanso).
+    - Genera jornadas: N-1 jornadas (o N si hay BYE ya incluido) con N/2 partidos por jornada.
+  * Evita que un equipo juegue dos veces la misma jornada.
+  * Evita repetir emparejamientos.
+  * Algoritmo recomendado: “circle method” (método del círculo).
+  * Permite opcional “ida y vuelta” duplicando jornadas invirtiendo local/visitante (config).
+
+- UI: una pantalla donde admin genera el calendario (preview) y luego lo confirma para crearlo en DB.
+- Luego, en calendario, el admin asigna fecha/hora manualmente por partido.
+
+C) PERFIL ÁRBITRO: EXPERIENCIA TIPO APP (MÓVIL)
+- Cuando inicia sesión un árbitro:
+  - Solo ve los partidos asignados y programados (y su estado).
+  - Puede seleccionar un partido y pulsar “Iniciar Partido”.
+- Pantalla “Iniciar Partido”:
+  1) Confirmar alineación inicial: seleccionar XI (o lista inicial configurable) desde la lista de jugadores del equipo.
+  2) Registrar eventos durante el partido con botones grandes:
+     - Gol (jugador, minuto)
+     - Tarjeta amarilla (jugador, minuto)
+     - Tarjeta roja (jugador, minuto)
+     - Tarjeta roja directa (jugador, minuto)
+     - Cambio (sale jugador A, entra jugador B, minuto)
+     - Notas rápidas (texto)
+     - Nota de voz → transcripción a texto (voice-to-text)
+     - Evidencia: subir fotos y videos (por partido; idealmente también asociables a un evento)
+  3) Finalizar Partido:
+     - Resultado final (marcador)
+     - Revisión de eventos
+     - Guardar y cerrar
+
+- Nota voz→texto:
+  - Implementa una aproximación viable en web móvil:
+    * Si el navegador soporta Web Speech API (SpeechRecognition), úsalo.
+    * Si no soporta, fallback a subir audio y transcribir con el servicio que ya exista en el proyecto o una interfaz placeholder (sin inventar servicios pagos).
+  - Guardar siempre el texto final (transcrito) en DB, y opcionalmente el audio como archivo.
+
+D) JUGADORES: IDENTIFICACIÓN + FOTOS
+- En ficha de jugador:
+  - Campo “identificación” (DNI/ID oficial) texto.
+  - Subida de 1+ fotos por jugador (galería).
+  - Validaciones básicas (no duplicar ID dentro del mismo torneo o misma división si aplica).
+  - Identificar si el jugador es federado. El torneo deberá de poder registrar la cantidad máxima de jugadores federados por equipo, y aplicar la validación correspondiente en el alta de jugadores
+
+E) ESTADÍSTICAS
+Crear un módulo de estadísticas (vistas + queries) para:
+- Goleadores (top X)
+- Jugadores con más partidos jugados
+- Equipo con menos tarjetas (o “menos faltas” usando tarjetas como proxy si no existe faltas)
+- Fair play: equipo con menos puntos disciplinarios (amarilla=1, roja=3, roja directa=4 por ejemplo, configurable)
+- Portería menos goleada (si se puede)
+- Racha de victorias/empates
+
+
+F) FINANZAS: GASTOS, PAGOS, RESUMEN
+- Por torneo:
+  - Campo “costo del torneo por equipo”.
+- Pagos por equipo:
+  - Un equipo puede registrar “abonos” (múltiples pagos parciales).
+  - Ver saldo: costo total - suma abonos.
+  - Esto lo gestiona el perfil “capitán” (o rol equivalente).
+- Gastos del torneo:
+  - Registro de gastos: fecha, concepto, monto, notas, evidencia opcional (foto recibo).
+- Página “Resultados financieros del torneo”:
+  - Total cobrado (sum pagos)
+  - Total gastado
+  - Balance
+  - Por equipo: pagado vs saldo
+  - Multas pendientes y pagadas
+
+G) MULTAS POR TARJETAS
+- Por torneo se configuran montos:
+  - multa_amarilla
+  - multa_roja
+  - multa_roja_directa
+- Al registrar tarjetas en un partido, se generan “cargos de multa” para el jugador y su equipo.
+- El capitán debe poder ver:
+  - multas por jugador
+  - total por equipo
+  - estado pagada/no pagada
+  - registrar pago (o abono) de multas, separado del pago del torneo (dos “carteras”: inscripción vs multas)
+
+H) MODELO DE DATOS Y API (ADÁPTALO AL PROTOTIPO)
+No asumas el stack exacto: detecta el stack existente (framework, ORM, DB) y adáptate.
+Pero define/crea tablas o colecciones equivalentes a:
+- divisions (id, name, theme_tokens/json)
+- tournaments (id, division_id, type, fee_per_team, fine_yellow, fine_red, fine_red_direct, config_json)
+- teams (id, tournament_id, name, captain_user_id, etc.)
+- players (id, team_id, full_name, identification_id, jersey_number, etc.)
+- player_photos (id, player_id, file_url, created_at)
+- matches (id, tournament_id, round_number/jornada, home_team_id, away_team_id, scheduled_datetime nullable, referee_user_id, status)
+- match_lineups (match_id, team_id, player_id, is_starter)
+- match_events (id, match_id, type: goal/card/substitution/note, minute, team_id, player_id, related_player_id(optional), payload_json)
+- match_media (id, match_id, event_id nullable, type photo/video/audio, url)
+- payments_team (id, tournament_id, team_id, amount, paid_at, method, notes)
+- expenses (id, tournament_id, amount, concept, expense_at, notes, receipt_url)
+- fines (id, tournament_id, match_id, team_id, player_id, card_type, amount, status, created_at)
+- fines_payments (id, tournament_id, team_id, amount, paid_at, notes, allocation_json optional)
+
+I) PERMISOS / ROLES
+- Admin: crea torneo, configura multas/costo, genera calendario, asigna árbitros, ve todo.
+- Capitán: ve su equipo, pagos, multas, saldo, registra pagos.
+- Árbitro: ve partidos asignados, registra match flow.
+
+PLAN DE TRABAJO (OBLIGATORIO)
+1) Auditoría del prototipo:
+   - Identificar stack, estructura, rutas, auth, DB actual, estilos UI.
+   - Listar qué ya existe y qué falta, sin romper.
+2) Diseñar esquema mínimo para divisiones + theming.
+3) Implementar theming global por división (Primera/Segunda).
+4) Implementar “Tipos de torneo” como catálogo (UI + backend) aunque solo “Liga” genere calendario.
+5) Implementar generador de calendario “Liga todos vs todos”:
+   - Preview + confirmación + persistencia.
+6) Implementar asignación manual de fecha/hora para partidos.
+7) Implementar perfil árbitro “app-like” móvil:
+   - Lista de partidos asignados
+   - Pantalla partido con botones grandes
+   - Alineación inicial, cambios, tarjetas, goles, notas
+   - Evidencias: fotos/video
+   - Voz→texto con Web Speech API + fallback
+8) Implementar jugador: identificación + fotos.
+9) Implementar multas por tarjetas + control de pago.
+10) Implementar pagos por equipo (abonos) + gastos + resumen financiero.
+11) Implementar estadísticas + tabla de posiciones.
+12) Pruebas exhaustivas + data mock:
+   - Script para insertar un torneo de liga con 8 equipos, 16–20 jugadores por equipo, 2 árbitros.
+   - Generar jornadas, asignar algunos partidos con fecha/hora.
+   - Simular eventos (goles, tarjetas, cambios) y generar multas.
+   - Simular pagos parciales y gastos.
+   - Verificar que estadísticas y finanzas cuadran.
+
+PRUEBAS (OBLIGATORIAS)
+- Unit tests del generador de calendario:
+  - N=4, N=5 (impar), N=8
+  - No repeticiones, no doble partido por jornada, correcto número de jornadas
+- Integration tests:
+  - Crear torneo→generar calendario→asignar horarios→árbitro registra partido→se generan multas→capitán paga→stats actualiza
+- UI tests básicos (si aplica):
+  - Cambio de theme al cambiar división
+  - Flujo árbitro usable en móvil (botones grandes, navegación mínima)
+
+RESTRICCIONES
+- No inventes servicios externos de pago. Si necesitas transcripción y no hay servicio, usa Web Speech API y fallback manual.
+- No cambies el estilo global de UI; usa tokens/variables para theme.
+- No instales librerías sin justificar; si son necesarias, propón alternativas y el mínimo.
+- No uses datos reales: solo mock data.
+
+ENTREGABLES
+- Código implementado por módulos
+- Migraciones/DDL (si aplica)
+- Documentación corta: cómo generar calendario, cómo usar perfil árbitro, cómo registrar pagos/multas
+- Script de mock data + instrucciones para correrlo
+- Reporte final de pruebas y casos cubiertos
+
+PRIORIDAD DE IMPLEMENTACIÓN (MVP)
+- Divisiones + theming
+- Torneo tipo liga + generador calendario + programación manual fecha/hora
+- Perfil árbitro: alineación, tarjetas, cambios, resultado, evidencias, notas/voz→texto básico
+- Multas por tarjetas + pagos de multas (capitán)
+- Pagos de inscripción por equipo + gastos + resumen
+- Estadísticas esenciales (tabla + goleadores + más partidos + fair play)
+
+COMIENZA AHORA:
+1) Haz auditoría del prototipo y escribe el plan por pasos con checklist.
+2) Implementa paso a paso, confirmando con pruebas al final de cada módulo.

@@ -8,7 +8,15 @@ import {
   type News, type InsertNews, type NewsWithAuthor,
   type Standing, type MatchWithTeams, type MatchEventWithPlayer,
   type RefereeProfile, type InsertRefereeProfile,
-  type CaptainProfile, type InsertCaptainProfile
+  type CaptainProfile, type InsertCaptainProfile,
+  type Division, type InsertDivision,
+  type TournamentType, type InsertTournamentType,
+  type MatchLineup, type InsertMatchLineup,
+  type MatchEvidence, type InsertMatchEvidence,
+  type Fine, type InsertFine,
+  type TeamPayment, type InsertTeamPayment,
+  type FinePayment, type InsertFinePayment,
+  type Expense, type InsertExpense,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -88,6 +96,52 @@ export interface IStorage {
   updateCaptainProfile(userId: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined>;
   updateCaptainProfileById(id: string, data: Partial<InsertCaptainProfile>): Promise<CaptainProfile | undefined>;
   deleteCaptainProfile(id: string): Promise<void>;
+
+  // Divisions
+  getDivisions(): Promise<Division[]>;
+  getDivision(id: string): Promise<Division | undefined>;
+  createDivision(division: InsertDivision): Promise<Division>;
+  updateDivision(id: string, data: Partial<InsertDivision>): Promise<Division | undefined>;
+  deleteDivision(id: string): Promise<void>;
+
+  // Tournament Types
+  getTournamentTypes(): Promise<TournamentType[]>;
+  getTournamentType(id: string): Promise<TournamentType | undefined>;
+  createTournamentType(type: InsertTournamentType): Promise<TournamentType>;
+
+  // Match Lineups
+  getMatchLineups(matchId: string): Promise<MatchLineup[]>;
+  createMatchLineup(lineup: InsertMatchLineup): Promise<MatchLineup>;
+  deleteMatchLineups(matchId: string): Promise<void>;
+  deleteMatchLineupByTeam(matchId: string, teamId: string): Promise<void>;
+
+  // Match Evidence
+  getMatchEvidence(matchId: string): Promise<MatchEvidence[]>;
+  createMatchEvidence(evidence: InsertMatchEvidence): Promise<MatchEvidence>;
+  deleteMatchEvidence(id: string): Promise<void>;
+
+  // Fines
+  getFines(tournamentId?: string, teamId?: string): Promise<Fine[]>;
+  getFine(id: string): Promise<Fine | undefined>;
+  createFine(fine: InsertFine): Promise<Fine>;
+  updateFine(id: string, data: Partial<Fine>): Promise<Fine | undefined>;
+
+  // Team Payments
+  getTeamPayments(tournamentId?: string, teamId?: string): Promise<TeamPayment[]>;
+  createTeamPayment(payment: InsertTeamPayment): Promise<TeamPayment>;
+
+  // Fine Payments
+  getFinePayments(tournamentId?: string, teamId?: string): Promise<FinePayment[]>;
+  createFinePayment(payment: InsertFinePayment): Promise<FinePayment>;
+
+  // Expenses
+  getExpenses(tournamentId?: string): Promise<Expense[]>;
+  createExpense(expense: InsertExpense): Promise<Expense>;
+  updateExpense(id: string, data: Partial<InsertExpense>): Promise<Expense | undefined>;
+  deleteExpense(id: string): Promise<void>;
+
+  // Schedule Generation
+  generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean): Promise<Match[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -100,6 +154,14 @@ export class MemStorage implements IStorage {
   private news: Map<string, News>;
   private refereeProfiles: Map<string, RefereeProfile>;
   private captainProfiles: Map<string, CaptainProfile>;
+  private divisions: Map<string, Division>;
+  private tournamentTypes: Map<string, TournamentType>;
+  private matchLineups: Map<string, MatchLineup>;
+  private matchEvidence: Map<string, MatchEvidence>;
+  private fines: Map<string, Fine>;
+  private teamPayments: Map<string, TeamPayment>;
+  private finePayments: Map<string, FinePayment>;
+  private expenses: Map<string, Expense>;
 
   constructor() {
     this.users = new Map();
@@ -111,6 +173,34 @@ export class MemStorage implements IStorage {
     this.news = new Map();
     this.refereeProfiles = new Map();
     this.captainProfiles = new Map();
+    this.divisions = new Map();
+    this.tournamentTypes = new Map();
+    this.matchLineups = new Map();
+    this.matchEvidence = new Map();
+    this.fines = new Map();
+    this.teamPayments = new Map();
+    this.finePayments = new Map();
+    this.expenses = new Map();
+    
+    this.initializeTournamentTypes();
+    this.initializeDivisions();
+  }
+
+  private initializeTournamentTypes() {
+    const types: TournamentType[] = [
+      { id: "type-liga", name: "Liga (Todos contra todos)", algorithm: "ROUND_ROBIN", description: "Todos los equipos juegan entre sí. El campeón es quien acumula más puntos.", supportsDoubleRound: true },
+      { id: "type-knockout", name: "Eliminación directa", algorithm: "KNOCKOUT", description: "Llaves directas, el perdedor queda eliminado.", supportsDoubleRound: false },
+      { id: "type-groups-playoffs", name: "Grupos + Playoffs", algorithm: "GROUPS_PLAYOFFS", description: "Fase de grupos seguida de eliminatorias.", supportsDoubleRound: false },
+    ];
+    types.forEach(t => this.tournamentTypes.set(t.id, t));
+  }
+
+  private initializeDivisions() {
+    const divs: Division[] = [
+      { id: "div-primera", name: "Primera División", theme: "PRIMERA", description: "Máxima categoría", createdAt: new Date().toISOString() },
+      { id: "div-segunda", name: "Segunda División", theme: "SEGUNDA", description: "Segunda categoría", createdAt: new Date().toISOString() },
+    ];
+    divs.forEach(d => this.divisions.set(d.id, d));
   }
 
   // Users
@@ -683,6 +773,292 @@ export class MemStorage implements IStorage {
 
   async deleteCaptainProfile(id: string): Promise<void> {
     this.captainProfiles.delete(id);
+  }
+
+  // Divisions
+  async getDivisions(): Promise<Division[]> {
+    return Array.from(this.divisions.values());
+  }
+
+  async getDivision(id: string): Promise<Division | undefined> {
+    return this.divisions.get(id);
+  }
+
+  async createDivision(division: InsertDivision): Promise<Division> {
+    const id = randomUUID();
+    const newDivision: Division = {
+      id,
+      ...division,
+      createdAt: new Date().toISOString(),
+    };
+    this.divisions.set(id, newDivision);
+    return newDivision;
+  }
+
+  async updateDivision(id: string, data: Partial<InsertDivision>): Promise<Division | undefined> {
+    const division = this.divisions.get(id);
+    if (!division) return undefined;
+    const updated: Division = { ...division, ...data };
+    this.divisions.set(id, updated);
+    return updated;
+  }
+
+  async deleteDivision(id: string): Promise<void> {
+    this.divisions.delete(id);
+  }
+
+  // Tournament Types
+  async getTournamentTypes(): Promise<TournamentType[]> {
+    return Array.from(this.tournamentTypes.values());
+  }
+
+  async getTournamentType(id: string): Promise<TournamentType | undefined> {
+    return this.tournamentTypes.get(id);
+  }
+
+  async createTournamentType(type: InsertTournamentType): Promise<TournamentType> {
+    const id = randomUUID();
+    const newType: TournamentType = { id, ...type };
+    this.tournamentTypes.set(id, newType);
+    return newType;
+  }
+
+  // Match Lineups
+  async getMatchLineups(matchId: string): Promise<MatchLineup[]> {
+    return Array.from(this.matchLineups.values()).filter(l => l.matchId === matchId);
+  }
+
+  async createMatchLineup(lineup: InsertMatchLineup): Promise<MatchLineup> {
+    const id = randomUUID();
+    const newLineup: MatchLineup = {
+      id,
+      ...lineup,
+      createdAt: new Date().toISOString(),
+    };
+    this.matchLineups.set(id, newLineup);
+    return newLineup;
+  }
+
+  async deleteMatchLineups(matchId: string): Promise<void> {
+    const toDelete = Array.from(this.matchLineups.values()).filter(l => l.matchId === matchId);
+    toDelete.forEach(l => this.matchLineups.delete(l.id));
+  }
+
+  async deleteMatchLineupByTeam(matchId: string, teamId: string): Promise<void> {
+    const toDelete = Array.from(this.matchLineups.values()).filter(l => l.matchId === matchId && l.teamId === teamId);
+    toDelete.forEach(l => this.matchLineups.delete(l.id));
+  }
+
+  // Match Evidence
+  async getMatchEvidence(matchId: string): Promise<MatchEvidence[]> {
+    return Array.from(this.matchEvidence.values()).filter(e => e.matchId === matchId);
+  }
+
+  async createMatchEvidence(evidence: InsertMatchEvidence): Promise<MatchEvidence> {
+    const id = randomUUID();
+    const newEvidence: MatchEvidence = {
+      id,
+      ...evidence,
+      createdAt: new Date().toISOString(),
+    };
+    this.matchEvidence.set(id, newEvidence);
+    return newEvidence;
+  }
+
+  async deleteMatchEvidence(id: string): Promise<void> {
+    this.matchEvidence.delete(id);
+  }
+
+  // Fines
+  async getFines(tournamentId?: string, teamId?: string): Promise<Fine[]> {
+    let fines = Array.from(this.fines.values());
+    if (tournamentId) fines = fines.filter(f => f.tournamentId === tournamentId);
+    if (teamId) fines = fines.filter(f => f.teamId === teamId);
+    return fines;
+  }
+
+  async getFine(id: string): Promise<Fine | undefined> {
+    return this.fines.get(id);
+  }
+
+  async createFine(fine: InsertFine): Promise<Fine> {
+    const id = randomUUID();
+    const newFine: Fine = {
+      id,
+      ...fine,
+      status: fine.status || "PENDIENTE",
+      createdAt: new Date().toISOString(),
+    };
+    this.fines.set(id, newFine);
+    return newFine;
+  }
+
+  async updateFine(id: string, data: Partial<Fine>): Promise<Fine | undefined> {
+    const fine = this.fines.get(id);
+    if (!fine) return undefined;
+    const updated: Fine = { ...fine, ...data };
+    this.fines.set(id, updated);
+    return updated;
+  }
+
+  // Team Payments
+  async getTeamPayments(tournamentId?: string, teamId?: string): Promise<TeamPayment[]> {
+    let payments = Array.from(this.teamPayments.values());
+    if (tournamentId) payments = payments.filter(p => p.tournamentId === tournamentId);
+    if (teamId) payments = payments.filter(p => p.teamId === teamId);
+    return payments;
+  }
+
+  async createTeamPayment(payment: InsertTeamPayment): Promise<TeamPayment> {
+    const id = randomUUID();
+    const newPayment: TeamPayment = {
+      id,
+      ...payment,
+      createdAt: new Date().toISOString(),
+    };
+    this.teamPayments.set(id, newPayment);
+    return newPayment;
+  }
+
+  // Fine Payments
+  async getFinePayments(tournamentId?: string, teamId?: string): Promise<FinePayment[]> {
+    let payments = Array.from(this.finePayments.values());
+    if (tournamentId) payments = payments.filter(p => p.tournamentId === tournamentId);
+    if (teamId) payments = payments.filter(p => p.teamId === teamId);
+    return payments;
+  }
+
+  async createFinePayment(payment: InsertFinePayment): Promise<FinePayment> {
+    const id = randomUUID();
+    const newPayment: FinePayment = {
+      id,
+      ...payment,
+      createdAt: new Date().toISOString(),
+    };
+    this.finePayments.set(id, newPayment);
+    return newPayment;
+  }
+
+  // Expenses
+  async getExpenses(tournamentId?: string): Promise<Expense[]> {
+    let expenses = Array.from(this.expenses.values());
+    if (tournamentId) expenses = expenses.filter(e => e.tournamentId === tournamentId);
+    return expenses;
+  }
+
+  async createExpense(expense: InsertExpense): Promise<Expense> {
+    const id = randomUUID();
+    const newExpense: Expense = {
+      id,
+      ...expense,
+      createdAt: new Date().toISOString(),
+    };
+    this.expenses.set(id, newExpense);
+    return newExpense;
+  }
+
+  async updateExpense(id: string, data: Partial<InsertExpense>): Promise<Expense | undefined> {
+    const expense = this.expenses.get(id);
+    if (!expense) return undefined;
+    const updated: Expense = { ...expense, ...data };
+    this.expenses.set(id, updated);
+    return updated;
+  }
+
+  async deleteExpense(id: string): Promise<void> {
+    this.expenses.delete(id);
+  }
+
+  // Schedule Generation - Round Robin Circle Method
+  async generateRoundRobinSchedule(tournamentId: string, doubleRound: boolean = false): Promise<Match[]> {
+    const tournament = await this.getTournament(tournamentId);
+    if (!tournament) throw new Error("Torneo no encontrado");
+
+    const teams = await this.getTeams(tournamentId);
+    if (teams.length < 2) throw new Error("Se necesitan al menos 2 equipos");
+
+    // Delete existing matches for this tournament
+    const existingMatches = await this.getMatches(tournamentId);
+    for (const match of existingMatches) {
+      await this.deleteMatch(match.id);
+    }
+
+    const teamIds = teams.map(t => t.id);
+    const n = teamIds.length;
+    const hasOdd = n % 2 !== 0;
+    
+    // If odd number of teams, add a "BYE" placeholder
+    if (hasOdd) {
+      teamIds.push("BYE");
+    }
+    
+    const numTeams = teamIds.length;
+    const numRounds = numTeams - 1;
+    const matchesPerRound = numTeams / 2;
+    
+    const generatedMatches: Match[] = [];
+    
+    // Circle method: fix one team (index 0), rotate the rest
+    const fixed = teamIds[0];
+    const rotating = teamIds.slice(1);
+    
+    for (let round = 0; round < numRounds; round++) {
+      const roundNumber = round + 1;
+      
+      // Generate pairings for this round
+      const pairings: [string, string][] = [];
+      
+      // First match: fixed team vs first rotating team
+      pairings.push([fixed, rotating[0]]);
+      
+      // Remaining matches: pair from ends of rotating array
+      for (let i = 1; i < matchesPerRound; i++) {
+        const home = rotating[i];
+        const away = rotating[numTeams - 1 - i];
+        pairings.push([home, away]);
+      }
+      
+      // Create matches (skip BYE matches)
+      for (const [homeId, awayId] of pairings) {
+        if (homeId === "BYE" || awayId === "BYE") continue;
+        
+        const match = await this.createMatch({
+          tournamentId,
+          roundNumber,
+          dateTime: "", // To be assigned manually
+          field: "Por asignar",
+          homeTeamId: homeId,
+          awayTeamId: awayId,
+          status: "PROGRAMADO",
+        });
+        generatedMatches.push(match);
+      }
+      
+      // Rotate: move last to first position in rotating array
+      rotating.unshift(rotating.pop()!);
+    }
+    
+    // If double round, create second leg with swapped home/away
+    if (doubleRound) {
+      const firstLegMatches = [...generatedMatches];
+      for (const match of firstLegMatches) {
+        const secondLegMatch = await this.createMatch({
+          tournamentId,
+          roundNumber: match.roundNumber + numRounds,
+          dateTime: "",
+          field: "Por asignar",
+          homeTeamId: match.awayTeamId,
+          awayTeamId: match.homeTeamId,
+          status: "PROGRAMADO",
+        });
+        generatedMatches.push(secondLegMatch);
+      }
+    }
+    
+    // Mark tournament as having generated schedule
+    await this.updateTournament(tournamentId, { scheduleGenerated: true } as any);
+    
+    return generatedMatches;
   }
 }
 

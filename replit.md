@@ -98,8 +98,15 @@ La aplicación estará disponible en el puerto 5000.
 - `/api/admin/matches` - CRUD partidos
 - `/api/admin/tournaments` - CRUD torneos
 - `/api/admin/tournaments/:id/finish` - Finalizar torneo con campeón
+- `/api/admin/tournaments/:id/generate-schedule` - Generar calendario round-robin automático
+- `/api/admin/tournaments/:id/schedule-preview` - Vista previa del calendario
+- `/api/admin/divisions` - CRUD divisiones
 - `/api/admin/news` - CRUD noticias
 - `/api/admin/referees` - Gestión de perfiles de árbitros (ver, editar, eliminar)
+- `/api/admin/fines` - Gestión de multas (ver, actualizar estado)
+- `/api/admin/payments` - Gestión de pagos de equipos
+- `/api/admin/fine-payments` - Gestión de pagos de multas
+- `/api/admin/expenses` - Gestión de gastos del torneo
 
 ### Capitán (requiere rol CAPITAN)
 - `GET/PUT /api/captain/team` - Mi equipo
@@ -110,6 +117,15 @@ La aplicación estará disponible en el puerto 5000.
 ### Árbitro (requiere rol ARBITRO)
 - `GET /api/referee/matches` - Mis partidos asignados
 - `POST /api/referee/matches/:id/result` - Cargar resultado
+- `POST /api/referee/matches/:id/start` - Iniciar partido (cambia estado a EN_CURSO)
+- `POST /api/referee/matches/:id/finalize` - Finalizar partido (guarda marcador, genera multas)
+- `GET/POST /api/referee/matches/:id/lineups` - Gestión de alineaciones
+- `GET/POST /api/referee/matches/:id/evidence` - Gestión de evidencias (fotos, actas)
+
+### Divisiones y Tipos de Torneo (Públicos)
+- `GET /api/divisions` - Lista de divisiones (Primera, Segunda)
+- `GET /api/divisions/:id` - Detalle de división
+- `GET /api/tournament-types` - Tipos de torneo (Liga, Eliminación, Grupos)
 
 ## Funcionalidades Principales
 
@@ -170,3 +186,43 @@ La aplicación estará disponible en el puerto 5000.
 - Datos obligatorios: nombre completo, número de identificación, teléfono, email
 - Datos opcionales: dirección, contacto de emergencia, teléfono de emergencia, observaciones
 - Trazabilidad: identifica al capitán de cada equipo
+
+## Divisiones (Nuevo)
+- Sistema de divisiones con theming personalizado
+- Divisiones predefinidas: Primera División, Segunda División
+- Cada división tiene: nombre, descripción, tema visual (PRIMERA/SEGUNDA)
+- Los torneos pueden asociarse a una división
+
+## Tipos de Torneo (Nuevo)
+- Catálogo de formatos de torneo predefinidos:
+  - **Liga (ROUND_ROBIN)**: Todos contra todos, soporta ida y vuelta
+  - **Eliminación directa (KNOCKOUT)**: Llaves de eliminación
+  - **Grupos + Playoffs (GROUPS_PLAYOFFS)**: Fase de grupos seguida de eliminatorias
+
+## Generador de Calendario (Nuevo)
+- Algoritmo del círculo (circle method) para generar calendario round-robin
+- Soporta ida (una vuelta) o ida y vuelta (dos vueltas)
+- Maneja automáticamente equipos impares (jornadas de descanso)
+- API de vista previa para ver estadísticas antes de generar
+- Al generar, elimina partidos anteriores del torneo
+
+## Flujo del Árbitro (Nuevo)
+- Estados del partido: PROGRAMADO → EN_CURSO → JUGADO
+- El árbitro puede iniciar el partido (cambia a EN_CURSO)
+- Al finalizar registra marcador final
+- Gestión de alineaciones por equipo
+- Subida de evidencias (fotos, documentos)
+- Generación automática de multas por tarjetas
+
+## Sistema de Multas (Nuevo)
+- Multas generadas automáticamente al finalizar partido según tarjetas
+- Configuración por torneo: monto por tarjeta amarilla, roja, roja directa
+- Estados: PENDIENTE, PAGADA
+- El capitán puede ver las multas de su equipo
+- El admin puede gestionar todas las multas
+
+## Sistema de Finanzas (Nuevo)
+- **Pagos de equipos**: Registro de inscripción y cuotas
+- **Pagos de multas**: Registro de pagos de multas
+- **Gastos del torneo**: Registro de gastos (arbitraje, canchas, etc.)
+- Todos los movimientos asociados a torneo y equipo
