@@ -144,7 +144,7 @@ export default function FinancesManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payments", effectiveTournamentId] });
       toast({ title: "Pago registrado exitosamente" });
       setIsPaymentDialogOpen(false);
       paymentForm.reset();
@@ -160,8 +160,8 @@ export default function FinancesManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fine-payments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fine-payments", effectiveTournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines", effectiveTournamentId] });
       toast({ title: "Pago de multa registrado exitosamente" });
       setIsFinePaymentDialogOpen(false);
       finePaymentForm.reset();
@@ -177,7 +177,7 @@ export default function FinancesManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/expenses", effectiveTournamentId] });
       toast({ title: "Gasto registrado exitosamente" });
       setIsExpenseDialogOpen(false);
       expenseForm.reset();
@@ -193,7 +193,7 @@ export default function FinancesManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines", effectiveTournamentId] });
       toast({ title: "Multa actualizada" });
     },
     onError: () => {
