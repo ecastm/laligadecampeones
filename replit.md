@@ -201,6 +201,7 @@ La aplicación estará disponible en el puerto 5000.
 - Divisiones predefinidas: Primera División, Segunda División
 - Cada división tiene: nombre, descripción, tema visual (PRIMERA/SEGUNDA)
 - Los torneos pueden asociarse a una división
+- Los equipos pueden asociarse a una división (campo divisionId)
 
 ## Tipos de Torneo (Nuevo)
 - Catálogo de formatos de torneo predefinidos:

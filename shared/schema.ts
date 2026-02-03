@@ -170,6 +170,7 @@ export type FinishTournament = z.infer<typeof finishTournamentSchema>;
 export interface Team {
   id: string;
   tournamentId: string;
+  divisionId?: string;
   name: string;
   colors: string;
   homeField: string;
@@ -180,6 +181,7 @@ export interface Team {
 
 export const insertTeamSchema = z.object({
   tournamentId: z.string(),
+  divisionId: z.string().optional(),
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   colors: z.string().min(2, "Los colores son requeridos"),
   homeField: z.string().min(2, "La sede es requerida"),

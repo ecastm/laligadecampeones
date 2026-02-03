@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, insertPlayerSchema, type InsertTeam, type InsertPlayer, type Team, type Tournament, type User, type Player } from "@shared/schema";
+import { insertTeamSchema, insertPlayerSchema, type InsertTeam, type InsertPlayer, type Team, type Tournament, type User, type Player, type Division } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +56,21 @@ export default function TeamsManagement() {
     },
   });
 
+  const { data: divisions = [] } = useQuery<Division[]>({
+    queryKey: ["/api/divisions"],
+    queryFn: async () => {
+      const response = await fetch("/api/divisions", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar divisiones");
+      return response.json();
+    },
+  });
+
+  const getDivisionName = (divisionId?: string) => {
+    if (!divisionId) return null;
+    const division = divisions.find(d => d.id === divisionId);
+    return division ? { name: division.name, theme: division.theme } : null;
+  };
+
   const getCaptainName = (captainUserId?: string) => {
     if (!captainUserId) return null;
     const captain = users.find(u => u.id === captainUserId);
@@ -85,6 +101,7 @@ export default function TeamsManagement() {
       homeField: "",
       logoUrl: "",
       coachName: "",
+      divisionId: "",
     },
   });
 
@@ -195,6 +212,7 @@ export default function TeamsManagement() {
       homeField: team.homeField,
       logoUrl: team.logoUrl || "",
       coachName: team.coachName || "",
+      divisionId: team.divisionId || "",
     });
   };
 
@@ -236,6 +254,30 @@ export default function TeamsManagement() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="divisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>División</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-team-division">
+                            <SelectValue placeholder="Seleccionar división" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {divisions.map((division) => (
+                            <SelectItem key={division.id} value={division.id}>
+                              {division.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="name"
@@ -351,7 +393,19 @@ export default function TeamsManagement() {
                             {team.name.substring(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
+                              {getDivisionName(team.divisionId) && (
+                                <Badge 
+                                  variant="outline" 
+                                  className={getDivisionName(team.divisionId)?.theme === "PRIMERA" 
+                                    ? "text-yellow-600 border-yellow-600 text-xs" 
+                                    : "text-slate-500 border-slate-500 text-xs"}
+                                >
+                                  {getDivisionName(team.divisionId)?.name}
+                                </Badge>
+                              )}
+                            </div>
                             <p className="text-xs sm:text-sm text-muted-foreground truncate">{team.colors}</p>
                             <p className="text-xs text-muted-foreground mt-1 truncate">{team.homeField}</p>
                             <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs">
