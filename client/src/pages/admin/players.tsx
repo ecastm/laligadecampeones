@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Users } from "lucide-react";
+import { Plus, Trash2, Users, Camera, IdCard } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function PlayersManagement() {
@@ -48,6 +49,10 @@ export default function PlayersManagement() {
       lastName: "",
       jerseyNumber: 1,
       position: "",
+      identificationId: "",
+      photoUrls: [],
+      isFederated: false,
+      federationId: "",
       active: true,
     },
   });
@@ -211,6 +216,76 @@ export default function PlayersManagement() {
                       )}
                     />
                   </div>
+                  <FormField
+                    control={form.control}
+                    name="identificationId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <IdCard className="h-4 w-4" />
+                          Número de Identificación (DNI/INE)
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="photoUrls"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <Camera className="h-4 w-4" />
+                          URL de Fotografía
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://ejemplo.com/foto.jpg" 
+                            data-testid="input-player-photo"
+                            value={field.value?.[0] || ""}
+                            onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="isFederated"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-md border p-3">
+                          <div className="space-y-0.5">
+                            <FormLabel>¿Federado?</FormLabel>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              data-testid="switch-player-federated"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="federationId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ID Federación</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Número de federación" data-testid="input-player-federation" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <Button
                     type="submit"
                     className="w-full"
@@ -249,12 +324,20 @@ export default function PlayersManagement() {
                   data-testid={`row-player-${player.id}`}
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
-                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base shrink-0">
-                      {player.jerseyNumber}
-                    </div>
+                    {player.photoUrls && player.photoUrls.length > 0 ? (
+                      <img 
+                        src={player.photoUrls[0]} 
+                        alt={`${player.firstName} ${player.lastName}`}
+                        className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-primary shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-sm sm:text-base shrink-0">
+                        {player.jerseyNumber}
+                      </div>
+                    )}
                     <div className="min-w-0">
                       <p className="font-medium text-sm sm:text-base truncate">
-                        {player.firstName} {player.lastName}
+                        #{player.jerseyNumber} {player.firstName} {player.lastName}
                       </p>
                       <div className="flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                         <span className="truncate">{getTeamName(player.teamId)}</span>
@@ -262,6 +345,15 @@ export default function PlayersManagement() {
                           <>
                             <span>·</span>
                             <span>{player.position}</span>
+                          </>
+                        )}
+                        {player.identificationId && (
+                          <>
+                            <span>·</span>
+                            <span className="flex items-center gap-1">
+                              <IdCard className="h-3 w-3" />
+                              {player.identificationId}
+                            </span>
                           </>
                         )}
                       </div>

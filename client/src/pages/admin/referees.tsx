@@ -129,8 +129,9 @@ export default function RefereesManagement() {
     );
   }
 
-  const refereesWithProfile = referees.filter(r => r.hasProfile);
-  const refereesWithoutProfile = referees.filter(r => !r.hasProfile);
+  const validReferees = referees.filter(r => r.user && r.user.name);
+  const refereesWithProfile = validReferees.filter(r => r.hasProfile);
+  const refereesWithoutProfile = validReferees.filter(r => !r.hasProfile);
 
   return (
     <div className="space-y-6">

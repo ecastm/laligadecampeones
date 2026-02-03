@@ -932,6 +932,15 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/divisions", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const divisions = await storage.getDivisions();
+      res.json(divisions);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.post("/api/admin/divisions", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const data = insertDivisionSchema.parse(req.body);
