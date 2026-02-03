@@ -25,6 +25,7 @@ export default function TeamsManagement() {
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [playerDialogTeamId, setPlayerDialogTeamId] = useState<string | null>(null);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -193,7 +194,28 @@ export default function TeamsManagement() {
     },
   });
 
+  const updatePlayerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: InsertPlayer }) => {
+      return apiRequest("PUT", `/api/admin/players/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/players"] });
+      toast({ title: "Jugador actualizado correctamente" });
+      closePlayerDialog();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const closePlayerDialog = () => {
+    setPlayerDialogTeamId(null);
+    setEditingPlayer(null);
+    playerForm.reset();
+  };
+
   const openPlayerDialog = (teamId: string) => {
+    setEditingPlayer(null);
     playerForm.reset({
       teamId,
       firstName: "",
@@ -209,8 +231,29 @@ export default function TeamsManagement() {
     setPlayerDialogTeamId(teamId);
   };
 
+  const openEditPlayerDialog = (player: Player) => {
+    setEditingPlayer(player);
+    playerForm.reset({
+      teamId: player.teamId,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      jerseyNumber: player.jerseyNumber,
+      position: player.position || "",
+      identificationId: player.identificationId || "",
+      photoUrls: player.photoUrls || [],
+      isFederated: player.isFederated || false,
+      federationId: player.federationId || "",
+      active: player.active,
+    });
+    setPlayerDialogTeamId(player.teamId);
+  };
+
   const handlePlayerSubmit = (data: InsertPlayer) => {
-    createPlayerMutation.mutate(data);
+    if (editingPlayer) {
+      updatePlayerMutation.mutate({ id: editingPlayer.id, data });
+    } else {
+      createPlayerMutation.mutate(data);
+    }
   };
 
   const openEditDialog = (team: Team) => {
@@ -531,30 +574,41 @@ export default function TeamsManagement() {
                                         </div>
                                       </div>
                                     </div>
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`button-delete-player-${player.id}`}>
-                                          <Trash2 className="h-3 w-3 text-destructive" />
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Eliminar jugador</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            ¿Estás seguro de que deseas eliminar a {player.firstName} {player.lastName}?
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                          <AlertDialogAction
-                                            onClick={() => deletePlayerMutation.mutate(player.id)}
-                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                          >
-                                            Eliminar
-                                          </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
+                                    <div className="flex items-center gap-1">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="h-7 w-7" 
+                                        onClick={() => openEditPlayerDialog(player)}
+                                        data-testid={`button-edit-player-${player.id}`}
+                                      >
+                                        <Edit className="h-3 w-3" />
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`button-delete-player-${player.id}`}>
+                                            <Trash2 className="h-3 w-3 text-destructive" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Eliminar jugador</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              ¿Estás seguro de que deseas eliminar a {player.firstName} {player.lastName}?
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => deletePlayerMutation.mutate(player.id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              Eliminar
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
                                   </div>
                                 ))}
                               </div>
@@ -581,12 +635,12 @@ export default function TeamsManagement() {
         </CardContent>
       </Card>
 
-      <Dialog open={playerDialogTeamId !== null} onOpenChange={(open) => !open && setPlayerDialogTeamId(null)}>
+      <Dialog open={playerDialogTeamId !== null} onOpenChange={(open) => !open && closePlayerDialog()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Agregar Jugador</DialogTitle>
+            <DialogTitle>{editingPlayer ? "Editar Jugador" : "Agregar Jugador"}</DialogTitle>
             <DialogDescription>
-              Agregar un nuevo jugador al equipo
+              {editingPlayer ? "Modificar los datos del jugador" : "Agregar un nuevo jugador al equipo"}
             </DialogDescription>
           </DialogHeader>
           <Form {...playerForm}>
@@ -727,10 +781,14 @@ export default function TeamsManagement() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createPlayerMutation.isPending}
+                disabled={createPlayerMutation.isPending || updatePlayerMutation.isPending}
                 data-testid="button-submit-player"
               >
-                {createPlayerMutation.isPending ? "Guardando..." : "Agregar Jugador"}
+                {(createPlayerMutation.isPending || updatePlayerMutation.isPending) 
+                  ? "Guardando..." 
+                  : editingPlayer 
+                    ? "Guardar Cambios" 
+                    : "Agregar Jugador"}
               </Button>
             </form>
           </Form>
