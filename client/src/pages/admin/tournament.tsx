@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2 } from "lucide-react";
+import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2, Shield } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function TournamentManagement() {
@@ -65,8 +65,15 @@ export default function TournamentManagement() {
       location: "",
       startDate: new Date().toISOString().split("T")[0],
       status: "ACTIVO",
+      divisionId: "",
     },
   });
+
+  // Helper to get division name by id
+  const getDivisionById = (divisionId?: string) => {
+    if (!divisionId) return null;
+    return divisions.find((d) => d.id === divisionId);
+  };
 
   const editForm = useForm<Partial<InsertTournament>>({
     defaultValues: {},
@@ -178,6 +185,7 @@ export default function TournamentManagement() {
       seasonName: tournament.seasonName,
       location: tournament.location,
       startDate: tournament.startDate.split("T")[0],
+      divisionId: tournament.divisionId || "",
     });
   };
 
@@ -278,6 +286,33 @@ export default function TournamentManagement() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={createForm.control}
+                  name="divisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>División</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-division">
+                            <SelectValue placeholder="Selecciona una división" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {divisions.map((div) => (
+                            <SelectItem key={div.id} value={div.id}>
+                              <div className="flex items-center gap-2">
+                                <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                                {div.name}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                   <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-tournament">
                     {createMutation.isPending ? "Creando..." : "Crear Torneo"}
@@ -308,6 +343,22 @@ export default function TournamentManagement() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  {(() => {
+                    const division = getDivisionById(tournament.divisionId);
+                    return division ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-yellow-600 dark:text-yellow-400" : "text-slate-600 dark:text-slate-400"}`}>
+                          {division.name}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Shield className="h-4 w-4 shrink-0" />
+                        <span className="italic">Sin división asignada</span>
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" />
                     <span className="truncate">{tournament.location}</span>
@@ -363,6 +414,17 @@ export default function TournamentManagement() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  {(() => {
+                    const division = getDivisionById(tournament.divisionId);
+                    return division ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-yellow-600 dark:text-yellow-400" : "text-slate-600 dark:text-slate-400"}`}>
+                          {division.name}
+                        </span>
+                      </div>
+                    ) : null;
+                  })()}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" />
                     <span className="truncate">{tournament.location}</span>
@@ -466,6 +528,33 @@ export default function TournamentManagement() {
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="divisionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>División</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="edit-select-division">
+                          <SelectValue placeholder="Selecciona una división" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {divisions.map((div) => (
+                          <SelectItem key={div.id} value={div.id}>
+                            <div className="flex items-center gap-2">
+                              <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                              {div.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

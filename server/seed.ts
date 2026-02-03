@@ -5,15 +5,20 @@ export async function seedDatabase() {
   console.log("🌱 Iniciando seed de datos...");
   console.log("==========================================\n");
 
-  // Create tournament
+  // Get Primera División
+  const divisions = await storage.getDivisions();
+  const primeraDivision = divisions.find(d => d.theme === "PRIMERA");
+
+  // Create tournament with division
   const tournament = await storage.createTournament({
     name: "Torneo Demo 2026",
     seasonName: "Temporada Primavera 2026",
     location: "Ciudad Central",
     startDate: new Date().toISOString(),
     status: "ACTIVO",
+    divisionId: primeraDivision?.id,
   });
-  console.log("✅ Torneo creado:", tournament.name);
+  console.log("✅ Torneo creado:", tournament.name, primeraDivision ? `(${primeraDivision.name})` : "");
 
   // Create 3 admin users
   const admins = [

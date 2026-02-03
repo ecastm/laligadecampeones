@@ -5,10 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, Trophy, Users, Clock, MapPin, Newspaper } from "lucide-react";
+import { Calendar, Trophy, Users, Clock, MapPin, Newspaper, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor } from "@shared/schema";
+import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor, Division } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 
 export default function Home() {
@@ -45,6 +45,15 @@ export default function Home() {
     enabled: !!tournament,
   });
 
+  const { data: divisions = [] } = useQuery<Division[]>({
+    queryKey: ["/api/divisions"],
+  });
+
+  // Get the division for the current tournament
+  const currentDivision = tournament?.divisionId 
+    ? divisions.find(d => d.id === tournament.divisionId)
+    : null;
+
   const rounds = Array.from(new Set(schedule.map(m => m.roundNumber))).sort((a, b) => a - b);
   const filteredSchedule = schedule.filter(m => {
     const matchRound = selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
@@ -77,9 +86,25 @@ export default function Home() {
                 <Trophy className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold" data-testid="text-tournament-name">
-                  {tournament?.name || "Liga de Fútbol"}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl font-bold" data-testid="text-tournament-name">
+                    {tournament?.name || "Liga de Fútbol"}
+                  </h1>
+                  {currentDivision && (
+                    <Badge
+                      variant="outline"
+                      className={`shrink-0 ${
+                        currentDivision.theme === "PRIMERA"
+                          ? "border-yellow-500 text-yellow-600 dark:text-yellow-400"
+                          : "border-slate-500 text-slate-600 dark:text-slate-400"
+                      }`}
+                      data-testid="badge-division"
+                    >
+                      <Shield className={`mr-1 h-3 w-3 ${currentDivision.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                      {currentDivision.name}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground" data-testid="text-season-name">
                   {tournament?.seasonName || "Temporada 2026"}
                 </p>
