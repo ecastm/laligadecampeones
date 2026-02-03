@@ -19,12 +19,20 @@ import {
   UserPlus,
   Info,
   Award,
-  Target
+  Target,
+  CheckCircle,
+  Star,
+  Clock,
+  Zap
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor, Division } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
+import heroFootball from "@/assets/images/football-field.jpg";
+import teamHuddle from "@/assets/images/team-huddle.jpg";
+import trophyImage from "@/assets/images/trophy.jpg";
+import stadiumImage from "@/assets/images/stadium.jpg";
 
 export default function Home() {
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
@@ -150,53 +158,135 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-accent/10 py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiMyMjIiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
-        <div className="container relative mx-auto px-4 text-center">
-          <Badge variant="outline" className="mb-4 text-sm" data-testid="badge-hero">
-            <Trophy className="mr-1 h-3 w-3" />
-            Temporada 2026 Abierta
-          </Badge>
-          <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl" data-testid="text-hero-title">
-            Organiza tu Torneo de
-            <span className="block text-primary">Fútbol Amateur</span>
-          </h1>
-          <p className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground sm:text-xl">
-            Sistema profesional para gestionar ligas, equipos, jugadores y estadísticas. 
-            Únete a la comunidad de fútbol amateur más grande.
-          </p>
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Button size="lg" className="gap-2" data-testid="button-register-team">
-              <UserPlus className="h-5 w-5" />
-              Inscribir Mi Equipo
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2" data-testid="button-request-info">
-              <Info className="h-5 w-5" />
-              Solicitar Información
-            </Button>
+      {/* Hero Section with Football Image */}
+      <section className="relative min-h-[600px] overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroFootball})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
+        
+        <div className="container relative mx-auto px-4 py-20 sm:py-28">
+          <div className="max-w-2xl">
+            <Badge className="mb-6 bg-primary/90 text-primary-foreground" data-testid="badge-hero">
+              <Zap className="mr-1 h-3 w-3" />
+              Inscripciones Abiertas - Temporada 2026
+            </Badge>
+            <h1 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-testid="text-hero-title">
+              Compite en el Mejor
+              <span className="block text-primary">Torneo de Fútbol Amateur</span>
+            </h1>
+            <p className="mb-8 text-lg text-gray-200 sm:text-xl">
+              Inscribe a tu equipo y demuestra de qué están hechos. Competencia real, 
+              organización profesional, y la oportunidad de consagrarse campeones.
+            </p>
+            
+            {/* Key Benefits */}
+            <div className="mb-8 grid gap-3 sm:grid-cols-2">
+              <div className="flex items-center gap-2 text-gray-200">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <span>Canchas de primera calidad</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-200">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <span>Árbitros certificados</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-200">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <span>Premios para los mejores</span>
+              </div>
+              <div className="flex items-center gap-2 text-gray-200">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <span>Estadísticas en tiempo real</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <Button size="lg" className="gap-2 text-base" data-testid="button-register-team">
+                <UserPlus className="h-5 w-5" />
+                Inscribir Mi Equipo
+              </Button>
+              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" data-testid="button-request-info">
+                <Info className="h-5 w-5" />
+                Más Información
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Join Section */}
+      <section className="py-16 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4" data-testid="text-why-join-title">¿Por Qué Inscribir a Tu Equipo?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              No es solo un torneo, es una experiencia competitiva de primer nivel para equipos que buscan superarse
+            </p>
+          </div>
+          
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {/* Benefit 1 */}
+            <div className="group relative overflow-hidden rounded-md">
+              <img src={stadiumImage} alt="Instalaciones" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute bottom-0 p-6 text-white">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+                  <MapPin className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold">Instalaciones de Primera</h3>
+                <p className="text-sm text-gray-300">Canchas en óptimas condiciones, iluminación profesional y vestuarios equipados</p>
+              </div>
+            </div>
+            
+            {/* Benefit 2 */}
+            <div className="group relative overflow-hidden rounded-md">
+              <img src={trophyImage} alt="Premios" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute bottom-0 p-6 text-white">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold">Premios y Reconocimientos</h3>
+                <p className="text-sm text-gray-300">Trofeos, medallas, premios en efectivo y reconocimiento a los mejores jugadores</p>
+              </div>
+            </div>
+            
+            {/* Benefit 3 */}
+            <div className="group relative overflow-hidden rounded-md">
+              <img src={teamHuddle} alt="Competencia" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+              <div className="absolute bottom-0 p-6 text-white">
+                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+                  <Users className="h-5 w-5" />
+                </div>
+                <h3 className="text-lg font-bold">Competencia Real</h3>
+                <p className="text-sm text-gray-300">Enfrenta a los mejores equipos de la zona en partidos emocionantes cada semana</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="border-y bg-card py-8">
+      <section className="border-y bg-background py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center" data-testid="stat-teams">
-              <p className="text-3xl font-bold text-primary">50+</p>
-              <p className="text-sm text-muted-foreground">Equipos Registrados</p>
+              <p className="text-4xl font-bold text-primary">50+</p>
+              <p className="text-sm text-muted-foreground">Equipos Compitiendo</p>
             </div>
             <div className="text-center" data-testid="stat-players">
-              <p className="text-3xl font-bold text-primary">800+</p>
+              <p className="text-4xl font-bold text-primary">800+</p>
               <p className="text-sm text-muted-foreground">Jugadores Activos</p>
             </div>
             <div className="text-center" data-testid="stat-matches">
-              <p className="text-3xl font-bold text-primary">200+</p>
+              <p className="text-4xl font-bold text-primary">200+</p>
               <p className="text-sm text-muted-foreground">Partidos por Temporada</p>
             </div>
             <div className="text-center" data-testid="stat-seasons">
-              <p className="text-3xl font-bold text-primary">10</p>
+              <p className="text-4xl font-bold text-primary">10</p>
               <p className="text-sm text-muted-foreground">Años de Experiencia</p>
             </div>
           </div>
@@ -629,18 +719,18 @@ export default function Home() {
       <section className="border-t bg-card py-12 sm:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
-            <h2 className="mb-2 text-3xl font-bold">¿Por Qué Elegirnos?</h2>
-            <p className="text-muted-foreground">Todo lo que necesitas para organizar tu torneo profesionalmente</p>
+            <h2 className="mb-2 text-3xl font-bold">Lo Que Tu Equipo Obtiene</h2>
+            <p className="text-muted-foreground">Beneficios exclusivos para todos los equipos inscritos</p>
           </div>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="text-center" data-testid="feature-organization">
               <CardContent className="pt-6">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Target className="h-6 w-6 text-primary" />
+                  <Calendar className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="mb-2 font-semibold">Organización Profesional</h3>
+                <h3 className="mb-2 font-semibold">Partidos Garantizados</h3>
                 <p className="text-sm text-muted-foreground">
-                  Gestión completa de calendarios, árbitros y resultados en tiempo real
+                  Calendario fijo con partidos cada semana contra equipos de tu nivel
                 </p>
               </CardContent>
             </Card>
@@ -649,20 +739,20 @@ export default function Home() {
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                   <Award className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="mb-2 font-semibold">Estadísticas Detalladas</h3>
+                <h3 className="mb-2 font-semibold">Premios y Trofeos</h3>
                 <p className="text-sm text-muted-foreground">
-                  Tablas de posiciones, goleadores, tarjetas y rendimiento de equipos
+                  Copa para campeón, medallas y reconocimientos a los mejores jugadores
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-mobile">
               <CardContent className="pt-6">
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <Phone className="h-6 w-6 text-primary" />
+                  <Star className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="mb-2 font-semibold">Acceso Móvil</h3>
+                <h3 className="mb-2 font-semibold">Portal del Capitán</h3>
                 <p className="text-sm text-muted-foreground">
-                  Árbitros y capitanes pueden gestionar todo desde su celular
+                  Gestiona tu plantilla, consulta calendario y sigue el desempeño de tu equipo
                 </p>
               </CardContent>
             </Card>
@@ -673,35 +763,39 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-12 sm:py-16">
         <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-2">¿Listo Para Competir?</h2>
+            <p className="text-muted-foreground">Inscribe a tu equipo ahora y sé parte de la mejor liga amateur</p>
+          </div>
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="overflow-hidden" data-testid="cta-register">
+            <Card className="overflow-hidden border-primary/50" data-testid="cta-register">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <UserPlus className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xl font-bold">Inscribe Tu Equipo</h3>
+                    <h3 className="mb-2 text-xl font-bold">Inscribe Tu Equipo Ahora</h3>
                     <p className="mb-4 text-muted-foreground">
-                      ¿Tienes un equipo de fútbol amateur? Únete a nuestra liga y compite contra los mejores equipos de la región.
+                      La temporada está por comenzar. No te quedes fuera de la competencia más emocionante de la región.
                     </p>
                     <ul className="mb-6 space-y-2 text-sm">
                       <li className="flex items-center gap-2">
-                        <ChevronRight className="h-4 w-4 text-primary" />
-                        Partidos semanales garantizados
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        Mínimo 11 jugadores por equipo
                       </li>
                       <li className="flex items-center gap-2">
-                        <ChevronRight className="h-4 w-4 text-primary" />
-                        Árbitros profesionales
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        Cuota de inscripción accesible
                       </li>
                       <li className="flex items-center gap-2">
-                        <ChevronRight className="h-4 w-4 text-primary" />
-                        Canchas de primera calidad
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                        Uniformes no incluidos
                       </li>
                     </ul>
-                    <Button className="gap-2" data-testid="button-cta-register">
+                    <Button size="lg" className="gap-2" data-testid="button-cta-register">
                       <UserPlus className="h-4 w-4" />
-                      Inscribir Equipo
+                      Quiero Inscribirme
                     </Button>
                   </div>
                 </div>
@@ -712,26 +806,26 @@ export default function Home() {
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                    <Mail className="h-6 w-6" />
+                    <Clock className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xl font-bold">Solicita Información</h3>
+                    <h3 className="mb-2 text-xl font-bold">¿Tienes Dudas?</h3>
                     <p className="mb-4 text-muted-foreground">
-                      ¿Tienes dudas sobre inscripciones, costos o requisitos? Contáctanos y te ayudaremos.
+                      Consulta sobre cuotas, horarios, requisitos o cualquier duda. Te respondemos en menos de 24 horas.
                     </p>
                     <div className="mb-6 space-y-3 text-sm">
                       <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span>+52 555 123 4567</span>
+                        <Phone className="h-4 w-4 text-primary" />
+                        <span className="font-medium">+52 555 123 4567</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-muted-foreground" />
-                        <span>info@ligafutbol.com</span>
+                        <Mail className="h-4 w-4 text-primary" />
+                        <span className="font-medium">inscripciones@ligafutbol.com</span>
                       </div>
                     </div>
-                    <Button variant="outline" className="gap-2" data-testid="button-cta-info">
+                    <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info">
                       <Mail className="h-4 w-4" />
-                      Enviar Mensaje
+                      Contáctanos
                     </Button>
                   </div>
                 </div>
