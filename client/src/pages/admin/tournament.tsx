@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTournamentSchema, finishTournamentSchema, type InsertTournament, type Tournament, type Team, type Standing } from "@shared/schema";
+import { insertTournamentSchema, finishTournamentSchema, type InsertTournament, type Tournament, type Team, type Standing, type Division, type TournamentType } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users } from "lucide-react";
+import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function TournamentManagement() {
@@ -23,6 +24,8 @@ export default function TournamentManagement() {
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [finishingTournament, setFinishingTournament] = useState<Tournament | null>(null);
   const [viewingTournament, setViewingTournament] = useState<Tournament | null>(null);
+  const [generatingSchedule, setGeneratingSchedule] = useState<Tournament | null>(null);
+  const [doubleRound, setDoubleRound] = useState(false);
 
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
     queryKey: ["/api/admin/tournaments"],
@@ -31,6 +34,14 @@ export default function TournamentManagement() {
       if (!response.ok) throw new Error("Error al cargar torneos");
       return response.json();
     },
+  });
+
+  const { data: divisions = [] } = useQuery<Division[]>({
+    queryKey: ["/api/divisions"],
+  });
+
+  const { data: tournamentTypes = [] } = useQuery<TournamentType[]>({
+    queryKey: ["/api/tournament-types"],
   });
 
   const { data: tournamentTeams = [] } = useQuery<Team[]>({
@@ -128,6 +139,32 @@ export default function TournamentManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments/completed"] });
       toast({ title: "Torneo eliminado correctamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const { data: scheduleTeams = [] } = useQuery<Team[]>({
+    queryKey: ["/api/admin/teams", generatingSchedule?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/teams?tournamentId=${generatingSchedule!.id}`, { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar equipos");
+      return response.json();
+    },
+    enabled: !!generatingSchedule,
+  });
+
+  const generateScheduleMutation = useMutation({
+    mutationFn: async ({ id, doubleRound }: { id: string; doubleRound: boolean }) => {
+      return apiRequest("POST", `/api/admin/tournaments/${id}/generate-schedule`, { doubleRound });
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      setGeneratingSchedule(null);
+      setDoubleRound(false);
+      toast({ title: "Calendario generado", description: data.message });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -284,6 +321,10 @@ export default function TournamentManagement() {
                   <Button size="sm" variant="outline" onClick={() => openEditDialog(tournament)} data-testid={`button-edit-tournament-${tournament.id}`}>
                     <Edit className="mr-1 h-3 w-3" />
                     Editar
+                  </Button>
+                  <Button size="sm" variant="secondary" onClick={() => setGeneratingSchedule(tournament)} data-testid={`button-generate-schedule-${tournament.id}`}>
+                    <CalendarPlus className="mr-1 h-3 w-3" />
+                    Generar Calendario
                   </Button>
                   <Button size="sm" variant="default" onClick={() => setFinishingTournament(tournament)} data-testid={`button-finish-tournament-${tournament.id}`}>
                     <Flag className="mr-1 h-3 w-3" />
@@ -544,6 +585,82 @@ export default function TournamentManagement() {
           ) : (
             <p className="text-center text-muted-foreground py-8">No hay datos de tabla de posiciones.</p>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!generatingSchedule} onOpenChange={() => { setGeneratingSchedule(null); setDoubleRound(false); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarPlus className="h-5 w-5" />
+              Generar Calendario
+            </DialogTitle>
+            <DialogDescription>
+              {generatingSchedule?.name} - Genera automáticamente los partidos del torneo
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg space-y-2">
+              <p className="text-sm font-medium">Equipos registrados: {scheduleTeams.length}</p>
+              {scheduleTeams.length >= 2 && (
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Se generarán {scheduleTeams.length - 1} jornadas con {Math.floor(scheduleTeams.length / 2)} partidos cada una.
+                  </p>
+                  {doubleRound && (
+                    <p className="text-sm text-muted-foreground">
+                      Con ida y vuelta: {(scheduleTeams.length - 1) * 2} jornadas en total.
+                    </p>
+                  )}
+                </>
+              )}
+              {scheduleTeams.length < 2 && (
+                <p className="text-sm text-destructive">Se necesitan al menos 2 equipos para generar el calendario.</p>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="doubleRound"
+                checked={doubleRound}
+                onCheckedChange={(checked) => setDoubleRound(checked === true)}
+                data-testid="checkbox-double-round"
+              />
+              <label htmlFor="doubleRound" className="text-sm font-medium cursor-pointer">
+                Ida y vuelta (dos vueltas completas)
+              </label>
+            </div>
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                <strong>Advertencia:</strong> Generar el calendario eliminará todos los partidos existentes del torneo.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setGeneratingSchedule(null); setDoubleRound(false); }}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={scheduleTeams.length < 2 || generateScheduleMutation.isPending}
+              onClick={() => {
+                if (generatingSchedule) {
+                  generateScheduleMutation.mutate({ id: generatingSchedule.id, doubleRound });
+                }
+              }}
+              data-testid="button-confirm-generate"
+            >
+              {generateScheduleMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Generar Partidos
+                </>
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
