@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3 } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -14,8 +14,9 @@ import NewsManagement from "./news";
 import RefereesManagement from "./referees";
 import DivisionsManagement from "./divisions";
 import FinancesManagement from "./finances";
+import StatisticsManagement from "./statistics";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -26,6 +27,7 @@ const menuItems = [
   { id: "players" as const, title: "Jugadores", icon: Users },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
   { id: "tournament" as const, title: "Torneo", icon: Trophy },
+  { id: "statistics" as const, title: "Estadísticas", icon: BarChart3 },
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
 ];
@@ -116,6 +118,7 @@ export default function AdminDashboard() {
             {activeSection === "players" && <PlayersManagement />}
             {activeSection === "matches" && <MatchesManagement />}
             {activeSection === "tournament" && <TournamentManagement />}
+            {activeSection === "statistics" && <StatisticsManagement />}
             {activeSection === "finances" && <FinancesManagement />}
             {activeSection === "news" && <NewsManagement />}
           </main>
