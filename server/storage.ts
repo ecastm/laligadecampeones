@@ -66,6 +66,7 @@ export interface IStorage {
 
   // Match Events
   getMatchEvents(matchId: string): Promise<MatchEventWithPlayer[]>;
+  getAllMatchEvents(): Promise<MatchEvent[]>;
   createMatchEvent(event: InsertMatchEvent): Promise<MatchEvent>;
   deleteMatchEvents(matchId: string): Promise<void>;
 
@@ -500,6 +501,10 @@ export class MemStorage implements IStorage {
       }
     }
     return result.sort((a, b) => a.minute - b.minute);
+  }
+
+  async getAllMatchEvents(): Promise<MatchEvent[]> {
+    return Array.from(this.matchEvents.values());
   }
 
   async createMatchEvent(insertEvent: InsertMatchEvent): Promise<MatchEvent> {

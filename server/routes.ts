@@ -206,6 +206,58 @@ export async function registerRoutes(
     }
   });
 
+  // Top scorers (public)
+  app.get("/api/home/scorers", async (req, res) => {
+    try {
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
+      }
+
+      const allEvents = await storage.getAllMatchEvents();
+      const teams = await storage.getTeams(targetTournamentId);
+      const teamIds = new Set(teams.map(t => t.id));
+      
+      // Filter goal events for teams in the tournament
+      const goalEvents = allEvents.filter(e => e.type === "GOAL" && teamIds.has(e.teamId));
+      
+      // Count goals per player
+      const playerGoals: Map<string, number> = new Map();
+      for (const event of goalEvents) {
+        const current = playerGoals.get(event.playerId) || 0;
+        playerGoals.set(event.playerId, current + 1);
+      }
+      
+      // Get player details and build scorers list
+      const allPlayers = await storage.getPlayers();
+      const scorers = Array.from(playerGoals.entries())
+        .map(([playerId, goals]) => {
+          const player = allPlayers.find(p => p.id === playerId);
+          const team = teams.find(t => t.id === player?.teamId);
+          return {
+            playerId,
+            playerName: player ? `${player.firstName} ${player.lastName}` : "Desconocido",
+            teamId: player?.teamId || "",
+            teamName: team?.name || "Sin equipo",
+            goals,
+            photoUrl: player?.photoUrls?.[0] || null,
+          };
+        })
+        .sort((a, b) => b.goals - a.goals)
+        .slice(0, 20);
+      
+      res.json(scorers);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/matches/:id", async (req, res) => {
     try {
       const match = await storage.getMatchWithTeams(req.params.id);

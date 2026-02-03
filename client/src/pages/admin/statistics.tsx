@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Target, Users, Trophy, TrendingUp } from "lucide-react";
 import { getAuthHeader } from "@/lib/auth";
 import type { Tournament, Player, Team } from "@shared/schema";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 
 interface TopScorer {
   playerId: string;
@@ -29,7 +29,7 @@ export default function StatisticsManagement() {
     },
   });
 
-  const { data: players = [], isLoading: loadingPlayers } = useQuery<Player[]>({
+  const { data: players = [] } = useQuery<Player[]>({
     queryKey: ["/api/admin/players"],
     queryFn: async () => {
       const response = await fetch("/api/admin/players", { headers: getAuthHeader() });
@@ -47,27 +47,20 @@ export default function StatisticsManagement() {
     },
   });
 
-  const getTeamName = (teamId: string) => {
-    return teams.find(t => t.id === teamId)?.name || "Sin equipo";
-  };
-
-  const topScorers: TopScorer[] = useMemo(() => {
-    if (players.length === 0 || teams.length === 0) return [];
-    
-    const scorersFromPlayers = players.slice(0, 10).map((p, idx) => ({
-      playerId: p.id,
-      playerName: `${p.firstName} ${p.lastName}`,
-      teamId: p.teamId,
-      teamName: getTeamName(p.teamId),
-      goals: Math.max(12 - idx * 1, 1),
-      photoUrl: p.photoUrls?.[0],
-    }));
-    
-    return scorersFromPlayers.sort((a, b) => b.goals - a.goals);
-  }, [players, teams]);
+  // Fetch real scorer data from API
+  const tournamentQueryParam = selectedTournamentId !== "all" ? `?tournamentId=${selectedTournamentId}` : "";
+  
+  const { data: topScorers = [], isLoading: loadingScorers } = useQuery<TopScorer[]>({
+    queryKey: ["/api/home/scorers", selectedTournamentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/home/scorers${tournamentQueryParam}`);
+      if (!response.ok) throw new Error("Error al cargar goleadores");
+      return response.json();
+    },
+  });
 
   const activeTournaments = tournaments.filter(t => t.status === "ACTIVO");
-  const totalMockGoals = topScorers.reduce((sum, s) => sum + s.goals, 0);
+  const totalGoals = topScorers.reduce((sum, s) => sum + s.goals, 0);
 
   return (
     <div className="space-y-6">
@@ -130,7 +123,7 @@ export default function StatisticsManagement() {
               </div>
               <div>
                 <p className="text-2xl font-bold">
-                  {totalMockGoals}
+                  {totalGoals}
                 </p>
                 <p className="text-sm text-muted-foreground">Goles Totales</p>
               </div>
@@ -165,7 +158,7 @@ export default function StatisticsManagement() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loadingPlayers ? (
+          {loadingScorers ? (
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12" />)}
             </div>

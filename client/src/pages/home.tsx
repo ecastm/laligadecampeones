@@ -115,6 +115,25 @@ export default function Home() {
     enabled: !!tournamentId && !!selectedDivision,
   });
 
+  interface TopScorer {
+    playerId: string;
+    playerName: string;
+    teamId: string;
+    teamName: string;
+    goals: number;
+    photoUrl: string | null;
+  }
+
+  const { data: scorers = [], isLoading: loadingScorers } = useQuery<TopScorer[]>({
+    queryKey: ["/api/home/scorers", tournamentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/home/scorers${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      if (!res.ok) throw new Error("Failed to fetch scorers");
+      return res.json();
+    },
+    enabled: !!tournamentId && !!selectedDivision,
+  });
+
   const rounds = Array.from(new Set(schedule.map(m => m.roundNumber))).sort((a, b) => a - b);
   const filteredSchedule = schedule.filter(m => {
     const matchRound = selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
@@ -611,66 +630,75 @@ export default function Home() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b text-muted-foreground">
-                              <th className="pb-3 text-left font-medium w-12">#</th>
-                              <th className="pb-3 text-left font-medium">Jugador</th>
-                              <th className="pb-3 text-left font-medium">Equipo</th>
-                              <th className="pb-3 text-center font-medium w-16">Goles</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {[
-                              { pos: 1, name: "Carlos Rodríguez", team: "Águilas FC", goals: 12 },
-                              { pos: 2, name: "Miguel Fernández", team: "Leones Unidos", goals: 10 },
-                              { pos: 3, name: "Andrés García", team: "Tigres del Valle", goals: 9 },
-                              { pos: 4, name: "Luis Martínez", team: "Dragones Rojos", goals: 8 },
-                              { pos: 5, name: "Pedro Sánchez", team: "Águilas FC", goals: 7 },
-                              { pos: 6, name: "Juan López", team: "Leones Unidos", goals: 6 },
-                              { pos: 7, name: "Roberto Díaz", team: "Tigres del Valle", goals: 5 },
-                              { pos: 8, name: "Fernando Torres", team: "Dragones Rojos", goals: 5 },
-                              { pos: 9, name: "Diego Ramírez", team: "Águilas FC", goals: 4 },
-                              { pos: 10, name: "Alejandro Ruiz", team: "Leones Unidos", goals: 4 },
-                            ].map((scorer, idx) => (
-                              <tr
-                                key={idx}
-                                className={`border-b last:border-0 ${idx < 3 ? "bg-primary/5" : ""}`}
-                                data-testid={`row-scorer-${idx + 1}`}
-                              >
-                                <td className="py-3 font-bold">
-                                  {scorer.pos <= 3 ? (
-                                    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                                      scorer.pos === 1 ? "bg-yellow-500 text-yellow-950" :
-                                      scorer.pos === 2 ? "bg-slate-400 text-slate-950" :
-                                      "bg-orange-400 text-orange-950"
-                                    }`}>
-                                      {scorer.pos}
-                                    </div>
-                                  ) : (
-                                    <span className="text-muted-foreground">{scorer.pos}</span>
-                                  )}
-                                </td>
-                                <td className="py-3">
-                                  <div className="flex items-center gap-2">
-                                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                                      <Users className="h-4 w-4 text-primary" />
-                                    </div>
-                                    <span className="font-medium">{scorer.name}</span>
-                                  </div>
-                                </td>
-                                <td className="py-3 text-muted-foreground">{scorer.team}</td>
-                                <td className="py-3 text-center">
-                                  <Badge variant="default" className="text-sm font-bold">
-                                    {scorer.goals}
-                                  </Badge>
-                                </td>
+                      {loadingScorers ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12" />)}
+                        </div>
+                      ) : scorers.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground">
+                          <Target className="mx-auto h-12 w-12 opacity-50" />
+                          <p className="mt-4">No hay goleadores registrados aún</p>
+                          <p className="text-sm">Los goles se registran cuando el árbitro finaliza un partido</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b text-muted-foreground">
+                                <th className="pb-3 text-left font-medium w-12">#</th>
+                                <th className="pb-3 text-left font-medium">Jugador</th>
+                                <th className="pb-3 text-left font-medium">Equipo</th>
+                                <th className="pb-3 text-center font-medium w-16">Goles</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                            </thead>
+                            <tbody>
+                              {scorers.map((scorer, idx) => (
+                                <tr
+                                  key={scorer.playerId}
+                                  className={`border-b last:border-0 ${idx < 3 ? "bg-primary/5" : ""}`}
+                                  data-testid={`row-scorer-${idx + 1}`}
+                                >
+                                  <td className="py-3 font-bold">
+                                    {idx < 3 ? (
+                                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                                        idx === 0 ? "bg-yellow-500 text-yellow-950" :
+                                        idx === 1 ? "bg-slate-400 text-slate-950" :
+                                        "bg-orange-400 text-orange-950"
+                                      }`}>
+                                        {idx + 1}
+                                      </div>
+                                    ) : (
+                                      <span className="text-muted-foreground">{idx + 1}</span>
+                                    )}
+                                  </td>
+                                  <td className="py-3">
+                                    <div className="flex items-center gap-2">
+                                      {scorer.photoUrl ? (
+                                        <img 
+                                          src={scorer.photoUrl} 
+                                          alt={scorer.playerName}
+                                          className="h-8 w-8 rounded-full object-cover"
+                                        />
+                                      ) : (
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                                          <Users className="h-4 w-4 text-primary" />
+                                        </div>
+                                      )}
+                                      <span className="font-medium">{scorer.playerName}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 text-muted-foreground">{scorer.teamName}</td>
+                                  <td className="py-3 text-center">
+                                    <Badge variant="default" className="text-sm font-bold">
+                                      {scorer.goals}
+                                    </Badge>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
