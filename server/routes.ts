@@ -103,13 +103,30 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/tournaments/active/all", async (req, res) => {
+    try {
+      const tournaments = await storage.getTournaments();
+      const activeTournaments = tournaments.filter(t => t.status === "ACTIVO");
+      res.json(activeTournaments);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/home/schedule", async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      if (!tournament) {
-        return res.json([]);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
       }
-      const matches = await storage.getMatches(tournament.id);
+      
+      const matches = await storage.getMatches(targetTournamentId);
       const result = [];
       for (const match of matches) {
         const withTeams = await storage.getMatchWithTeams(match.id);
@@ -124,11 +141,18 @@ export async function registerRoutes(
 
   app.get("/api/home/standings", async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      if (!tournament) {
-        return res.json([]);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
       }
-      const standings = await storage.calculateStandings(tournament.id);
+      
+      const standings = await storage.calculateStandings(targetTournamentId);
       res.json(standings);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -137,11 +161,18 @@ export async function registerRoutes(
 
   app.get("/api/home/results", async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      if (!tournament) {
-        return res.json([]);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
       }
-      const matches = await storage.getMatches(tournament.id);
+      
+      const matches = await storage.getMatches(targetTournamentId);
       const playedMatches = matches.filter(m => m.status === "JUGADO");
       const result = [];
       for (const match of playedMatches) {
@@ -157,11 +188,18 @@ export async function registerRoutes(
 
   app.get("/api/home/teams", async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      if (!tournament) {
-        return res.json([]);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
       }
-      const teams = await storage.getTeams(tournament.id);
+      
+      const teams = await storage.getTeams(targetTournamentId);
       res.json(teams);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -192,11 +230,18 @@ export async function registerRoutes(
   // ==================== NEWS (PUBLIC) ====================
   app.get("/api/home/news", async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      if (!tournament) {
-        return res.json([]);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json([]);
+        }
+        targetTournamentId = tournament.id;
       }
-      const news = await storage.getNews(tournament.id);
+      
+      const news = await storage.getNews(targetTournamentId);
       res.json(news);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });

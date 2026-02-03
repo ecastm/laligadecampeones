@@ -129,12 +129,21 @@ La aplicación estará disponible en el puerto 5000.
 
 ## Funcionalidades Principales
 
-### Página Principal (Pública)
-- Calendario de partidos con filtros por jornada y equipo
-- Tabla de posiciones (PJ, PG, PE, PP, GF, GC, DG, PTS)
-- Resultados recientes
-- Noticias del torneo (reseñas de partidos, blog informativo)
-- Detalle de partidos con eventos
+### Página Principal - Landing Page Promocional (Pública)
+- **Hero section**: Título promocional con CTAs para inscripción y solicitud de información
+- **Estadísticas**: Equipos registrados, jugadores activos, partidos por temporada
+- **Selector de División**: Botones para Primera y Segunda División con theming visual
+- **Visor de Torneos**: Al seleccionar una división muestra:
+  - Nombre del torneo y badge de división
+  - Calendario de partidos con filtros por jornada y equipo
+  - Tabla de posiciones (PJ, PG, PE, PP, GF, GC, DG, PTS)
+  - Resultados recientes
+  - Equipos participantes
+- **Secciones CTA**: "Inscribe Tu Equipo" y "Solicita Información" con datos de contacto
+- **Footer**: Enlaces a historial e inicio de sesión
+
+### API Adicional para Landing
+- `GET /api/tournaments/active/all` - Todos los torneos activos (para selector de división)
 
 ### Panel Admin
 - Gestión completa de usuarios, equipos, jugadores y partidos
