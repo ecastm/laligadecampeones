@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Liga de Fútbol - Documentación del Producto</title>
+  <style>
+    body { font-family: Calibri, Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
+    h1 { color: #1a365d; border-bottom: 3px solid #2563eb; padding-bottom: 10px; }
+    h2 { color: #1e40af; border-bottom: 1px solid #93c5fd; padding-bottom: 5px; margin-top: 30px; }
+    h3 { color: #3730a3; margin-top: 25px; }
+    h4 { color: #4338ca; margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+    th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
+    th { background-color: #e2e8f0; font-weight: bold; }
+    tr:nth-child(even) { background-color: #f8fafc; }
+    code { background-color: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-family: Consolas, monospace; }
+    pre { background-color: #f1f5f9; padding: 15px; border-radius: 8px; overflow-x: auto; font-family: Consolas, monospace; font-size: 13px; }
+    .status-ok { color: #16a34a; font-weight: bold; }
+    .status-warn { color: #d97706; font-weight: bold; }
+    .status-no { color: #dc2626; font-weight: bold; }
+    ul { margin: 10px 0; }
+    li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+
+<h1>LIGA DE FÚTBOL - Sistema de Gestión de Torneos</h1>
+<p><strong>Documentación Técnica del Producto</strong></p>
+<p><em>Fecha: Febrero 2026</em></p>
+
+<hr>
+
+<h2>1. DOCUMENTACIÓN TÉCNICA</h2>
+
+<h3>1.1 Stack Tecnológico</h3>
+
+<h4>Frontend</h4>
+<ul>
+  <li>React 18 + Vite + TypeScript</li>
+  <li>TailwindCSS + Shadcn UI (componentes)</li>
+  <li>TanStack React Query (estado del servidor)</li>
+  <li>Wouter (routing)</li>
+  <li>React Hook Form + Zod (formularios/validación)</li>
+</ul>
+
+<h4>Backend</h4>
+<ul>
+  <li>Node.js + Express + TypeScript</li>
+  <li>JWT (jsonwebtoken) + bcrypt (autenticación)</li>
+  <li>Zod (validación de esquemas)</li>
+</ul>
+
+<h4>Almacenamiento</h4>
+<ul>
+  <li>MemStorage (almacenamiento en memoria)</li>
+  <li>Patrón Repository con interface IStorage</li>
+</ul>
+
+<h4>Shared</h4>
+<ul>
+  <li>Esquemas Zod compartidos (client/server)</li>
+  <li>Tipos TypeScript inferidos de esquemas</li>
+</ul>
+
+<h3>1.2 Arquitectura del Proyecto</h3>
+<pre>
+├── client/                    # SPA React
+│   └── src/
+│       ├── components/ui/     # Shadcn UI components
+│       ├── lib/               # Auth helpers, queryClient
+│       ├── hooks/             # Custom hooks
+│       └── pages/             # Páginas por rol
+│           ├── admin/         # Panel administrador
+│           ├── captain/       # Panel capitán
+│           └── referee/       # Panel árbitro
+│
+├── server/                    # API Express
+│   ├── index.ts              # Entry point
+│   ├── routes.ts             # Endpoints REST
+│   ├── storage.ts            # MemStorage + IStorage interface
+│   ├── auth.ts               # JWT middleware
+│   └── seed.ts               # Datos iniciales
+│
+└── shared/
+    └── schema.ts             # Tipos y validaciones Zod
+</pre>
+
+<h3>1.3 Flujos Principales</h3>
+
+<h4>Flujo de Autenticación</h4>
+<ol>
+  <li>Usuario envía credenciales → POST /api/auth/login</li>
+  <li>Server valida con bcrypt → Genera JWT (24h)</li>
+  <li>Client almacena token en localStorage</li>
+  <li>Requests incluyen header: Authorization: Bearer &lt;token&gt;</li>
+  <li>Middleware auth.ts valida y extrae usuario</li>
+</ol>
+
+<h4>Flujo del Partido (Árbitro)</h4>
+<ol>
+  <li><strong>PROGRAMADO</strong> → Árbitro ve partido asignado</li>
+  <li>Árbitro inicia partido → POST /matches/:id/start → <strong>EN_CURSO</strong></li>
+  <li>Árbitro registra eventos (goles, tarjetas) durante partido</li>
+  <li>Árbitro finaliza → POST /matches/:id/finalize → <strong>JUGADO</strong>
+    <ul>
+      <li>Guarda marcador final</li>
+      <li>Genera multas automáticas por tarjetas</li>
+      <li>Actualiza tabla de posiciones</li>
+    </ul>
+  </li>
+</ol>
+
+<h4>Flujo de Goleadores</h4>
+<ol>
+  <li>Árbitro registra evento GOAL con playerId</li>
+  <li>API /api/home/scorers agrega eventos GOAL por jugador</li>
+  <li>Retorna top 20 ordenados por cantidad de goles</li>
+</ol>
+
+<hr>
+
+<h2>2. CASOS DE USO FORMALES</h2>
+
+<h3>CU-01: Iniciar Sesión</h3>
+<table>
+  <tr><th>Actor</th><td>Usuario (Admin/Capitán/Árbitro)</td></tr>
+  <tr><th>Precondición</th><td>Usuario registrado en el sistema</td></tr>
+  <tr><th>Flujo</th><td>Ingresa email + contraseña → Sistema valida → Redirige a panel según rol</td></tr>
+  <tr><th>Postcondición</th><td>Usuario autenticado con token JWT válido</td></tr>
+</table>
+
+<h3>CU-02: Gestionar Equipos (Admin)</h3>
+<table>
+  <tr><th>Actor</th><td>Administrador</td></tr>
+  <tr><th>Precondición</th><td>Sesión activa con rol ADMIN</td></tr>
+  <tr><th>Flujo</th><td>CRUD completo de equipos (crear, ver, editar, eliminar)</td></tr>
+  <tr><th>Reglas</th><td>Equipo asociado a torneo y opcionalmente a división</td></tr>
+</table>
+
+<h3>CU-03: Gestionar Jugadores (Admin/Capitán)</h3>
+<table>
+  <tr><th>Actor</th><td>Administrador o Capitán (solo su equipo)</td></tr>
+  <tr><th>Precondición</th><td>Sesión activa</td></tr>
+  <tr><th>Flujo</th><td>CRUD de jugadores con datos personales</td></tr>
+  <tr><th>Datos</th><td>Nombre, apellido, posición, número, DNI, fecha nacimiento, fotos</td></tr>
+</table>
+
+<h3>CU-04: Registrar Resultado de Partido (Árbitro)</h3>
+<table>
+  <tr><th>Actor</th><td>Árbitro asignado al partido</td></tr>
+  <tr><th>Precondición</th><td>Partido en estado PROGRAMADO o EN_CURSO</td></tr>
+  <tr><th>Flujo</th><td>
+    1. Iniciar partido (cambia a EN_CURSO)<br>
+    2. Registrar eventos (goles, tarjetas amarillas/rojas)<br>
+    3. Finalizar partido con marcador
+  </td></tr>
+  <tr><th>Postcondición</th><td>Partido JUGADO, multas generadas, posiciones actualizadas</td></tr>
+</table>
+
+<h3>CU-05: Generar Calendario Round-Robin (Admin)</h3>
+<table>
+  <tr><th>Actor</th><td>Administrador</td></tr>
+  <tr><th>Precondición</th><td>Torneo con equipos asignados</td></tr>
+  <tr><th>Flujo</th><td>Selecciona torneo → Configura ida/vuelta → Genera jornadas automáticamente</td></tr>
+  <tr><th>Algoritmo</th><td>Circle method para round-robin balanceado</td></tr>
+</table>
+
+<h3>CU-06: Consultar Tabla de Posiciones (Público)</h3>
+<table>
+  <tr><th>Actor</th><td>Cualquier visitante</td></tr>
+  <tr><th>Flujo</th><td>Selecciona división → Ve torneo activo → Consulta standings</td></tr>
+  <tr><th>Cálculo</th><td>PTS (3 victoria, 1 empate, 0 derrota), ordenado por PTS > DG > GF</td></tr>
+</table>
+
+<h3>CU-07: Consultar Tabla de Goleadores (Público)</h3>
+<table>
+  <tr><th>Actor</th><td>Cualquier visitante</td></tr>
+  <tr><th>Flujo</th><td>Selecciona división → Ve pestaña Goleadores</td></tr>
+  <tr><th>Datos</th><td>Top 20 jugadores con más goles, foto, equipo</td></tr>
+</table>
+
+<h3>CU-08: Finalizar Torneo (Admin)</h3>
+<table>
+  <tr><th>Actor</th><td>Administrador</td></tr>
+  <tr><th>Flujo</th><td>Selecciona campeón → Guarda tabla final → Cambia estado a FINALIZADO</td></tr>
+  <tr><th>Postcondición</th><td>Torneo archivado en historial con posiciones congeladas</td></tr>
+</table>
+
+<hr>
+
+<h2>3. FUNCIONALIDADES IMPLEMENTADAS</h2>
+
+<table>
+  <tr>
+    <th>Módulo</th>
+    <th>Funcionalidad</th>
+    <th>Estado</th>
+  </tr>
+  <tr><td>Auth</td><td>Login/Logout JWT</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Auth</td><td>Registro de usuarios</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Auth</td><td>Control RBAC (Admin/Capitán/Árbitro)</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Torneos</td><td>CRUD torneos</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Torneos</td><td>Finalizar torneo con campeón</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Torneos</td><td>Historial de torneos</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Divisiones</td><td>Primera/Segunda División con theming</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Equipos</td><td>CRUD equipos</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Jugadores</td><td>CRUD jugadores con datos personales</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Calendario</td><td>Generador round-robin automático</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Calendario</td><td>Vista previa antes de generar</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Partidos</td><td>Estados: PROGRAMADO → EN_CURSO → JUGADO</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Árbitro</td><td>Iniciar/Finalizar partido</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Árbitro</td><td>Registrar eventos (goles, tarjetas)</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Árbitro</td><td>Perfil obligatorio</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Capitán</td><td>Editar su equipo</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Capitán</td><td>Gestionar jugadores de su equipo</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Capitán</td><td>Perfil obligatorio</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Multas</td><td>Generación automática por tarjetas</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Multas</td><td>Gestión de estados (pendiente/pagada)</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Finanzas</td><td>Pagos de equipos</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Finanzas</td><td>Pagos de multas</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Finanzas</td><td>Gastos del torneo</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Estadísticas</td><td>Tabla de goleadores (datos reales)</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Estadísticas</td><td>Resumen general</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Landing</td><td>Página promocional pública</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Landing</td><td>Selector de división</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Landing</td><td>Visor de torneo (calendario, posiciones, resultados)</td><td class="status-ok">✓ Completo</td></tr>
+  <tr><td>Noticias</td><td>CRUD noticias/reseñas</td><td class="status-ok">✓ Completo</td></tr>
+</table>
+
+<hr>
+
+<h2>4. DOCUMENTACIÓN LEGAL</h2>
+
+<h3>Estado Actual: NO IMPLEMENTADA</h3>
+
+<table>
+  <tr>
+    <th>Elemento</th>
+    <th>Estado</th>
+  </tr>
+  <tr><td>Términos y Condiciones de uso</td><td class="status-no">✗ Pendiente</td></tr>
+  <tr><td>Política de Privacidad</td><td class="status-no">✗ Pendiente</td></tr>
+  <tr><td>Aviso de cookies</td><td class="status-no">✗ Pendiente</td></tr>
+  <tr><td>Consentimiento de tratamiento de datos</td><td class="status-no">✗ Pendiente</td></tr>
+  <tr><td>Política de menores de edad</td><td class="status-no">✗ Pendiente</td></tr>
+  <tr><td>Aviso legal / Información del responsable</td><td class="status-no">✗ Pendiente</td></tr>
+</table>
+
+<h3>Recomendaciones para Implementar</h3>
+<ol>
+  <li>Crear página /terminos con Términos y Condiciones</li>
+  <li>Crear página /privacidad con política de datos</li>
+  <li>Checkbox de aceptación en registro</li>
+  <li>Banner de cookies si aplica</li>
+  <li>Información de contacto del responsable</li>
+</ol>
+
+<hr>
+
+<h2>5. VALIDACIÓN TÉCNICA DEL ESTADO EN PRODUCCIÓN</h2>
+
+<h3>Estado Actual: DESARROLLO (No publicado)</h3>
+
+<table>
+  <tr>
+    <th>Aspecto</th>
+    <th>Estado</th>
+    <th>Observaciones</th>
+  </tr>
+  <tr><td>Servidor</td><td class="status-ok">✓ Funcionando</td><td>Express en puerto 5000</td></tr>
+  <tr><td>Frontend</td><td class="status-ok">✓ Funcionando</td><td>Vite + React compilando</td></tr>
+  <tr><td>Autenticación</td><td class="status-ok">✓ Operativa</td><td>JWT funcionando correctamente</td></tr>
+  <tr><td>Base de datos</td><td class="status-warn">⚠ En memoria</td><td>Datos se pierden al reiniciar</td></tr>
+  <tr><td>Seed data</td><td class="status-ok">✓ Carga correcta</td><td>4 equipos, 44 jugadores, 6 partidos demo</td></tr>
+  <tr><td>API endpoints</td><td class="status-ok">✓ Todos operativos</td><td>Probados y respondiendo</td></tr>
+  <tr><td>Responsive</td><td class="status-ok">✓ Implementado</td><td>Mobile-friendly</td></tr>
+  <tr><td>HTTPS</td><td class="status-warn">⚠ Pendiente</td><td>Solo disponible en deploy</td></tr>
+  <tr><td>Dominio</td><td class="status-warn">⚠ Pendiente</td><td>Usar .replit.app o dominio custom</td></tr>
+</table>
+
+<h3>Credenciales de Prueba</h3>
+<table>
+  <tr>
+    <th>Rol</th>
+    <th>Email</th>
+    <th>Contraseña</th>
+  </tr>
+  <tr><td>Administrador</td><td>admin@liga.com</td><td>admin123</td></tr>
+  <tr><td>Administrador 2</td><td>admin2@liga.com</td><td>admin123</td></tr>
+  <tr><td>Capitán (Águilas FC)</td><td>capitan1@liga.com</td><td>capitan123</td></tr>
+  <tr><td>Capitán (Leones Unidos)</td><td>capitan2@liga.com</td><td>capitan123</td></tr>
+  <tr><td>Árbitro 1</td><td>arbitro1@liga.com</td><td>arbitro123</td></tr>
+  <tr><td>Árbitro 2</td><td>arbitro2@liga.com</td><td>arbitro123</td></tr>
+</table>
+
+<h3>Métricas del Seed</h3>
+<ul>
+  <li>3 administradores</li>
+  <li>4 equipos con 11 jugadores cada uno (44 total)</li>
+  <li>4 capitanes (uno por equipo)</li>
+  <li>2 árbitros</li>
+  <li>6 partidos de demo</li>
+  <li>2 divisiones (Primera, Segunda)</li>
+  <li>1 torneo activo</li>
+</ul>
+
+<hr>
+
+<p style="text-align: center; color: #64748b; margin-top: 40px;">
+  <em>Documento generado automáticamente - Liga de Fútbol v1.0</em>
+</p>
+
+</body>
+</html>
