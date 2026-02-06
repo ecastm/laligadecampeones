@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3 } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -20,16 +20,19 @@ type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "t
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
-  { id: "users" as const, title: "Usuarios", icon: UserCog },
-  { id: "referees" as const, title: "Árbitros", icon: ClipboardList },
-  { id: "divisions" as const, title: "Divisiones", icon: Layers },
   { id: "teams" as const, title: "Equipos", icon: Shield },
   { id: "players" as const, title: "Jugadores", icon: Users },
+  { id: "referees" as const, title: "Árbitros", icon: ClipboardList },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
   { id: "tournament" as const, title: "Torneo", icon: Trophy },
   { id: "statistics" as const, title: "Estadísticas", icon: BarChart3 },
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
+];
+
+const configItems = [
+  { id: "users" as const, title: "Usuarios", icon: UserCog },
+  { id: "divisions" as const, title: "Divisiones", icon: Layers },
 ];
 
 export default function AdminDashboard() {
@@ -82,6 +85,28 @@ export default function AdminDashboard() {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>
+                <Settings className="h-3.5 w-3.5 mr-1 inline" />
+                Configuración
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {configItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        onClick={() => setActiveSection(item.id)}
+                        isActive={activeSection === item.id}
+                        data-testid={`nav-${item.id}`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
           <div className="mt-auto border-t p-4">
             <Button
@@ -101,7 +126,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">
-                {menuItems.find(i => i.id === activeSection)?.title || "Panel"}
+                {[...menuItems, ...configItems].find(i => i.id === activeSection)?.title || "Panel"}
               </h1>
             </div>
             <div className="flex items-center gap-2">
