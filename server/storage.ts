@@ -18,6 +18,7 @@ import {
   type FinePayment, type InsertFinePayment,
   type Expense, type InsertExpense,
   type MarketingMedia, type InsertMarketingMedia,
+  type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -149,6 +150,13 @@ export interface IStorage {
   updateMarketingMedia(id: string, data: Partial<InsertMarketingMedia>): Promise<MarketingMedia | undefined>;
   deleteMarketingMedia(id: string): Promise<void>;
 
+  // Contact Messages
+  getContactMessages(): Promise<ContactMessage[]>;
+  getContactMessage(id: string): Promise<ContactMessage | undefined>;
+  createContactMessage(message: InsertContactMessage): Promise<ContactMessage>;
+  updateContactMessageStatus(id: string, status: string): Promise<ContactMessage | undefined>;
+  deleteContactMessage(id: string): Promise<void>;
+
   // Schedule Generation
   generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean): Promise<Match[]>;
 }
@@ -172,6 +180,7 @@ export class MemStorage implements IStorage {
   private finePayments: Map<string, FinePayment>;
   private expenses: Map<string, Expense>;
   private marketingMedia: Map<string, MarketingMedia>;
+  private contactMessages: Map<string, ContactMessage>;
 
   constructor() {
     this.users = new Map();
@@ -192,6 +201,7 @@ export class MemStorage implements IStorage {
     this.finePayments = new Map();
     this.expenses = new Map();
     this.marketingMedia = new Map();
+    this.contactMessages = new Map();
     
     this.initializeTournamentTypes();
     this.initializeDivisions();
@@ -1108,6 +1118,41 @@ export class MemStorage implements IStorage {
     await this.updateTournament(tournamentId, { scheduleGenerated: true } as any);
     
     return generatedMatches;
+  }
+
+  // Contact Messages
+  async getContactMessages(): Promise<ContactMessage[]> {
+    return Array.from(this.contactMessages.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getContactMessage(id: string): Promise<ContactMessage | undefined> {
+    return this.contactMessages.get(id);
+  }
+
+  async createContactMessage(message: InsertContactMessage): Promise<ContactMessage> {
+    const id = randomUUID();
+    const contactMessage: ContactMessage = {
+      id,
+      ...message,
+      status: "NUEVO",
+      createdAt: new Date().toISOString(),
+    };
+    this.contactMessages.set(id, contactMessage);
+    return contactMessage;
+  }
+
+  async updateContactMessageStatus(id: string, status: string): Promise<ContactMessage | undefined> {
+    const msg = this.contactMessages.get(id);
+    if (!msg) return undefined;
+    const updated = { ...msg, status: status as any };
+    this.contactMessages.set(id, updated);
+    return updated;
+  }
+
+  async deleteContactMessage(id: string): Promise<void> {
+    this.contactMessages.delete(id);
   }
 }
 

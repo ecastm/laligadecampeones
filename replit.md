@@ -108,6 +108,10 @@ La aplicación estará disponible en el puerto 5000.
 - `/api/admin/fine-payments` - Gestión de pagos de multas
 - `/api/admin/expenses` - Gestión de gastos del torneo
 - `/api/admin/marketing` - CRUD contenido multimedia (fotos y videos)
+- `/api/admin/messages` - Gestión de mensajes de contacto (ver, actualizar estado, eliminar)
+
+### Público - Contacto
+- `POST /api/contact` - Enviar mensaje de contacto (sin autenticación)
 
 ### Capitán (requiere rol CAPITAN)
 - `GET/PUT /api/captain/team` - Mi equipo

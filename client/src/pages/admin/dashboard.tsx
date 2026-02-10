@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -16,9 +16,10 @@ import DivisionsManagement from "./divisions";
 import FinancesManagement from "./finances";
 import StatisticsManagement from "./statistics";
 import MarketingManagement from "./marketing";
+import MessagesManagement from "./messages";
 import Regulations from "@/components/regulations";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -31,6 +32,7 @@ const menuItems = [
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
   { id: "marketing" as const, title: "Marketing", icon: Megaphone },
+  { id: "messages" as const, title: "Mensajería", icon: MessageSquare },
   { id: "regulations" as const, title: "Reglamento", icon: ScrollText },
 ];
 
@@ -151,6 +153,7 @@ export default function AdminDashboard() {
             {activeSection === "finances" && <FinancesManagement />}
             {activeSection === "news" && <NewsManagement />}
             {activeSection === "marketing" && <MarketingManagement />}
+            {activeSection === "messages" && <MessagesManagement />}
             {activeSection === "regulations" && <Regulations />}
           </main>
         </div>
@@ -168,6 +171,7 @@ function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => 
     { title: "Partidos", icon: Calendar, description: "Programa y administra los partidos", section: "matches" },
     { title: "Noticias", icon: Newspaper, description: "Publica reseñas y noticias del torneo", section: "news" },
     { title: "Marketing", icon: Megaphone, description: "Sube fotos y videos promocionales", section: "marketing" },
+    { title: "Mensajería", icon: MessageSquare, description: "Mensajes de contacto recibidos", section: "messages" },
     { title: "Finanzas", icon: DollarSign, description: "Gestiona pagos, multas y gastos", section: "finances" },
     { title: "Estadísticas", icon: BarChart3, description: "Consulta goleadores y estadísticas", section: "statistics" },
     { title: "Torneo", icon: Trophy, description: "Configura y gestiona los torneos", section: "tournament" },

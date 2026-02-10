@@ -22,6 +22,7 @@ import {
   insertFinePaymentSchema,
   insertExpenseSchema,
   insertMarketingMediaSchema,
+  insertContactMessageSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1455,6 +1456,53 @@ export async function registerRoutes(
   app.delete("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       await storage.deleteMarketingMedia(req.params.id);
+      res.status(204).send();
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== PUBLIC CONTACT MESSAGES ====================
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const data = insertContactMessageSchema.parse(req.body);
+      const message = await storage.createContactMessage(data);
+      res.status(201).json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== ADMIN CONTACT MESSAGES ====================
+  app.get("/api/admin/messages", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const messages = await storage.getContactMessages();
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/messages/:id/status", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const { status } = req.body;
+      if (!["NUEVO", "LEIDO", "RESPONDIDO"].includes(status)) {
+        return res.status(400).json({ message: "Estado inválido" });
+      }
+      const updated = await storage.updateContactMessageStatus(req.params.id, status);
+      if (!updated) return res.status(404).json({ message: "Mensaje no encontrado" });
+      res.json(updated);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/messages/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteContactMessage(req.params.id);
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });

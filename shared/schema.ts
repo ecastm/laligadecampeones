@@ -614,3 +614,29 @@ export const insertMarketingMediaSchema = z.object({
   tournamentId: z.string().optional(),
 });
 export type InsertMarketingMedia = z.infer<typeof insertMarketingMediaSchema>;
+
+// Contact Messages
+export const ContactMessageStatus = {
+  NUEVO: "NUEVO",
+  LEIDO: "LEIDO",
+  RESPONDIDO: "RESPONDIDO",
+} as const;
+export type ContactMessageStatus = (typeof ContactMessageStatus)[keyof typeof ContactMessageStatus];
+
+export interface ContactMessage {
+  id: string;
+  contactName: string;
+  phone: string;
+  email: string;
+  comments: string;
+  status: ContactMessageStatus;
+  createdAt: string;
+}
+
+export const insertContactMessageSchema = z.object({
+  contactName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
+  phone: z.string().min(7, "El teléfono debe tener al menos 7 caracteres"),
+  email: z.string().email("Correo electrónico inválido"),
+  comments: z.string().min(1, "Los comentarios son obligatorios"),
+});
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;

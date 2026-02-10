@@ -1,12 +1,19 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Calendar, 
   Trophy, 
@@ -24,11 +31,13 @@ import {
   CheckCircle,
   Star,
   Clock,
-  Zap
+  Zap,
+  Send
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SiInstagram } from "react-icons/si";
+import { insertContactMessageSchema, type InsertContactMessage } from "@shared/schema";
 import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor, Division } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 import heroFootball from "@/assets/images/football-field.jpg";
@@ -37,12 +46,33 @@ import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
 
 export default function Home() {
+  const { toast } = useToast();
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
   const [selectedRound, setSelectedRound] = useState<string>("all");
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("calendario");
+  const [showContactForm, setShowContactForm] = useState(false);
+
+  const contactForm = useForm<InsertContactMessage>({
+    resolver: zodResolver(insertContactMessageSchema),
+    defaultValues: { contactName: "", phone: "", email: "", comments: "" },
+  });
+
+  const contactMutation = useMutation({
+    mutationFn: async (data: InsertContactMessage) => {
+      await apiRequest("POST", "/api/contact", data);
+    },
+    onSuccess: () => {
+      toast({ title: "Mensaje enviado", description: "Nos pondremos en contacto contigo pronto." });
+      setShowContactForm(false);
+      contactForm.reset();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se pudo enviar el mensaje. Intenta de nuevo.", variant: "destructive" });
+    },
+  });
 
   const { data: divisions = [], isLoading: loadingDivisions } = useQuery<Division[]>({
     queryKey: ["/api/divisions"],
@@ -225,11 +255,11 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" className="gap-2 text-base" data-testid="button-register-team">
+              <Button size="lg" className="gap-2 text-base" data-testid="button-register-team" onClick={() => setShowContactForm(true)}>
                 <UserPlus className="h-5 w-5" />
                 Inscribir Mi Equipo
               </Button>
-              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" data-testid="button-request-info">
+              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" data-testid="button-request-info" onClick={() => setShowContactForm(true)}>
                 <Info className="h-5 w-5" />
                 Más Información
               </Button>
@@ -912,7 +942,7 @@ export default function Home() {
                         Uniformes no incluidos
                       </li>
                     </ul>
-                    <Button size="lg" className="gap-2" data-testid="button-cta-register">
+                    <Button size="lg" className="gap-2" data-testid="button-cta-register" onClick={() => setShowContactForm(true)}>
                       <UserPlus className="h-4 w-4" />
                       Quiero Inscribirme
                     </Button>
@@ -943,7 +973,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info">
+                      <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info" onClick={() => setShowContactForm(true)}>
                         <Mail className="h-4 w-4" />
                         Contáctanos
                       </Button>
@@ -1013,6 +1043,80 @@ export default function Home() {
               <p className="text-3xl font-extrabold text-muted-foreground">1.000 &euro;</p>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showContactForm} onOpenChange={setShowContactForm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl">
+              <UserPlus className="h-5 w-5 text-primary" />
+              Formulario de Contacto
+            </DialogTitle>
+            <DialogDescription>
+              Déjanos tus datos y nos pondremos en contacto contigo para inscribir a tu equipo.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...contactForm}>
+            <form onSubmit={contactForm.handleSubmit((data) => contactMutation.mutate(data))} className="space-y-4">
+              <FormField
+                control={contactForm.control}
+                name="contactName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre de Contacto</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Tu nombre completo" {...field} data-testid="input-contact-name" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={contactForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono</FormLabel>
+                    <FormControl>
+                      <Input placeholder="+52 555 123 4567" {...field} data-testid="input-contact-phone" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={contactForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Correo Electrónico</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="tu@email.com" {...field} data-testid="input-contact-email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={contactForm.control}
+                name="comments"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Comentarios</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Cuéntanos sobre tu equipo, número de jugadores, experiencia..." className="resize-none" rows={3} {...field} data-testid="input-contact-comments" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full gap-2" disabled={contactMutation.isPending} data-testid="button-send-contact">
+                <Send className="h-4 w-4" />
+                {contactMutation.isPending ? "Enviando..." : "Enviar Mensaje"}
+              </Button>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
