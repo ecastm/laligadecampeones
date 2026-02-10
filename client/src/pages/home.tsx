@@ -51,6 +51,7 @@ import teamHuddle from "@/assets/images/team-huddle.jpg";
 import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
 import waterSplash from "@/assets/images/water-splash.jpg";
+import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 
 export default function Home() {
   const { toast } = useToast();
@@ -201,7 +202,7 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-primary" />
+              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
             <div className="flex items-center gap-2">
