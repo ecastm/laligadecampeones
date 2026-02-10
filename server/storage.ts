@@ -17,6 +17,7 @@ import {
   type TeamPayment, type InsertTeamPayment,
   type FinePayment, type InsertFinePayment,
   type Expense, type InsertExpense,
+  type MarketingMedia, type InsertMarketingMedia,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -141,6 +142,13 @@ export interface IStorage {
   updateExpense(id: string, data: Partial<InsertExpense>): Promise<Expense | undefined>;
   deleteExpense(id: string): Promise<void>;
 
+  // Marketing Media
+  getMarketingMedia(): Promise<MarketingMedia[]>;
+  getMarketingMediaItem(id: string): Promise<MarketingMedia | undefined>;
+  createMarketingMedia(media: InsertMarketingMedia): Promise<MarketingMedia>;
+  updateMarketingMedia(id: string, data: Partial<InsertMarketingMedia>): Promise<MarketingMedia | undefined>;
+  deleteMarketingMedia(id: string): Promise<void>;
+
   // Schedule Generation
   generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean): Promise<Match[]>;
 }
@@ -163,6 +171,7 @@ export class MemStorage implements IStorage {
   private teamPayments: Map<string, TeamPayment>;
   private finePayments: Map<string, FinePayment>;
   private expenses: Map<string, Expense>;
+  private marketingMedia: Map<string, MarketingMedia>;
 
   constructor() {
     this.users = new Map();
@@ -182,6 +191,7 @@ export class MemStorage implements IStorage {
     this.teamPayments = new Map();
     this.finePayments = new Map();
     this.expenses = new Map();
+    this.marketingMedia = new Map();
     
     this.initializeTournamentTypes();
     this.initializeDivisions();
@@ -972,6 +982,40 @@ export class MemStorage implements IStorage {
 
   async deleteExpense(id: string): Promise<void> {
     this.expenses.delete(id);
+  }
+
+  // Marketing Media
+  async getMarketingMedia(): Promise<MarketingMedia[]> {
+    return Array.from(this.marketingMedia.values()).sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async getMarketingMediaItem(id: string): Promise<MarketingMedia | undefined> {
+    return this.marketingMedia.get(id);
+  }
+
+  async createMarketingMedia(media: InsertMarketingMedia): Promise<MarketingMedia> {
+    const id = randomUUID();
+    const newMedia: MarketingMedia = {
+      id,
+      ...media,
+      createdAt: new Date().toISOString(),
+    };
+    this.marketingMedia.set(id, newMedia);
+    return newMedia;
+  }
+
+  async updateMarketingMedia(id: string, data: Partial<InsertMarketingMedia>): Promise<MarketingMedia | undefined> {
+    const media = this.marketingMedia.get(id);
+    if (!media) return undefined;
+    const updated: MarketingMedia = { ...media, ...data };
+    this.marketingMedia.set(id, updated);
+    return updated;
+  }
+
+  async deleteMarketingMedia(id: string): Promise<void> {
+    this.marketingMedia.delete(id);
   }
 
   // Schedule Generation - Round Robin Circle Method
