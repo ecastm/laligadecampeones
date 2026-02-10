@@ -586,3 +586,31 @@ export interface TournamentWithDivision extends Tournament {
   division?: Division;
   tournamentType?: TournamentType;
 }
+
+// Marketing Media
+export const MediaType = {
+  PHOTO: "PHOTO",
+  VIDEO: "VIDEO",
+} as const;
+export type MediaType = (typeof MediaType)[keyof typeof MediaType];
+
+export interface MarketingMedia {
+  id: string;
+  title: string;
+  description?: string;
+  type: MediaType;
+  url: string;
+  thumbnailUrl?: string;
+  tournamentId?: string;
+  createdAt: string;
+}
+
+export const insertMarketingMediaSchema = z.object({
+  title: z.string().min(2, "El título debe tener al menos 2 caracteres"),
+  description: z.string().optional(),
+  type: z.enum(["PHOTO", "VIDEO"]),
+  url: z.string().min(1, "La URL es obligatoria"),
+  thumbnailUrl: z.string().optional(),
+  tournamentId: z.string().optional(),
+});
+export type InsertMarketingMedia = z.infer<typeof insertMarketingMediaSchema>;
