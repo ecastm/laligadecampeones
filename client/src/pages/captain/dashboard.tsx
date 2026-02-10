@@ -18,18 +18,20 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, Camera, IdCard } from "lucide-react";
+import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, Camera, IdCard, ScrollText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import Regulations from "@/components/regulations";
 
-type CaptainSection = "team" | "players" | "schedule" | "profile";
+type CaptainSection = "team" | "players" | "schedule" | "profile" | "regulations";
 
 const menuItems = [
   { id: "team" as const, title: "Mi Equipo", icon: Shield },
   { id: "players" as const, title: "Jugadores", icon: Users },
   { id: "schedule" as const, title: "Calendario", icon: Calendar },
+  { id: "regulations" as const, title: "Reglamento", icon: ScrollText },
   { id: "profile" as const, title: "Mi Perfil", icon: User },
 ];
 
@@ -124,6 +126,7 @@ export default function CaptainDashboard() {
             {effectiveSection === "team" && <TeamInfo />}
             {effectiveSection === "players" && <TeamPlayers />}
             {effectiveSection === "schedule" && <TeamSchedule />}
+            {effectiveSection === "regulations" && <Regulations />}
             {effectiveSection === "profile" && <ProfileSection profile={captainProfile} />}
           </main>
         </div>

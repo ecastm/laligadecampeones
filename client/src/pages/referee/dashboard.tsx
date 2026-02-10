@@ -19,18 +19,21 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
-type RefereeSection = "pending" | "completed" | "standings" | "results" | "profile";
+import Regulations from "@/components/regulations";
+
+type RefereeSection = "pending" | "completed" | "standings" | "results" | "profile" | "regulations";
 
 const menuItems = [
   { id: "pending" as const, title: "Pendientes", icon: Calendar },
   { id: "completed" as const, title: "Completados", icon: CircleDot },
   { id: "standings" as const, title: "Posiciones", icon: Trophy },
   { id: "results" as const, title: "Resultados", icon: ListOrdered },
+  { id: "regulations" as const, title: "Reglamento", icon: ScrollText },
   { id: "profile" as const, title: "Mi Perfil", icon: User },
 ];
 
@@ -135,6 +138,7 @@ export default function RefereeDashboard() {
             )}
             {effectiveSection === "standings" && <StandingsSection />}
             {effectiveSection === "results" && <ResultsSection />}
+            {effectiveSection === "regulations" && <Regulations />}
             {effectiveSection === "profile" && <ProfileSection profile={refereeProfile} />}
           </main>
         </div>
