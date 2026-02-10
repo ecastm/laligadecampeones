@@ -30,6 +30,10 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  // ==================== OBJECT STORAGE ====================
+  const { registerObjectStorageRoutes } = await import("./replit_integrations/object_storage");
+  registerObjectStorageRoutes(app);
+
   // ==================== AUTH ====================
   app.post("/api/auth/login", async (req, res) => {
     try {
