@@ -156,7 +156,7 @@ export default function RefereesManagement() {
           {refereesWithoutProfile.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-500" />
+                <AlertCircle className="h-5 w-5 text-amber-700 dark:text-amber-500" />
                 Pendientes de completar perfil ({refereesWithoutProfile.length})
               </h3>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -168,7 +168,7 @@ export default function RefereesManagement() {
                           <CardTitle className="text-lg truncate">{referee.user.name}</CardTitle>
                           <p className="text-sm text-muted-foreground truncate">{referee.user.email}</p>
                         </div>
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                        <Badge variant="outline" className="text-amber-800 dark:text-amber-500 border-amber-700">
                           Sin perfil
                         </Badge>
                       </div>

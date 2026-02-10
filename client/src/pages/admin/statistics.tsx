@@ -134,8 +134,8 @@ export default function StatisticsManagement() {
         <Card data-testid="stat-top-scorer">
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-yellow-500/10">
-                <TrendingUp className="h-6 w-6 text-yellow-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-700/10">
+                <TrendingUp className="h-6 w-6 text-amber-800 dark:text-amber-500" />
               </div>
               <div>
                 <p className="text-lg font-bold truncate">
@@ -189,7 +189,7 @@ export default function StatisticsManagement() {
                       <td className="py-3 font-bold">
                         {idx < 3 ? (
                           <div className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                            idx === 0 ? "bg-yellow-500 text-yellow-950" :
+                            idx === 0 ? "bg-amber-700 text-amber-950" :
                             idx === 1 ? "bg-slate-400 text-slate-950" :
                             "bg-orange-400 text-orange-950"
                           }`}>

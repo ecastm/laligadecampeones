@@ -108,7 +108,7 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
                             ? "outline"
                             : "destructive"
                         }
-                        className={event.type === "YELLOW" ? "bg-yellow-500 text-white border-yellow-600" : ""}
+                        className={event.type === "YELLOW" ? "bg-amber-600 text-white border-amber-700" : ""}
                       >
                         {event.type === "GOAL" ? "Gol" : event.type === "YELLOW" ? "Amarilla" : "Roja"}
                       </Badge>

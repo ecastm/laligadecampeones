@@ -589,7 +589,7 @@ function MatchDetailsDialog({
       case "GOAL":
         return <Goal className="h-4 w-4 text-primary" />;
       case "YELLOW":
-        return <div className="h-4 w-3 rounded-sm bg-yellow-400" />;
+        return <div className="h-4 w-3 rounded-sm bg-amber-600" />;
       case "RED":
         return <div className="h-4 w-3 rounded-sm bg-red-500" />;
       default:
@@ -666,7 +666,7 @@ function MatchDetailsDialog({
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
-                    <div className="h-4 w-3 rounded-sm bg-yellow-400" />
+                    <div className="h-4 w-3 rounded-sm bg-amber-600" />
                     Amarillas
                   </CardTitle>
                 </CardHeader>

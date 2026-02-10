@@ -302,7 +302,7 @@ export default function TournamentManagement() {
                           {divisions.map((div) => (
                             <SelectItem key={div.id} value={div.id}>
                               <div className="flex items-center gap-2">
-                                <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                                <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-amber-700 dark:text-amber-500" : "text-emerald-700 dark:text-emerald-500"}`} />
                                 {div.name}
                               </div>
                             </SelectItem>
@@ -347,8 +347,8 @@ export default function TournamentManagement() {
                     const division = getDivisionById(tournament.divisionId);
                     return division ? (
                       <div className="flex items-center gap-2 text-sm">
-                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
-                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-yellow-600 dark:text-yellow-400" : "text-slate-600 dark:text-slate-400"}`}>
+                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-amber-700 dark:text-amber-500" : "text-emerald-700 dark:text-emerald-500"}`} />
+                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-amber-800 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                           {division.name}
                         </span>
                       </div>
@@ -398,7 +398,7 @@ export default function TournamentManagement() {
       {completedTournaments.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Award className="h-5 w-5 text-yellow-500" />
+            <Award className="h-5 w-5 text-amber-700 dark:text-amber-500" />
             Torneos Finalizados
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -418,8 +418,8 @@ export default function TournamentManagement() {
                     const division = getDivisionById(tournament.divisionId);
                     return division ? (
                       <div className="flex items-center gap-2 text-sm">
-                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
-                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-yellow-600 dark:text-yellow-400" : "text-slate-600 dark:text-slate-400"}`}>
+                        <Shield className={`h-4 w-4 shrink-0 ${division.theme === "PRIMERA" ? "text-amber-700 dark:text-amber-500" : "text-emerald-700 dark:text-emerald-500"}`} />
+                        <span className={`font-medium ${division.theme === "PRIMERA" ? "text-amber-800 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400"}`}>
                           {division.name}
                         </span>
                       </div>
@@ -434,7 +434,7 @@ export default function TournamentManagement() {
                     <span>Finalizó: {tournament.endDate ? formatDate(tournament.endDate) : "N/A"}</span>
                   </div>
                   {tournament.championTeamName && (
-                    <div className="flex items-center gap-2 text-sm font-medium text-yellow-600 dark:text-yellow-400">
+                    <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-400">
                       <Trophy className="h-4 w-4 shrink-0" />
                       <span className="truncate">Campeón: {tournament.championTeamName}</span>
                     </div>
@@ -548,7 +548,7 @@ export default function TournamentManagement() {
                         {divisions.map((div) => (
                           <SelectItem key={div.id} value={div.id}>
                             <div className="flex items-center gap-2">
-                              <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-yellow-500" : "text-slate-500"}`} />
+                              <Shield className={`h-4 w-4 ${div.theme === "PRIMERA" ? "text-amber-700 dark:text-amber-500" : "text-emerald-700 dark:text-emerald-500"}`} />
                               {div.name}
                             </div>
                           </SelectItem>
@@ -622,13 +622,13 @@ export default function TournamentManagement() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-500" />
+              <Trophy className="h-5 w-5 text-amber-700 dark:text-amber-500" />
               {viewingTournament?.name}
             </DialogTitle>
             <DialogDescription>
               {viewingTournament?.seasonName} - {viewingTournament?.location}
               {viewingTournament?.championTeamName && (
-                <span className="block mt-1 font-medium text-yellow-600 dark:text-yellow-400">
+                <span className="block mt-1 font-medium text-amber-800 dark:text-amber-400">
                   Campeón: {viewingTournament.championTeamName}
                 </span>
               )}
@@ -653,9 +653,9 @@ export default function TournamentManagement() {
                 </TableHeader>
                 <TableBody>
                   {viewingTournament.finalStandings.map((standing: Standing, index: number) => (
-                    <TableRow key={standing.teamId} className={index === 0 ? "bg-yellow-50 dark:bg-yellow-900/20" : ""}>
+                    <TableRow key={standing.teamId} className={index === 0 ? "bg-amber-50 dark:bg-amber-900/20" : ""}>
                       <TableCell className="font-medium">
-                        {index === 0 ? <Trophy className="h-4 w-4 text-yellow-500" /> : index + 1}
+                        {index === 0 ? <Trophy className="h-4 w-4 text-amber-700 dark:text-amber-500" /> : index + 1}
                       </TableCell>
                       <TableCell className="font-medium">{standing.teamName}</TableCell>
                       <TableCell className="text-center">{standing.played}</TableCell>
@@ -718,8 +718,8 @@ export default function TournamentManagement() {
                 Ida y vuelta (dos vueltas completas)
               </label>
             </div>
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+            <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-sm text-amber-800 dark:text-amber-200">
                 <strong>Advertencia:</strong> Generar el calendario eliminará todos los partidos existentes del torneo.
               </p>
             </div>
