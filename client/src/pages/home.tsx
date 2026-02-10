@@ -936,10 +936,23 @@ export default function Home() {
                         <span className="font-medium">inscripciones@ligafutbol.com</span>
                       </div>
                     </div>
-                    <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info">
-                      <Mail className="h-4 w-4" />
-                      Contáctanos
-                    </Button>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info">
+                        <Mail className="h-4 w-4" />
+                        Contáctanos
+                      </Button>
+                      <a
+                        href="https://www.instagram.com/laligadecampeones_100?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid="link-instagram-cta"
+                      >
+                        <Button size="lg" variant="outline" className="gap-2">
+                          <SiInstagram className="h-4 w-4" />
+                          Instagram
+                        </Button>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -959,15 +972,6 @@ export default function Home() {
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a href="/historial" className="hover:text-foreground">Historial</a>
               <a href="/login" className="hover:text-foreground">Iniciar Sesión</a>
-              <a
-                href="https://www.instagram.com/laligadecampeones_100?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
-                data-testid="link-instagram"
-              >
-                <SiInstagram className="h-5 w-5" />
-              </a>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2026 La Liga de Campeones. Todos los derechos reservados.
