@@ -248,7 +248,7 @@ export default function Home() {
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Benefit 1 */}
             <a
-              href="https://www.google.com/maps/place/Portada+Alta+C.F./@36.721389,-4.457778,17z/data=!3m1!4b1!4m6!3m5!1s0x7277150769d0e505:0xb3b0a2662ae7d065!8m2!3d36.721389!4d-4.457778!16s%2Fg%2F11bwzy0jss"
+              href="https://maps.google.com/?q=Portada+Alta+C.F.,+C.+James+Joyce,+47,+Teatinos-Universidad,+29010+Málaga"
               target="_blank"
               rel="noopener noreferrer"
               className="group relative overflow-hidden rounded-md cursor-pointer"
