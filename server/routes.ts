@@ -21,6 +21,7 @@ import {
   insertTeamPaymentSchema,
   insertFinePaymentSchema,
   insertExpenseSchema,
+  insertMarketingMediaSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1404,6 +1405,52 @@ export async function registerRoutes(
   app.delete("/api/admin/expenses/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       await storage.deleteExpense(req.params.id);
+      res.status(204).send();
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== ADMIN MARKETING MEDIA ====================
+  app.get("/api/admin/marketing", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const media = await storage.getMarketingMedia();
+      res.json(media);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/marketing", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertMarketingMediaSchema.parse(req.body);
+      const media = await storage.createMarketingMedia(data);
+      res.status(201).json(media);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertMarketingMediaSchema.partial().parse(req.body);
+      const media = await storage.updateMarketingMedia(req.params.id, data);
+      if (!media) return res.status(404).json({ message: "Contenido no encontrado" });
+      res.json(media);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteMarketingMedia(req.params.id);
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
