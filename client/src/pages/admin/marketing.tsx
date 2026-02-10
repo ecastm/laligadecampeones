@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -230,6 +230,7 @@ function MediaFormDialog({
   editingMedia: MarketingMedia | null;
 }) {
   const { toast } = useToast();
+  const [isUploading, setIsUploading] = useState(false);
 
   const form = useForm<InsertMarketingMedia>({
     resolver: zodResolver(insertMarketingMediaSchema),
@@ -242,6 +243,48 @@ function MediaFormDialog({
       tournamentId: "",
     },
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const res = await fetch("/api/uploads/request-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: file.name,
+          size: file.size,
+          contentType: file.type || "application/octet-stream",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Error al obtener URL de subida");
+
+      const { uploadURL, objectPath } = await res.json();
+
+      await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+      });
+
+      const servingUrl = objectPath;
+      form.setValue("url", servingUrl, { shouldValidate: true });
+
+      if (!form.getValues("title")) {
+        form.setValue("title", file.name.replace(/\.[^/.]+$/, ""));
+      }
+
+      toast({ title: "Archivo subido correctamente" });
+    } catch (err) {
+      toast({ title: "Error al subir archivo", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertMarketingMedia) => {
@@ -341,7 +384,38 @@ function MediaFormDialog({
               name="url"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>URL del {form.watch("type") === "VIDEO" ? "Video" : "Foto"}</FormLabel>
+                  <FormLabel>
+                    {form.watch("type") === "VIDEO" ? "URL del Video" : "Foto"}
+                  </FormLabel>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        disabled={isUploading}
+                        onClick={() => document.getElementById("file-upload-input")?.click()}
+                        data-testid="button-upload-file"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Upload className="h-4 w-4" />
+                        )}
+                        {isUploading ? "Subiendo..." : "Subir desde dispositivo"}
+                      </Button>
+                      <span className="text-xs text-muted-foreground">o pega una URL abajo</span>
+                    </div>
+                    <input
+                      id="file-upload-input"
+                      type="file"
+                      accept={form.watch("type") === "VIDEO" ? "video/*" : "image/*"}
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      data-testid="input-file-upload"
+                    />
+                  </div>
                   <FormControl>
                     <Input
                       placeholder={form.watch("type") === "VIDEO" ? "https://youtube.com/watch?v=..." : "https://ejemplo.com/foto.jpg"}
@@ -349,6 +423,18 @@ function MediaFormDialog({
                       data-testid="input-media-url"
                     />
                   </FormControl>
+                  {field.value && form.watch("type") === "PHOTO" && (
+                    <div className="mt-2 rounded-md overflow-hidden border aspect-video bg-muted">
+                      <img
+                        src={field.value}
+                        alt="Vista previa"
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
