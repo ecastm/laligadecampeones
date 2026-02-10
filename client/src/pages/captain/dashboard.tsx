@@ -20,6 +20,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, IdCard, ScrollText } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
+import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -69,9 +70,7 @@ export default function CaptainDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Shield className="h-5 w-5" />
-              </div>
+              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Panel Capitán</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>

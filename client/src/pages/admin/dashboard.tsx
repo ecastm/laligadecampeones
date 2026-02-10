@@ -5,6 +5,7 @@ import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare } from "lucide-react";
+import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -62,9 +63,7 @@ export default function AdminDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <Trophy className="h-5 w-5" />
-              </div>
+              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Panel Admin</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>

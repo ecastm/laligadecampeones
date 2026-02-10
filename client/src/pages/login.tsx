@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
+import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -50,9 +51,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-            <Trophy className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <img src={ligaLogo} alt="La Liga de Campeones" className="mx-auto h-20 w-20 object-contain" />
           <div>
             <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
             <CardDescription>
