@@ -1,0 +1,88 @@
+Necesito que apliques un TEMA GLOBAL (branding + UI) para TODA la plataforma (home + módulos internos) de una App de Torneos de Fútbol.
+
+OBJETIVO:
+- Look & feel premium tipo “liga profesional”: cancha + trofeo.
+- Diseño consistente en todas las pantallas (Home, Tabla de posiciones, Calendario, Resultados, Equipos, Jugadores, Árbitros, Panel Admin).
+- Interfaz moderna, limpia, deportiva, con alta legibilidad en móviles y desktop.
+
+PALETA OFICIAL (OBLIGATORIA):
+- Verde cancha (primary): #0B5D1E
+- Verde oscuro (primaryDark): #063A13
+- Dorado torneo (accentGold): #C9A227
+- Dorado brillo (goldShine): #E6C75A
+- Blanco (textLight): #FFFFFF
+- Negro suave (textDark): #1C1C1C
+
+REGLA DE PROPORCIÓN DE COLOR (OBLIGATORIA):
+- 70% verdes (fondos y superficies)
+- 20% blanco/negro (texto, líneas, legibilidad)
+- 10% dorado (solo para destacar: CTAs, títulos, badges, detalles premium, 1er lugar)
+
+TIPOGRAFÍA Y ESTILO:
+- Tipografía sans moderna y deportiva (ej: Inter / Montserrat / Poppins).
+- Títulos en mayúsculas, peso 700/800.
+- Bordes redondeados 12-16px.
+- Sombras suaves, nada exagerado.
+- Separación generosa (padding/margins) y grid consistente.
+
+FONDOS Y TEXTURAS (SUTILES):
+- Fondo general con degradado entre #063A13 y #0B5D1E.
+- Textura ligera tipo césped/cancha (muy sutil, no caricaturesca).
+- Línea dorada fina para separar secciones importantes.
+
+DISEÑO GLOBAL (APLICAR A TODAS LAS VISTAS):
+1) Layout base:
+   - Topbar fija con logo/nombre del torneo.
+   - Sidebar (desktop) con íconos + texto; en móvil usar bottom-nav o drawer.
+   - Contenido en cards sobre fondo verde oscuro.
+2) Sistema de componentes reutilizables:
+   - ButtonPrimary (CTA): bg #C9A227, text #1C1C1C, hover #E6C75A, focus ring dorado.
+   - ButtonSecondary: borde #C9A227, bg transparente, text blanco, hover con leve fondo #0B5D1E.
+   - Card: bg #063A13, borde 1px rgba dorado sutil, texto blanco.
+   - Badge: dorado para “Líder/Clasificado/MVP”; verde para “En juego”; rojo NO usar (si hace falta “expulsión”, usar un dorado oscuro + icono).
+   - Inputs: fondo #0B5D1E, borde sutil, placeholder gris claro, focus dorado.
+   - Tabs: activo con línea inferior dorada.
+   - Modals: fondo oscuro con borde dorado.
+   - Toast/alerts: success en verde claro (variación), warning en dorado.
+
+HOME (PANTALLA PRINCIPAL):
+- Hero superior 16:9 estilo torneo oficial:
+  - Fondo degradado verde oscuro a verde cancha.
+  - Trofeo/escudo minimalista en dorado (SVG o CSS).
+  - Texto: “COMPETENCIA REAL” (blanco) y subtítulo.
+  - CTA dorado: “Inscribe tu equipo” + texto “Cupos limitados”.
+- Secciones con cards:
+  1) Próximos partidos (calendario)
+  2) Tabla de posiciones (top 5)
+  3) Resultados recientes
+  4) MVP / Goleadores (si existe)
+- En tabla: resaltar 1er lugar con dorado (sin saturar).
+
+MÓDULOS INTERNOS (ADMIN / CAPITÁN / ÁRBITRO):
+- Admin:
+  - Panel con cards y métricas: Equipos, Partidos, Jugadores, Árbitros.
+  - Acciones importantes siempre con botón dorado.
+- Capitán:
+  - Alta/edición de equipo y jugadores en formularios claros, con CTA dorado.
+- Árbitro:
+  - Pantalla especial tipo “match control”: muy legible, botones grandes:
+    - +Gol, +Tarjeta, +Expulsión (mantener estética: usar iconos y dorado/verde; evitar rojo chillón).
+  - Confirmaciones en modal para evitar errores.
+
+ACCESIBILIDAD Y LEGIBILIDAD (OBLIGATORIO):
+- Contraste alto: texto blanco sobre verdes.
+- Tamaños mínimos: 14-16px body, 24-40px títulos.
+- Estados hover/focus visibles (focus ring dorado).
+- No abusar del dorado en fondos grandes.
+
+ENTREGABLES TÉCNICOS (GENERA EN CÓDIGO):
+1) Definir tokens globales (CSS variables o Tailwind theme):
+   --primary, --primaryDark, --accentGold, --goldShine, --textLight, --textDark
+2) Archivo de estilos globales (o config Tailwind + clases utilitarias).
+3) Componentes base: Button, Card, Badge, Input, Table, Tabs, Modal.
+4) Aplicar el tema a TODAS las pantallas existentes en la app y asegurar consistencia.
+
+RESTRICCIONES:
+- NO usar paletas azules/rojas llamativas.
+- NO usar colores “neón”.
+- Mantener estilo torneo premium, limpio y coherente.

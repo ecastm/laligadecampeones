@@ -451,8 +451,8 @@ export default function TeamsManagement() {
                                 <Badge 
                                   variant="outline" 
                                   className={getDivisionName(team.divisionId)?.theme === "PRIMERA" 
-                                    ? "text-amber-800 dark:text-amber-500 border-amber-700 text-xs" 
-                                    : "text-emerald-700 border-emerald-700 text-xs"}
+                                    ? "text-primary border-primary/50 text-xs" 
+                                    : "text-secondary-foreground border-secondary text-xs"}
                                 >
                                   {getDivisionName(team.divisionId)?.name}
                                 </Badge>

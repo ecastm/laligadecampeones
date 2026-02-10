@@ -45,7 +45,7 @@ export default function TournamentHistory() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-md bg-amber-700 text-white">
+              <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
                 <Trophy className="h-6 w-6" />
               </div>
               <div>
@@ -99,7 +99,7 @@ export default function TournamentHistory() {
                     </div>
                   )}
                   {tournament.championTeamName && (
-                    <div className="flex items-center gap-2 text-sm font-medium text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-2 rounded-md">
+                    <div className="flex items-center gap-2 text-sm font-medium text-primary bg-primary/5 p-2 rounded-md">
                       <Trophy className="h-4 w-4 shrink-0" />
                       <span className="truncate">Campeón: {tournament.championTeamName}</span>
                     </div>
@@ -135,13 +135,13 @@ export default function TournamentHistory() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-700 dark:text-amber-500" />
+              <Trophy className="h-5 w-5 text-primary" />
               {viewingTournament?.name}
             </DialogTitle>
             <DialogDescription>
               {viewingTournament?.seasonName} - {viewingTournament?.location}
               {viewingTournament?.championTeamName && (
-                <span className="block mt-1 font-medium text-amber-800 dark:text-amber-400">
+                <span className="block mt-1 font-medium text-primary">
                   Campeón: {viewingTournament.championTeamName}
                 </span>
               )}
@@ -166,9 +166,9 @@ export default function TournamentHistory() {
                 </TableHeader>
                 <TableBody>
                   {viewingTournament.finalStandings.map((standing: Standing, index: number) => (
-                    <TableRow key={standing.teamId} className={index === 0 ? "bg-amber-50 dark:bg-amber-900/20" : ""}>
+                    <TableRow key={standing.teamId} className={index === 0 ? "bg-primary/5" : ""}>
                       <TableCell className="font-medium">
-                        {index === 0 ? <Trophy className="h-4 w-4 text-amber-700 dark:text-amber-500" /> : index + 1}
+                        {index === 0 ? <Trophy className="h-4 w-4 text-primary" /> : index + 1}
                       </TableCell>
                       <TableCell className="font-medium">{standing.teamName}</TableCell>
                       <TableCell className="text-center">{standing.played}</TableCell>

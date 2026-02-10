@@ -129,9 +129,9 @@ export default function DivisionsManagement() {
 
   const getThemeBadge = (theme: string) => {
     if (theme === "PRIMERA") {
-      return <Badge className="bg-amber-700 text-amber-950">Primera</Badge>;
+      return <Badge className="bg-primary text-primary-foreground">Primera</Badge>;
     }
-    return <Badge className="bg-emerald-700 text-emerald-50">Segunda</Badge>;
+    return <Badge className="bg-secondary text-secondary-foreground">Segunda</Badge>;
   };
 
   if (isLoading) {
@@ -257,13 +257,13 @@ export default function DivisionsManagement() {
                       <SelectContent>
                         <SelectItem value="PRIMERA">
                           <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full bg-amber-700" />
+                            <div className="h-3 w-3 rounded-full bg-primary" />
                             Primera (Dorado)
                           </div>
                         </SelectItem>
                         <SelectItem value="SEGUNDA">
                           <div className="flex items-center gap-2">
-                            <div className="h-3 w-3 rounded-full bg-emerald-700" />
+                            <div className="h-3 w-3 rounded-full bg-secondary" />
                             Segunda (Verde)
                           </div>
                         </SelectItem>

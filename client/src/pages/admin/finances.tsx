@@ -240,7 +240,7 @@ export default function FinancesManagement() {
             </div>
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Multas Pagadas</p>
-              <p className="text-2xl font-bold text-green-600">${totalFinesPaid.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary">${totalFinesPaid.toLocaleString()}</p>
             </div>
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Pagos Recibidos</p>
@@ -344,7 +344,7 @@ export default function FinancesManagement() {
                       {payments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>{getTeamName(payment.teamId)}</TableCell>
-                          <TableCell className="font-medium text-green-600">${payment.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium text-primary">${payment.amount.toLocaleString()}</TableCell>
                           <TableCell>{payment.method || "-"}</TableCell>
                           <TableCell>{format(new Date(payment.paidAt), "dd/MM/yyyy", { locale: es })}</TableCell>
                           <TableCell className="max-w-xs truncate">{payment.notes || "-"}</TableCell>
@@ -385,7 +385,7 @@ export default function FinancesManagement() {
                       {finePayments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>{getTeamName(payment.teamId)}</TableCell>
-                          <TableCell className="font-medium text-green-600">${payment.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium text-primary">${payment.amount.toLocaleString()}</TableCell>
                           <TableCell>{format(new Date(payment.paidAt), "dd/MM/yyyy", { locale: es })}</TableCell>
                           <TableCell className="max-w-xs truncate">{payment.notes || "-"}</TableCell>
                         </TableRow>

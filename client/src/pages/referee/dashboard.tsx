@@ -589,9 +589,9 @@ function MatchDetailsDialog({
       case "GOAL":
         return <Goal className="h-4 w-4 text-primary" />;
       case "YELLOW":
-        return <div className="h-4 w-3 rounded-sm bg-amber-600" />;
+        return <div className="h-4 w-3 rounded-sm bg-primary" />;
       case "RED":
-        return <div className="h-4 w-3 rounded-sm bg-red-500" />;
+        return <div className="h-4 w-3 rounded-sm bg-destructive" />;
       default:
         return <CircleAlert className="h-4 w-4" />;
     }
@@ -666,7 +666,7 @@ function MatchDetailsDialog({
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
-                    <div className="h-4 w-3 rounded-sm bg-amber-600" />
+                    <div className="h-4 w-3 rounded-sm bg-primary" />
                     Amarillas
                   </CardTitle>
                 </CardHeader>
@@ -677,7 +677,7 @@ function MatchDetailsDialog({
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm">
-                    <div className="h-4 w-3 rounded-sm bg-red-500" />
+                    <div className="h-4 w-3 rounded-sm bg-destructive" />
                     Rojas
                   </CardTitle>
                 </CardHeader>

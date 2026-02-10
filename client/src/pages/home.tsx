@@ -189,7 +189,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-[100] border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroFootball})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#063A13]/90 via-[#063A13]/70 to-[#0B5D1E]/50" />
         
         <div className="container relative mx-auto px-4 py-20 sm:py-28">
           <div className="max-w-2xl">
@@ -243,19 +243,19 @@ export default function Home() {
             {/* Key Benefits */}
             <div className="mb-8 grid gap-3 sm:grid-cols-2">
               <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 <span>Canchas de primera calidad</span>
               </div>
               <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 <span>Árbitros certificados</span>
               </div>
               <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 <span>Premios para los mejores</span>
               </div>
               <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-emerald-400" />
+                <CheckCircle className="h-5 w-5 text-primary" />
                 <span>Estadísticas en tiempo real</span>
               </div>
             </div>
@@ -382,24 +382,14 @@ export default function Home() {
                   onClick={() => handleDivisionSelect(division.id)}
                   className={`group relative overflow-hidden rounded-md border-2 p-6 text-left transition-all hover-elevate ${
                     selectedDivision === division.id
-                      ? division.theme === "PRIMERA"
-                        ? "border-amber-700 bg-amber-700/10"
-                        : "border-emerald-700 bg-emerald-700/10"
+                      ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
                   }`}
                   data-testid={`button-division-${division.id}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`rounded-full p-2 ${
-                      division.theme === "PRIMERA" 
-                        ? "bg-amber-700/20" 
-                        : "bg-emerald-700/20"
-                    }`}>
-                      <Trophy className={`h-6 w-6 ${
-                        division.theme === "PRIMERA" 
-                          ? "text-amber-700 dark:text-amber-500" 
-                          : "text-emerald-700 dark:text-emerald-500"
-                      }`} />
+                    <div className="rounded-full p-2 bg-primary/20">
+                      <Trophy className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <h3 className="font-semibold">{division.name}</h3>
@@ -422,16 +412,8 @@ export default function Home() {
                 <CardHeader className="pb-4">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center gap-3">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-md ${
-                        currentDivision?.theme === "PRIMERA"
-                          ? "bg-amber-700/20"
-                          : "bg-emerald-700/20"
-                      }`}>
-                        <Trophy className={`h-6 w-6 ${
-                          currentDivision?.theme === "PRIMERA"
-                            ? "text-amber-800 dark:text-amber-500"
-                            : "text-emerald-700 dark:text-emerald-500"
-                        }`} />
+                      <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary/15">
+                        <Trophy className="h-6 w-6 text-primary" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
@@ -441,14 +423,10 @@ export default function Home() {
                           {currentDivision && (
                             <Badge
                               variant="outline"
-                              className={`shrink-0 ${
-                                currentDivision.theme === "PRIMERA"
-                                  ? "border-amber-700 text-amber-800 dark:text-amber-400"
-                                  : "border-emerald-700 text-emerald-700 dark:text-emerald-400"
-                              }`}
+                              className="shrink-0 border-primary/50 text-primary"
                               data-testid="badge-division"
                             >
-                              <Shield className={`mr-1 h-3 w-3 ${currentDivision.theme === "PRIMERA" ? "text-amber-700 dark:text-amber-500" : "text-emerald-700 dark:text-emerald-500"}`} />
+                              <Shield className="mr-1 h-3 w-3 text-primary" />
                               {currentDivision.name}
                             </Badge>
                           )}
@@ -650,9 +628,9 @@ export default function Home() {
                                     <td className="py-3 pr-4 font-medium">{index + 1}</td>
                                     <td className="py-3 pr-4 font-medium">{team.teamName}</td>
                                     <td className="py-3 pr-2 text-center">{team.played}</td>
-                                    <td className="py-3 pr-2 text-center text-green-600">{team.won}</td>
-                                    <td className="py-3 pr-2 text-center text-amber-800 dark:text-amber-500">{team.drawn}</td>
-                                    <td className="py-3 pr-2 text-center text-red-600">{team.lost}</td>
+                                    <td className="py-3 pr-2 text-center text-foreground">{team.won}</td>
+                                    <td className="py-3 pr-2 text-center text-primary">{team.drawn}</td>
+                                    <td className="py-3 pr-2 text-center text-destructive">{team.lost}</td>
                                     <td className="py-3 pr-2 text-center">{team.goalsFor}</td>
                                     <td className="py-3 pr-2 text-center">{team.goalsAgainst}</td>
                                     <td className="py-3 pr-2 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
@@ -709,9 +687,9 @@ export default function Home() {
                                   <td className="py-3 font-bold">
                                     {idx < 3 ? (
                                       <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                                        idx === 0 ? "bg-amber-700 text-amber-950" :
-                                        idx === 1 ? "bg-slate-400 text-slate-950" :
-                                        "bg-orange-400 text-orange-950"
+                                        idx === 0 ? "bg-primary text-primary-foreground" :
+                                        idx === 1 ? "bg-muted text-foreground" :
+                                        "bg-secondary text-secondary-foreground"
                                       }`}>
                                         {idx + 1}
                                       </div>
@@ -882,8 +860,8 @@ export default function Home() {
             </Card>
             <Card className="text-center" data-testid="feature-stats">
               <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-700/10 dark:bg-emerald-700/20">
-                  <Award className="h-6 w-6 text-emerald-700 dark:text-emerald-500" />
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                  <Award className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="mb-2 font-semibold">Premios y Trofeos</h3>
                 <p className="text-sm text-muted-foreground">
@@ -927,15 +905,15 @@ export default function Home() {
                     </p>
                     <ul className="mb-6 space-y-2 text-sm">
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                        <CheckCircle className="h-4 w-4 text-primary" />
                         Mínimo 11 jugadores por equipo
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                        <CheckCircle className="h-4 w-4 text-primary" />
                         Cuota de inscripción accesible
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />
+                        <CheckCircle className="h-4 w-4 text-primary" />
                         Uniformes no incluidos
                       </li>
                     </ul>
@@ -951,7 +929,7 @@ export default function Home() {
             <Card className="overflow-hidden" data-testid="cta-info">
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-700/10 text-emerald-700 dark:bg-emerald-700/20 dark:text-emerald-500">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Clock className="h-6 w-6" />
                   </div>
                   <div>
@@ -995,7 +973,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-card py-8">
+      <footer className="border-t border-primary/20 bg-card py-8">
         <div className="container mx-auto px-4">
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
