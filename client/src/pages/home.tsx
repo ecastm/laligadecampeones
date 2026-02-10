@@ -247,7 +247,13 @@ export default function Home() {
           
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Benefit 1 */}
-            <div className="group relative overflow-hidden rounded-md">
+            <a
+              href="https://www.google.com/maps/place/Portada+Alta+C.F./@36.7258,-4.4595,17z/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-md cursor-pointer"
+              data-testid="link-instalaciones"
+            >
               <img src={stadiumImage} alt="Instalaciones" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
@@ -257,7 +263,7 @@ export default function Home() {
                 <h3 className="text-lg font-bold">Instalaciones de Primera</h3>
                 <p className="text-sm text-gray-300">Canchas en óptimas condiciones, iluminación profesional y vestuarios equipados</p>
               </div>
-            </div>
+            </a>
             
             {/* Benefit 2 */}
             <div className="group relative overflow-hidden rounded-md">
