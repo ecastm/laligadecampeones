@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { SiInstagram } from "react-icons/si";
 import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor, Division } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 import heroFootball from "@/assets/images/football-field.jpg";
@@ -955,9 +956,18 @@ export default function Home() {
               <Trophy className="h-5 w-5 text-primary" />
               <span className="font-semibold">La Liga de Campeones</span>
             </div>
-            <div className="flex gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a href="/historial" className="hover:text-foreground">Historial</a>
               <a href="/login" className="hover:text-foreground">Iniciar Sesión</a>
+              <a
+                href="https://www.instagram.com/laligadecampeones_100?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw=="
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors"
+                data-testid="link-instagram"
+              >
+                <SiInstagram className="h-5 w-5" />
+              </a>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2026 La Liga de Campeones. Todos los derechos reservados.
