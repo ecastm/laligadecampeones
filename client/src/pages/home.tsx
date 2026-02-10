@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -85,6 +85,12 @@ export default function Home() {
   const { data: activeTournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
   });
+
+  useEffect(() => {
+    if (divisions.length > 0 && !selectedDivision) {
+      setSelectedDivision(divisions[0].id);
+    }
+  }, [divisions, selectedDivision]);
 
   const currentTournament = selectedDivision 
     ? allTournaments.find(t => t.divisionId === selectedDivision) || activeTournament
@@ -851,15 +857,7 @@ export default function Home() {
                 </TabsContent>
               </Tabs>
             </div>
-          ) : (
-            <div className="rounded-md border-2 border-dashed p-12 text-center">
-              <Shield className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-medium">Selecciona una División</h3>
-              <p className="mt-2 text-muted-foreground">
-                Elige Primera o Segunda División arriba para ver los torneos activos
-              </p>
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
 
