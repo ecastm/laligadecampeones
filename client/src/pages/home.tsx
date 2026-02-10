@@ -155,7 +155,7 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <Trophy className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">Liga de Fútbol</span>
+              <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
             <div className="flex items-center gap-2">
               <a
@@ -193,8 +193,8 @@ export default function Home() {
               Inscripciones Abiertas - Temporada 2026
             </Badge>
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-testid="text-hero-title">
-              Compite en el Mejor
-              <span className="block text-primary">Torneo de Fútbol Amateur</span>
+              Bienvenidos a
+              <span className="block text-primary">LA LIGA DE CAMPEONES</span>
             </h1>
             <p className="mb-8 text-lg text-gray-200 sm:text-xl">
               Inscribe a tu equipo y demuestra de qué están hechos. Competencia real, 
@@ -947,14 +947,14 @@ export default function Home() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Liga de Fútbol</span>
+              <span className="font-semibold">La Liga de Campeones</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="/historial" className="hover:text-foreground">Historial</a>
               <a href="/login" className="hover:text-foreground">Iniciar Sesión</a>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 Liga de Fútbol. Todos los derechos reservados.
+              © 2026 La Liga de Campeones. Todos los derechos reservados.
             </p>
           </div>
         </div>
