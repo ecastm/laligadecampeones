@@ -360,7 +360,6 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
             <h2 className="mb-2 text-3xl font-bold" data-testid="text-divisions-title">Ver Torneos en Curso</h2>
-            <p className="text-muted-foreground">Selecciona una división para ver la información del torneo activo</p>
           </div>
 
           {/* Division Selector */}
@@ -390,7 +389,7 @@ export default function Home() {
                         ? "bg-amber-700/20" 
                         : "bg-emerald-700/20"
                     }`}>
-                      <Shield className={`h-6 w-6 ${
+                      <Trophy className={`h-6 w-6 ${
                         division.theme === "PRIMERA" 
                           ? "text-amber-700 dark:text-amber-500" 
                           : "text-emerald-700 dark:text-emerald-500"
