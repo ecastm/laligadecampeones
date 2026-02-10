@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ export default function Home() {
   const [selectedRound, setSelectedRound] = useState<string>("all");
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
+  const [showPrizes, setShowPrizes] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("calendario");
 
   const { data: divisions = [], isLoading: loadingDivisions } = useQuery<Division[]>({
@@ -267,7 +269,11 @@ export default function Home() {
             </a>
             
             {/* Benefit 2 */}
-            <div className="group relative overflow-hidden rounded-md">
+            <div
+              className="group relative overflow-hidden rounded-md cursor-pointer"
+              onClick={() => setShowPrizes(true)}
+              data-testid="link-premios"
+            >
               <img src={trophyImage} alt="Premios" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
@@ -987,6 +993,28 @@ export default function Home() {
           onOpenChange={(open) => !open && setSelectedMatch(null)}
         />
       )}
+
+      <Dialog open={showPrizes} onOpenChange={setShowPrizes}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center text-2xl font-bold">
+              Premios y Reconocimientos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="flex flex-col items-center gap-3 rounded-md border p-6">
+              <Trophy className="h-16 w-16 text-primary" />
+              <h3 className="text-lg font-bold">Primera División</h3>
+              <p className="text-3xl font-extrabold text-primary">1.500 &euro;</p>
+            </div>
+            <div className="flex flex-col items-center gap-3 rounded-md border p-6">
+              <Trophy className="h-16 w-16 text-muted-foreground" />
+              <h3 className="text-lg font-bold">Segunda División</h3>
+              <p className="text-3xl font-extrabold text-muted-foreground">1.000 &euro;</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
