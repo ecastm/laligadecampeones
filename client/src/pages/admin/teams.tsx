@@ -14,7 +14,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Shield, Edit, User as UserIcon, Award, Users, ChevronDown, ChevronUp, Camera, IdCard, ShieldCheck } from "lucide-react";
+import { Plus, Trash2, Shield, Edit, User as UserIcon, Award, Users, ChevronDown, ChevronUp, IdCard, ShieldCheck } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -387,9 +388,15 @@ export default function TeamsManagement() {
                   name="logoUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL del Logo (opcional)</FormLabel>
+                      <FormLabel>Logo del Equipo (opcional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://..." data-testid="input-team-logo" {...field} />
+                        <ImageUpload
+                          value={field.value || ""}
+                          onChange={field.onChange}
+                          label="Subir logo"
+                          shape="square"
+                          size="md"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -441,9 +448,13 @@ export default function TeamsManagement() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
-                            {team.name.substring(0, 2).toUpperCase()}
-                          </div>
+                          {team.logoUrl ? (
+                            <img src={team.logoUrl} alt={team.name} className="h-10 w-10 sm:h-12 sm:w-12 rounded-md object-cover shrink-0" />
+                          ) : (
+                            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm sm:text-base shrink-0">
+                              {team.name.substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold text-sm sm:text-base truncate">{team.name}</p>
@@ -729,16 +740,14 @@ export default function TeamsManagement() {
                 name="photoUrls"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <Camera className="h-4 w-4" />
-                      URL de Fotografía
-                    </FormLabel>
+                    <FormLabel>Fotografía del Jugador</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="https://ejemplo.com/foto.jpg" 
-                        data-testid="input-player-photo"
+                      <ImageUpload
                         value={field.value?.[0] || ""}
-                        onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                        onChange={(url) => field.onChange(url ? [url] : [])}
+                        label="Subir foto"
+                        shape="circle"
+                        size="md"
                       />
                     </FormControl>
                     <FormMessage />

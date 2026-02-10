@@ -18,7 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, Camera, IdCard, ScrollText } from "lucide-react";
+import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, IdCard, ScrollText } from "lucide-react";
+import { ImageUpload } from "@/components/image-upload";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -251,9 +252,15 @@ function TeamInfo() {
                 name="logoUrl"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>URL del Logo</FormLabel>
+                    <FormLabel>Logo del Equipo</FormLabel>
                     <FormControl>
-                      <Input data-testid="input-edit-team-logo" {...field} />
+                      <ImageUpload
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        label="Subir logo"
+                        shape="square"
+                        size="md"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -479,16 +486,14 @@ function TeamPlayers() {
                   name="photoUrls"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <Camera className="h-4 w-4" />
-                        URL de Fotografía
-                      </FormLabel>
+                      <FormLabel>Fotografía del Jugador</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="https://ejemplo.com/foto.jpg" 
-                          data-testid="input-player-photo"
+                        <ImageUpload
                           value={field.value?.[0] || ""}
-                          onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
+                          onChange={(url) => field.onChange(url ? [url] : [])}
+                          label="Subir foto"
+                          shape="circle"
+                          size="md"
                         />
                       </FormControl>
                       <FormMessage />

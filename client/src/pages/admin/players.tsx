@@ -14,13 +14,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Users, Camera, IdCard } from "lucide-react";
+import { Plus, Trash2, Users, Edit, IdCard } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { ImageUpload } from "@/components/image-upload";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function PlayersManagement() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState<string>("all");
 
   const { data: teams = [] } = useQuery<Team[]>({
@@ -64,8 +66,21 @@ export default function PlayersManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/players"] });
       toast({ title: "Jugador creado correctamente" });
-      setIsDialogOpen(false);
-      form.reset();
+      closeDialog();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: InsertPlayer }) => {
+      return apiRequest("PUT", `/api/admin/players/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/players"] });
+      toast({ title: "Jugador actualizado correctamente" });
+      closeDialog();
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -84,6 +99,54 @@ export default function PlayersManagement() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setEditingPlayer(null);
+    form.reset();
+  };
+
+  const openCreateDialog = () => {
+    setEditingPlayer(null);
+    form.reset({
+      teamId: "",
+      firstName: "",
+      lastName: "",
+      jerseyNumber: 1,
+      position: "",
+      identificationId: "",
+      photoUrls: [],
+      isFederated: false,
+      federationId: "",
+      active: true,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (player: Player) => {
+    setEditingPlayer(player);
+    form.reset({
+      teamId: player.teamId,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      jerseyNumber: player.jerseyNumber,
+      position: player.position || "",
+      identificationId: player.identificationId || "",
+      photoUrls: player.photoUrls || [],
+      isFederated: player.isFederated || false,
+      federationId: player.federationId || "",
+      active: player.active,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (data: InsertPlayer) => {
+    if (editingPlayer) {
+      updateMutation.mutate({ id: editingPlayer.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
 
   const filteredPlayers = players.filter(
     (p) => selectedTeamFilter === "all" || p.teamId === selectedTeamFilter
@@ -116,190 +179,210 @@ export default function PlayersManagement() {
               ))}
             </SelectContent>
           </Select>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-add-player">
-                <Plus className="mr-2 h-4 w-4" />
-                Nuevo Jugador
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Agregar Jugador</DialogTitle>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="teamId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Equipo</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-player-team">
-                              <SelectValue placeholder="Selecciona un equipo" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {teams.map((team) => (
-                              <SelectItem key={team.id} value={team.id}>
-                                {team.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nombre</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nombre" data-testid="input-player-firstname" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Apellido</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Apellido" data-testid="input-player-lastname" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="jerseyNumber"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Número</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={1}
-                              max={99}
-                              data-testid="input-player-number"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="position"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Posición</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Ej: Delantero" data-testid="input-player-position" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <FormField
-                    control={form.control}
-                    name="identificationId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <IdCard className="h-4 w-4" />
-                          Número de Identificación (DNI/INE)
-                        </FormLabel>
-                        <FormControl>
-                          <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="photoUrls"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <Camera className="h-4 w-4" />
-                          URL de Fotografía
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://ejemplo.com/foto.jpg" 
-                            data-testid="input-player-photo"
-                            value={field.value?.[0] || ""}
-                            onChange={(e) => field.onChange(e.target.value ? [e.target.value] : [])}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="isFederated"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-md border p-3">
-                          <div className="space-y-0.5">
-                            <FormLabel>¿Federado?</FormLabel>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                              data-testid="switch-player-federated"
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="federationId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ID Federación</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Número de federación" data-testid="input-player-federation" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={createMutation.isPending}
-                    data-testid="button-submit-player"
-                  >
-                    {createMutation.isPending ? "Creando..." : "Agregar Jugador"}
-                  </Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+          <Button onClick={openCreateDialog} data-testid="button-add-player">
+            <Plus className="mr-2 h-4 w-4" />
+            Nuevo Jugador
+          </Button>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingPlayer ? "Editar Jugador" : "Agregar Jugador"}</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="photoUrls"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ImageUpload
+                        value={field.value?.[0] || ""}
+                        onChange={(url) => field.onChange(url ? [url] : [])}
+                        label="Subir foto"
+                        shape="circle"
+                        size="lg"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="teamId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Equipo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-player-team">
+                          <SelectValue placeholder="Selecciona un equipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {teams.map((team) => (
+                          <SelectItem key={team.id} value={team.id}>
+                            {team.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nombre" data-testid="input-player-firstname" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Apellido</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Apellido" data-testid="input-player-lastname" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="jerseyNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={99}
+                          data-testid="input-player-number"
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Posición</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: Delantero" data-testid="input-player-position" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <FormField
+                control={form.control}
+                name="identificationId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <IdCard className="h-4 w-4" />
+                      Número de Identificación (DNI/INE)
+                    </FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="isFederated"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-md border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>¿Federado?</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-player-federated"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="federationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID Federación</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Número de federación" data-testid="input-player-federation" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {editingPlayer && (
+                <FormField
+                  control={form.control}
+                  name="active"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-md border p-3">
+                      <div className="space-y-0.5">
+                        <FormLabel>Activo</FormLabel>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          data-testid="switch-player-active"
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                data-testid="button-submit-player"
+              >
+                {(createMutation.isPending || updateMutation.isPending) 
+                  ? "Guardando..." 
+                  : editingPlayer 
+                    ? "Guardar Cambios" 
+                    : "Agregar Jugador"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader>
@@ -363,6 +446,14 @@ export default function PlayersManagement() {
                     <Badge variant={player.active ? "default" : "secondary"} className="text-xs">
                       {player.active ? "Activo" : "Inactivo"}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEditDialog(player)}
+                      data-testid={`button-edit-player-${player.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" data-testid={`button-delete-player-${player.id}`}>
