@@ -44,6 +44,7 @@ import heroFootball from "@/assets/images/football-field.jpg";
 import teamHuddle from "@/assets/images/team-huddle.jpg";
 import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
+import waterSplash from "@/assets/images/water-splash.jpg";
 
 export default function Home() {
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export default function Home() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
+  const [showCompetencia, setShowCompetencia] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("calendario");
   const [showContactForm, setShowContactForm] = useState(false);
 
@@ -322,7 +324,11 @@ export default function Home() {
             </div>
             
             {/* Benefit 3 */}
-            <div className="group relative overflow-hidden rounded-md">
+            <div
+              className="group relative overflow-hidden rounded-md cursor-pointer"
+              onClick={() => setShowCompetencia(true)}
+              data-testid="link-competencia"
+            >
               <img src={teamHuddle} alt="Competencia" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
@@ -1016,6 +1022,52 @@ export default function Home() {
               <Trophy className="h-16 w-16 text-muted-foreground" />
               <h3 className="text-lg font-bold">Segunda División</h3>
               <p className="text-3xl font-extrabold text-muted-foreground">1.000 &euro;</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCompetencia} onOpenChange={setShowCompetencia}>
+        <DialogContent className="p-0 sm:max-w-lg overflow-hidden">
+          <div className="relative">
+            <img
+              src={waterSplash}
+              alt="Competencia Real"
+              className="absolute inset-0 h-full w-full object-cover opacity-20"
+            />
+            <div className="relative z-10 p-8 sm:p-10">
+              <DialogHeader className="mb-6">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/20">
+                  <Zap className="h-7 w-7 text-primary" />
+                </div>
+                <DialogTitle className="text-center text-2xl font-extrabold uppercase tracking-wide">
+                  Competencia real que se vive en la cancha.
+                </DialogTitle>
+              </DialogHeader>
+              <p className="mb-6 text-center text-base leading-relaxed text-muted-foreground">
+                Enfr&eacute;ntate a los mejores equipos de la zona en partidos llenos de intensidad, pasi&oacute;n y emoci&oacute;n cada semana. S&uacute;mate al torneo, demuestra de qu&eacute; est&aacute; hecho tu equipo y forma parte de una liga donde cada partido cuenta.
+              </p>
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-center">
+                <p className="text-sm font-bold text-destructive">
+                  Cupos limitados. No te quedes fuera.
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Inscribe a tu equipo y vive el torneo desde adentro.
+                </p>
+              </div>
+              <div className="mt-6 flex justify-center">
+                <Button
+                  className="gap-2 font-bold uppercase"
+                  onClick={() => {
+                    setShowCompetencia(false);
+                    setShowContactForm(true);
+                  }}
+                  data-testid="button-competencia-inscribir"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Inscribe Tu Equipo
+                </Button>
+              </div>
             </div>
           </div>
         </DialogContent>
