@@ -858,69 +858,69 @@ export default function Home() {
             <h2 className="mb-2 text-3xl font-bold">Lo Que Tu Equipo Obtiene</h2>
             <p className="text-muted-foreground">Beneficios exclusivos para todos los equipos inscritos</p>
           </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="text-center" data-testid="feature-organization">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <Swords className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <Swords className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Partidos Garantizados</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Partidos Garantizados</h3>
+                <p className="text-xs text-muted-foreground">
                   Calendario fijo con partidos cada semana contra equipos de tu nivel
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-stats">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <Trophy className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <Trophy className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Premios y Trofeos</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Premios y Trofeos</h3>
+                <p className="text-xs text-muted-foreground">
                   Copa para campeón, medallas y reconocimientos a los mejores jugadores
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-captain">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <ShieldCheck className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Portal del Capitán</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Portal del Capitán</h3>
+                <p className="text-xs text-muted-foreground">
                   Gestiona tu plantilla, consulta calendario y sigue el desempeño de tu equipo
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-rankings">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <BarChart3 className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <BarChart3 className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Estadísticas en Vivo</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Estadísticas en Vivo</h3>
+                <p className="text-xs text-muted-foreground">
                   Tabla de posiciones, goleadores y rendimiento de tu equipo actualizados en tiempo real
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-referees">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <Shirt className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <Shirt className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Árbitros Certificados</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Árbitros Certificados</h3>
+                <p className="text-xs text-muted-foreground">
                   Todos los partidos con árbitros profesionales que garantizan juego limpio
                 </p>
               </CardContent>
             </Card>
             <Card className="text-center" data-testid="feature-fair-play">
-              <CardContent className="pt-6">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15">
-                  <HeartPulse className="h-7 w-7 text-primary" />
+              <CardContent className="pt-4 pb-4">
+                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
+                  <HeartPulse className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-2 font-bold">Competencia Sana</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="mb-1 text-sm font-bold">Competencia Sana</h3>
+                <p className="text-xs text-muted-foreground">
                   Reglamento claro, sistema de multas y fair play para una experiencia deportiva de calidad
                 </p>
               </CardContent>
