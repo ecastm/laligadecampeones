@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image } from "lucide-react";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -15,9 +15,10 @@ import RefereesManagement from "./referees";
 import DivisionsManagement from "./divisions";
 import FinancesManagement from "./finances";
 import StatisticsManagement from "./statistics";
+import MarketingManagement from "./marketing";
 import Regulations from "@/components/regulations";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -29,6 +30,7 @@ const menuItems = [
   { id: "statistics" as const, title: "Estadísticas", icon: BarChart3 },
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
+  { id: "marketing" as const, title: "Marketing", icon: Megaphone },
   { id: "regulations" as const, title: "Reglamento", icon: ScrollText },
 ];
 
@@ -137,7 +139,7 @@ export default function AdminDashboard() {
           </header>
 
           <main className="flex-1 overflow-auto p-6">
-            {activeSection === "dashboard" && <AdminOverview />}
+            {activeSection === "dashboard" && <AdminOverview onNavigate={setActiveSection} />}
             {activeSection === "users" && <UsersManagement />}
             {activeSection === "referees" && <RefereesManagement />}
             {activeSection === "divisions" && <DivisionsManagement />}
@@ -148,6 +150,7 @@ export default function AdminDashboard() {
             {activeSection === "statistics" && <StatisticsManagement />}
             {activeSection === "finances" && <FinancesManagement />}
             {activeSection === "news" && <NewsManagement />}
+            {activeSection === "marketing" && <MarketingManagement />}
             {activeSection === "regulations" && <Regulations />}
           </main>
         </div>
@@ -156,7 +159,20 @@ export default function AdminDashboard() {
   );
 }
 
-function AdminOverview() {
+function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => void }) {
+  const overviewCards: { title: string; icon: typeof Trophy; description: string; section: AdminSection }[] = [
+    { title: "Usuarios", icon: UserCog, description: "Gestiona administradores, capitanes y árbitros", section: "users" },
+    { title: "Árbitros", icon: ClipboardList, description: "Catálogo completo de árbitros registrados", section: "referees" },
+    { title: "Equipos", icon: Shield, description: "Administra los equipos del torneo", section: "teams" },
+    { title: "Jugadores", icon: Users, description: "Gestiona los jugadores de cada equipo", section: "players" },
+    { title: "Partidos", icon: Calendar, description: "Programa y administra los partidos", section: "matches" },
+    { title: "Noticias", icon: Newspaper, description: "Publica reseñas y noticias del torneo", section: "news" },
+    { title: "Marketing", icon: Megaphone, description: "Sube fotos y videos promocionales", section: "marketing" },
+    { title: "Finanzas", icon: DollarSign, description: "Gestiona pagos, multas y gastos", section: "finances" },
+    { title: "Estadísticas", icon: BarChart3, description: "Consulta goleadores y estadísticas", section: "statistics" },
+    { title: "Torneo", icon: Trophy, description: "Configura y gestiona los torneos", section: "tournament" },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -167,17 +183,12 @@ function AdminOverview() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { title: "Usuarios", icon: UserCog, description: "Gestiona administradores, capitanes y árbitros" },
-          { title: "Árbitros", icon: ClipboardList, description: "Catálogo completo de árbitros registrados" },
-          { title: "Equipos", icon: Shield, description: "Administra los equipos del torneo" },
-          { title: "Jugadores", icon: Users, description: "Gestiona los jugadores de cada equipo" },
-          { title: "Partidos", icon: Calendar, description: "Programa y administra los partidos" },
-          { title: "Noticias", icon: Newspaper, description: "Publica reseñas y noticias del torneo" },
-        ].map((card) => (
+        {overviewCards.map((card) => (
           <div
             key={card.title}
-            className="rounded-md border bg-card p-6 hover-elevate"
+            className="rounded-md border bg-card p-6 hover-elevate cursor-pointer"
+            onClick={() => onNavigate(card.section)}
+            data-testid={`card-${card.section}`}
           >
             <card.icon className="h-8 w-8 text-primary" />
             <h3 className="mt-4 font-semibold">{card.title}</h3>
