@@ -394,6 +394,31 @@ Al iniciar sesión como Administrador, verás un panel con un menú lateral izqu
 
 ### B) CAPITÁN
 
+#### Cómo obtener acceso como Capitán
+
+Existen dos formas de obtener una cuenta de Capitán:
+
+**Opción 1 — Autoregistro:**
+1. Ingresa a la plataforma y haz clic en **"Iniciar Sesión"**.
+2. Haz clic en el enlace **"Crear cuenta"**.
+3. Completa el formulario de registro:
+   - **Nombre completo**: Tu nombre y apellido.
+   - **Correo electrónico**: Un correo válido.
+   - **Rol**: Selecciona **"Capitán"**.
+   - **Contraseña**: Crea una contraseña segura.
+   - **Confirmar contraseña**: Repite la contraseña.
+4. Haz clic en **"Crear Cuenta"**.
+5. Serás redirigido automáticamente al Panel de Capitán.
+
+**Opción 2 — Cuenta creada por el Administrador:**
+1. El Administrador crea tu cuenta desde su panel, en la sección **"Usuarios"**, asignándote el rol de Capitán.
+2. El Administrador te compartirá tus credenciales (correo y contraseña).
+3. Ingresa a la plataforma con esas credenciales siguiendo los pasos de la sección 1.3 de este manual.
+
+> **Recomendación:** Si te autoregistras, comunícale al Administrador para que asocie tu cuenta con el equipo correspondiente.
+
+---
+
 Al iniciar sesión como Capitán, verás un panel con un menú lateral que incluye: Mi Equipo, Jugadores, Calendario, Reglamento y Mi Perfil.
 
 > **Importante:** La primera vez que ingreses, la plataforma te pedirá completar tu **perfil de capitán** antes de poder acceder a las demás secciones.
@@ -499,6 +524,31 @@ Al iniciar sesión como Capitán, verás un panel con un menú lateral que inclu
 ---
 
 ### C) ÁRBITRO
+
+#### Cómo obtener acceso como Árbitro
+
+Existen dos formas de obtener una cuenta de Árbitro:
+
+**Opción 1 — Autoregistro:**
+1. Ingresa a la plataforma y haz clic en **"Iniciar Sesión"**.
+2. Haz clic en el enlace **"Crear cuenta"**.
+3. Completa el formulario de registro:
+   - **Nombre completo**: Tu nombre y apellido.
+   - **Correo electrónico**: Un correo válido.
+   - **Rol**: Selecciona **"Árbitro"**.
+   - **Contraseña**: Crea una contraseña segura.
+   - **Confirmar contraseña**: Repite la contraseña.
+4. Haz clic en **"Crear Cuenta"**.
+5. Serás redirigido automáticamente al Panel de Árbitro.
+
+**Opción 2 — Cuenta creada por el Administrador:**
+1. El Administrador crea tu cuenta desde su panel, en la sección **"Usuarios"**, asignándote el rol de Árbitro.
+2. El Administrador te compartirá tus credenciales (correo y contraseña).
+3. Ingresa a la plataforma con esas credenciales siguiendo los pasos de la sección 1.3 de este manual.
+
+> **Recomendación:** Si te autoregistras, comunícale al Administrador para que pueda asignarte partidos.
+
+---
 
 Al iniciar sesión como Árbitro, verás un panel con un menú lateral que incluye: Pendientes, Completados, Posiciones, Resultados, Reglamento y Mi Perfil.
 
