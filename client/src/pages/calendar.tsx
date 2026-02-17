@@ -398,7 +398,7 @@ export default function CalendarView() {
   }, [selectedMatch]);
 
   useEffect(() => {
-    if (selectedMatch) {
+    if (selectedMatch && !selectedMatch.vsImageUrl) {
       setTimeout(() => generateInstagramImage(selectedMatch), 150);
     }
   }, [selectedMatch, generateInstagramImage]);
@@ -630,20 +630,35 @@ export default function CalendarView() {
                   <SiInstagram className="h-4 w-4 text-primary" />
                   Imagen para Redes Sociales
                 </p>
-                <canvas
-                  ref={canvasRef}
-                  className="w-full rounded-md border"
-                  style={{ aspectRatio: "1/1" }}
-                  data-testid="canvas-instagram"
-                />
+                {selectedMatch.vsImageUrl ? (
+                  <img
+                    src={selectedMatch.vsImageUrl}
+                    alt={`${selectedMatch.homeTeam.name} vs ${selectedMatch.awayTeam.name}`}
+                    className="w-full rounded-md border"
+                    style={{ aspectRatio: "1/1" }}
+                    data-testid="img-saved-vs"
+                  />
+                ) : (
+                  <canvas
+                    ref={canvasRef}
+                    className="w-full rounded-md border"
+                    style={{ aspectRatio: "1/1" }}
+                    data-testid="canvas-instagram"
+                  />
+                )}
                 <Button
                   className="w-full mt-3"
-                  onClick={downloadImage}
-                  disabled={isGenerating}
+                  onClick={selectedMatch.vsImageUrl ? () => {
+                    const link = document.createElement("a");
+                    link.href = selectedMatch.vsImageUrl!;
+                    link.download = `partido-${selectedMatch.homeTeam.name}-vs-${selectedMatch.awayTeam.name}.png`;
+                    link.click();
+                  } : downloadImage}
+                  disabled={!selectedMatch.vsImageUrl && isGenerating}
                   data-testid="button-download-image"
                 >
                   <Download className="mr-2 h-4 w-4" />
-                  {isGenerating ? "Generando..." : "Descargar Imagen"}
+                  {!selectedMatch.vsImageUrl && isGenerating ? "Generando..." : "Descargar Imagen"}
                 </Button>
               </div>
             </div>

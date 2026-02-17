@@ -503,6 +503,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Próximos Partidos Section - VS Images */}
+      <UpcomingMatchesSection />
+
       {/* Divisions Section - Tournament Viewer */}
       <section className="py-12 sm:py-16" id="torneos">
         <div className="container mx-auto px-4">
@@ -1537,5 +1540,117 @@ export default function Home() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function UpcomingMatchesSection() {
+  const { data: allSchedule = [], isLoading } = useQuery<MatchWithTeams[]>({
+    queryKey: ["/api/home/schedule/upcoming"],
+    queryFn: async () => {
+      const res = await fetch("/api/home/schedule/upcoming");
+      if (!res.ok) throw new Error("Failed to fetch upcoming");
+      return res.json();
+    },
+  });
+
+  const upcomingMatches = allSchedule.slice(0, 3);
+
+  if (isLoading) {
+    return (
+      <section className="py-12 sm:py-16 bg-card">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <Skeleton className="h-8 w-64 mx-auto mb-2" />
+            <Skeleton className="h-4 w-48 mx-auto" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="aspect-square rounded-md" />)}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (upcomingMatches.length === 0) return null;
+
+  return (
+    <section className="py-12 sm:py-16 bg-card" data-testid="section-upcoming-matches">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold mb-2" data-testid="text-upcoming-title">
+            Próximos Partidos
+          </h2>
+          <p className="text-muted-foreground">
+            No te pierdas la acción en la cancha
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {upcomingMatches.map((match) => (
+            <div key={match.id} className="group" data-testid={`card-upcoming-match-${match.id}`}>
+              <div className="overflow-hidden rounded-md border shadow-md transition-transform group-hover:scale-[1.02]">
+                {match.vsImageUrl ? (
+                  <img
+                    src={match.vsImageUrl}
+                    alt={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
+                    className="w-full aspect-square object-cover"
+                    data-testid={`img-vs-${match.id}`}
+                  />
+                ) : (
+                  <div className="w-full aspect-square bg-gradient-to-br from-[#031D0A] to-[#0F6B2E] flex flex-col items-center justify-center gap-4 p-6">
+                    <div className="flex items-center gap-6">
+                      <div className="text-center">
+                        {match.homeTeam.logoUrl ? (
+                          <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-16 w-16 rounded-full object-cover border-2 border-amber-400 mx-auto" />
+                        ) : (
+                          <div className="h-16 w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">FC</div>
+                        )}
+                        <p className="text-white font-bold text-sm mt-2">{match.homeTeam.name.toUpperCase()}</p>
+                      </div>
+                      <p className="text-amber-400 font-black text-3xl">VS</p>
+                      <div className="text-center">
+                        {match.awayTeam.logoUrl ? (
+                          <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-16 w-16 rounded-full object-cover border-2 border-amber-400 mx-auto" />
+                        ) : (
+                          <div className="h-16 w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">FC</div>
+                        )}
+                        <p className="text-white font-bold text-sm mt-2">{match.awayTeam.name.toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-amber-300 font-semibold text-sm">
+                        {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                          ? format(new Date(match.dateTime), "EEEE d 'de' MMMM", { locale: es }).toUpperCase()
+                          : "FECHA POR CONFIRMAR"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 text-center">
+                <p className="text-sm font-medium">
+                  {match.homeTeam.name} vs {match.awayTeam.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                    ? format(new Date(match.dateTime), "EEEE d MMM, HH:mm", { locale: es })
+                    : "Fecha por confirmar"}
+                  {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <a href="/calendario" data-testid="link-full-calendar">
+            <Button variant="outline" size="lg" className="gap-2">
+              <Calendar className="h-5 w-5" />
+              Ver Calendario Completo
+            </Button>
+          </a>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -149,6 +149,38 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/home/schedule/upcoming", async (req, res) => {
+    try {
+      const allTournaments = await storage.getTournaments();
+      const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+      const allUpcoming: any[] = [];
+      const now = new Date();
+      
+      for (const tournament of activeTournaments) {
+        const matches = await storage.getMatches(tournament.id);
+        for (const match of matches) {
+          if (match.status === "PROGRAMADO" || match.status === "EN_CURSO") {
+            const matchDate = new Date(match.dateTime);
+            if (isNaN(matchDate.getTime())) continue;
+            if (matchDate >= now || match.status === "EN_CURSO") {
+              const withTeams = await storage.getMatchWithTeams(match.id);
+              if (withTeams) allUpcoming.push(withTeams);
+            }
+          }
+        }
+      }
+      
+      allUpcoming.sort((a, b) => {
+        const dateA = new Date(a.dateTime).getTime();
+        const dateB = new Date(b.dateTime).getTime();
+        return dateA - dateB;
+      });
+      res.json(allUpcoming.slice(0, 6));
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/home/standings", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;

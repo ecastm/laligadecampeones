@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament } from "@shared/schema";
+import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
+import { generateVsImageBlob, uploadVsImage } from "@/lib/vs-image-generator";
+import ligaLogo from "@assets/image_1771352006885.png";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +31,14 @@ export default function MatchesManagement() {
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
+  });
+
+  const { data: allTournaments = [] } = useQuery<Tournament[]>({
+    queryKey: ["/api/tournaments/active/all"],
+  });
+
+  const { data: divisions = [] } = useQuery<Division[]>({
+    queryKey: ["/api/divisions"],
   });
 
   const { data: teams = [] } = useQuery<Team[]>({
@@ -59,6 +69,44 @@ export default function MatchesManagement() {
     },
   });
 
+  const autoGenerateVsImage = async (matchId: string, matchData: Partial<InsertMatch>) => {
+    try {
+      const homeTeam = teams.find(t => t.id === matchData.homeTeamId);
+      const awayTeam = teams.find(t => t.id === matchData.awayTeamId);
+      if (!homeTeam || !awayTeam) return;
+
+      const tournamentForImage = allTournaments.find(t => t.id === (matchData.tournamentId || tournament?.id));
+      const divisionForImage = tournamentForImage?.divisionId ? divisions.find(d => d.id === tournamentForImage.divisionId) : undefined;
+
+      const blob = await generateVsImageBlob({
+        match: {
+          id: matchId,
+          tournamentId: matchData.tournamentId || tournament?.id || "",
+          roundNumber: matchData.roundNumber || 1,
+          dateTime: matchData.dateTime || "",
+          field: matchData.field || "",
+          homeTeamId: matchData.homeTeamId || "",
+          awayTeamId: matchData.awayTeamId || "",
+          status: matchData.status || "PROGRAMADO",
+          homeScore: matchData.homeScore,
+          awayScore: matchData.awayScore,
+        },
+        homeTeam,
+        awayTeam,
+        tournament: tournamentForImage,
+        division: divisionForImage,
+        ligaLogoSrc: ligaLogo,
+      });
+
+      const objectPath = await uploadVsImage(blob, matchId);
+      await apiRequest("PUT", `/api/admin/matches/${matchId}`, { vsImageUrl: objectPath });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+    } catch (err) {
+      console.error("Error generando imagen VS:", err);
+    }
+  };
+
   const form = useForm<Omit<InsertMatch, 'tournamentId'>>({
     resolver: zodResolver(insertMatchSchema.omit({ tournamentId: true })),
     defaultValues: {
@@ -74,14 +122,17 @@ export default function MatchesManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertMatch, 'tournamentId'>) => {
-      return apiRequest("POST", "/api/admin/matches", { ...data, tournamentId: tournament?.id });
+      const res = await apiRequest("POST", "/api/admin/matches", { ...data, tournamentId: tournament?.id });
+      return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async (createdMatch: Match) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
       toast({ title: "Partido creado correctamente" });
       setIsDialogOpen(false);
+      const formData = form.getValues();
       form.reset();
+      autoGenerateVsImage(createdMatch.id, { ...formData, tournamentId: tournament?.id });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -90,14 +141,19 @@ export default function MatchesManagement() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertMatch> }) => {
-      return apiRequest("PUT", `/api/admin/matches/${id}`, data);
+      const res = await apiRequest("PUT", `/api/admin/matches/${id}`, data);
+      return { id, data, match: await res.json() };
     },
-    onSuccess: () => {
+    onSuccess: async ({ id, data: updatedData, match: updatedMatch }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
       toast({ title: "Partido actualizado" });
+      const needsRegeneration = updatedData.homeTeamId || updatedData.awayTeamId || updatedData.dateTime || updatedData.field || updatedData.roundNumber;
       setEditingMatch(null);
       form.reset();
+      if (needsRegeneration) {
+        autoGenerateVsImage(id, updatedMatch);
+      }
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });

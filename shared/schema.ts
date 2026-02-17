@@ -250,6 +250,7 @@ export interface Match {
   status: MatchStatus;
   homeScore?: number;
   awayScore?: number;
+  vsImageUrl?: string;
 }
 
 export const insertMatchSchema = z.object({
@@ -263,6 +264,7 @@ export const insertMatchSchema = z.object({
   status: z.enum(["PROGRAMADO", "EN_CURSO", "JUGADO"]).default("PROGRAMADO"),
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
+  vsImageUrl: z.string().optional(),
 });
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
 
