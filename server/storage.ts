@@ -1173,4 +1173,8 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+import { Pool } from "pg";
+import { DatabaseStorage } from "./db-storage";
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const storage: IStorage = new DatabaseStorage(pool);

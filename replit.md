@@ -7,7 +7,8 @@ Aplicación web full-stack para organizar torneos de fútbol (liga) con autentic
 - **Frontend**: React + Vite + TypeScript + TailwindCSS + Shadcn UI
 - **Backend**: Node.js + Express + TypeScript
 - **Autenticación**: JWT + bcrypt
-- **Almacenamiento**: In-memory storage (MemStorage)
+- **Base de datos**: PostgreSQL (Neon) con raw SQL via pg Pool
+- **Almacenamiento**: DatabaseStorage (server/db-storage.ts) - persistente
 - **Validación**: Zod
 
 ## Cómo Ejecutar
@@ -25,10 +26,10 @@ La aplicación estará disponible en el puerto 5000.
 - `admin3@liga.com` / `admin123`
 
 ### Capitanes
-- `capitan1@liga.com` / `capitan123` (Águilas FC)
-- `capitan2@liga.com` / `capitan123` (Leones Unidos)
-- `capitan3@liga.com` / `capitan123` (Tigres del Valle)
-- `capitan4@liga.com` / `capitan123` (Dragones Rojos)
+- `capitan1@liga.com` / `capitan123` (El Palo)
+- `capitan2@liga.com` / `capitan123` (Fuengirola)
+- `capitan3@liga.com` / `capitan123` (Millonarios)
+- `capitan4@liga.com` / `capitan123` (Rejunte)
 
 ### Árbitros
 - `arbitro1@liga.com` / `arbitro123`
