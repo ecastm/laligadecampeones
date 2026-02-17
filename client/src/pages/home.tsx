@@ -3,24 +3,43 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { 
-  Calendar, 
-  Trophy, 
-  Users, 
-  MapPin, 
-  Newspaper, 
-  Shield, 
+import {
+  Calendar,
+  Trophy,
+  Users,
+  MapPin,
+  Newspaper,
+  Shield,
   ChevronRight,
   Phone,
   Mail,
@@ -38,20 +57,30 @@ import {
   ShieldCheck,
   Shirt,
   Megaphone,
-  HeartPulse
+  HeartPulse,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SiInstagram } from "react-icons/si";
-import { insertContactMessageSchema, type InsertContactMessage } from "@shared/schema";
-import type { MatchWithTeams, Standing, Team, Tournament, NewsWithAuthor, Division } from "@shared/schema";
+import {
+  insertContactMessageSchema,
+  type InsertContactMessage,
+} from "@shared/schema";
+import type {
+  MatchWithTeams,
+  Standing,
+  Team,
+  Tournament,
+  NewsWithAuthor,
+  Division,
+} from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 import heroFootball from "@/assets/images/football-field.jpg";
 import teamHuddle from "@/assets/images/team-huddle.jpg";
 import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
 import waterSplash from "@/assets/images/water-splash.jpg";
-import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
+import ligaLogo from "@assets/image_1771352006885.png";
 
 export default function Home() {
   const { toast } = useToast();
@@ -74,16 +103,25 @@ export default function Home() {
       await apiRequest("POST", "/api/contact", data);
     },
     onSuccess: () => {
-      toast({ title: "Mensaje enviado", description: "Nos pondremos en contacto contigo pronto." });
+      toast({
+        title: "Mensaje enviado",
+        description: "Nos pondremos en contacto contigo pronto.",
+      });
       setShowContactForm(false);
       contactForm.reset();
     },
     onError: () => {
-      toast({ title: "Error", description: "No se pudo enviar el mensaje. Intenta de nuevo.", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "No se pudo enviar el mensaje. Intenta de nuevo.",
+        variant: "destructive",
+      });
     },
   });
 
-  const { data: divisions = [], isLoading: loadingDivisions } = useQuery<Division[]>({
+  const { data: divisions = [], isLoading: loadingDivisions } = useQuery<
+    Division[]
+  >({
     queryKey: ["/api/divisions"],
   });
 
@@ -101,42 +139,55 @@ export default function Home() {
     }
   }, [divisions, selectedDivision]);
 
-  const currentTournament = selectedDivision 
-    ? allTournaments.find(t => t.divisionId === selectedDivision) || activeTournament
+  const currentTournament = selectedDivision
+    ? allTournaments.find((t) => t.divisionId === selectedDivision) ||
+      activeTournament
     : activeTournament;
 
   const currentDivision = selectedDivision
-    ? divisions.find(d => d.id === selectedDivision)
-    : currentTournament?.divisionId 
-      ? divisions.find(d => d.id === currentTournament.divisionId)
+    ? divisions.find((d) => d.id === selectedDivision)
+    : currentTournament?.divisionId
+      ? divisions.find((d) => d.id === currentTournament.divisionId)
       : null;
 
   const tournamentId = currentTournament?.id;
 
-  const { data: schedule = [], isLoading: loadingSchedule } = useQuery<MatchWithTeams[]>({
+  const { data: schedule = [], isLoading: loadingSchedule } = useQuery<
+    MatchWithTeams[]
+  >({
     queryKey: ["/api/home/schedule", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/schedule${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/schedule${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch schedule");
       return res.json();
     },
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const { data: standings = [], isLoading: loadingStandings } = useQuery<Standing[]>({
+  const { data: standings = [], isLoading: loadingStandings } = useQuery<
+    Standing[]
+  >({
     queryKey: ["/api/home/standings", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/standings${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/standings${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch standings");
       return res.json();
     },
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const { data: results = [], isLoading: loadingResults } = useQuery<MatchWithTeams[]>({
+  const { data: results = [], isLoading: loadingResults } = useQuery<
+    MatchWithTeams[]
+  >({
     queryKey: ["/api/home/results", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/results${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/results${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch results");
       return res.json();
     },
@@ -146,17 +197,23 @@ export default function Home() {
   const { data: teams = [] } = useQuery<Team[]>({
     queryKey: ["/api/home/teams", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/teams${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/teams${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch teams");
       return res.json();
     },
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const { data: news = [], isLoading: loadingNews } = useQuery<NewsWithAuthor[]>({
+  const { data: news = [], isLoading: loadingNews } = useQuery<
+    NewsWithAuthor[]
+  >({
     queryKey: ["/api/home/news", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/news${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/news${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch news");
       return res.json();
     },
@@ -172,20 +229,30 @@ export default function Home() {
     photoUrl: string | null;
   }
 
-  const { data: scorers = [], isLoading: loadingScorers } = useQuery<TopScorer[]>({
+  const { data: scorers = [], isLoading: loadingScorers } = useQuery<
+    TopScorer[]
+  >({
     queryKey: ["/api/home/scorers", tournamentId],
     queryFn: async () => {
-      const res = await fetch(`/api/home/scorers${tournamentId ? `?tournamentId=${tournamentId}` : ""}`);
+      const res = await fetch(
+        `/api/home/scorers${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
       if (!res.ok) throw new Error("Failed to fetch scorers");
       return res.json();
     },
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const rounds = Array.from(new Set(schedule.map(m => m.roundNumber))).sort((a, b) => a - b);
-  const filteredSchedule = schedule.filter(m => {
-    const matchRound = selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
-    const matchTeam = selectedTeam === "all" || m.homeTeamId === selectedTeam || m.awayTeamId === selectedTeam;
+  const rounds = Array.from(new Set(schedule.map((m) => m.roundNumber))).sort(
+    (a, b) => a - b,
+  );
+  const filteredSchedule = schedule.filter((m) => {
+    const matchRound =
+      selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
+    const matchTeam =
+      selectedTeam === "all" ||
+      m.homeTeamId === selectedTeam ||
+      m.awayTeamId === selectedTeam;
     return matchRound && matchTeam;
   });
 
@@ -202,7 +269,11 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
-              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img
+                src={ligaLogo}
+                alt="La Liga de Campeones"
+                className="h-10 w-10 object-contain"
+              />
               <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
             <div className="flex items-center gap-2">
@@ -228,32 +299,39 @@ export default function Home() {
       {/* Hero Section with Football Image */}
       <section className="relative min-h-[600px] overflow-hidden">
         {/* Background Image with Overlay */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroFootball})` }}
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#063A13]/90 via-[#063A13]/70 to-[#0B5D1E]/50" />
-        
+
         <div className="container relative mx-auto px-4 py-20 sm:py-28">
           <div className="max-w-2xl">
-            <Badge className="mb-6 bg-primary/90 text-primary-foreground" data-testid="badge-hero">
+            <Badge
+              className="mb-6 bg-primary/90 text-primary-foreground"
+              data-testid="badge-hero"
+            >
               <Zap className="mr-1 h-3 w-3" />
               Inscripciones Abiertas - Temporada 2026
             </Badge>
-            <h1 className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl" data-testid="text-hero-title">
+            <h1
+              className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
+              data-testid="text-hero-title"
+            >
               Bienvenidos a
               <span className="block text-primary">LA LIGA DE CAMPEONES</span>
             </h1>
             <p className="mb-8 text-lg text-gray-200 sm:text-xl">
-              Inscribe a tu equipo y demuestra de qué están hechos. Competencia real, 
-              organización profesional, y la oportunidad de consagrarse campeones.
+              Inscribe a tu equipo y demuestra de qué están hechos. Competencia
+              real, organización profesional, y la oportunidad de consagrarse
+              campeones.
             </p>
-            
+
             {/* Key Benefits */}
             <div className="mb-8 grid gap-3 sm:grid-cols-2">
               <div className="flex items-center gap-2 text-gray-200">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                <span>Canchas de primera calidad</span>
+                <span>Gran ubicación con facil acceso</span>
               </div>
               <div className="flex items-center gap-2 text-gray-200">
                 <CheckCircle className="h-5 w-5 text-primary" />
@@ -270,11 +348,22 @@ export default function Home() {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Button size="lg" className="gap-2 text-base" data-testid="button-register-team" onClick={() => setShowContactForm(true)}>
+              <Button
+                size="lg"
+                className="gap-2 text-base"
+                data-testid="button-register-team"
+                onClick={() => setShowContactForm(true)}
+              >
                 <UserPlus className="h-5 w-5" />
                 Inscribir Mi Equipo
               </Button>
-              <Button size="lg" variant="outline" className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20" data-testid="button-request-info" onClick={() => setShowContactForm(true)}>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                data-testid="button-request-info"
+                onClick={() => setShowContactForm(true)}
+              >
                 <Info className="h-5 w-5" />
                 Más Información
               </Button>
@@ -287,12 +376,18 @@ export default function Home() {
       <section className="py-16 bg-card">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4" data-testid="text-why-join-title">¿Por Qué Inscribir a Tu Equipo?</h2>
+            <h2
+              className="text-3xl font-bold mb-4"
+              data-testid="text-why-join-title"
+            >
+              ¿Por Qué Inscribir a Tu Equipo?
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              No es solo un torneo, es una experiencia competitiva de primer nivel para equipos que buscan superarse
+              No es solo un torneo, es una experiencia competitiva de primer
+              nivel para equipos que buscan superarse
             </p>
           </div>
-          
+
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Benefit 1 */}
             <a
@@ -302,48 +397,69 @@ export default function Home() {
               className="group relative overflow-hidden rounded-md cursor-pointer"
               data-testid="link-instalaciones"
             >
-              <img src={stadiumImage} alt="Instalaciones" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <img
+                src={stadiumImage}
+                alt="Instalaciones"
+                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
                   <MapPin className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Instalaciones de Primera</h3>
-                <p className="text-sm text-gray-300">Canchas en óptimas condiciones, iluminación profesional y vestuarios equipados</p>
+                <p className="text-sm text-gray-300">
+                  Canchas en óptimas condiciones, iluminación profesional y
+                  vestuarios equipados
+                </p>
               </div>
             </a>
-            
+
             {/* Benefit 2 */}
             <div
               className="group relative overflow-hidden rounded-md cursor-pointer"
               onClick={() => setShowPrizes(true)}
               data-testid="link-premios"
             >
-              <img src={trophyImage} alt="Premios" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <img
+                src={trophyImage}
+                alt="Premios"
+                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
                   <Trophy className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Premios y Reconocimientos</h3>
-                <p className="text-sm text-gray-300">Trofeos, medallas, premios en efectivo y reconocimiento a los mejores jugadores</p>
+                <p className="text-sm text-gray-300">
+                  Trofeos, medallas, premios en efectivo y reconocimiento a los
+                  mejores jugadores
+                </p>
               </div>
             </div>
-            
+
             {/* Benefit 3 */}
             <div
               className="group relative overflow-hidden rounded-md cursor-pointer"
               onClick={() => setShowCompetencia(true)}
               data-testid="link-competencia"
             >
-              <img src={teamHuddle} alt="Competencia" className="h-48 w-full object-cover transition-transform group-hover:scale-105" />
+              <img
+                src={teamHuddle}
+                alt="Competencia"
+                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-6 text-white">
                 <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
                   <Users className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Competencia Real</h3>
-                <p className="text-sm text-gray-300">Enfrenta a los mejores equipos de la zona en partidos emocionantes cada semana</p>
+                <p className="text-sm text-gray-300">
+                  Enfrenta a los mejores equipos de la zona en partidos
+                  emocionantes cada semana
+                </p>
               </div>
             </div>
           </div>
@@ -356,7 +472,9 @@ export default function Home() {
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <div className="text-center" data-testid="stat-teams">
               <p className="text-4xl font-bold text-primary">50+</p>
-              <p className="text-sm text-muted-foreground">Equipos Compitiendo</p>
+              <p className="text-sm text-muted-foreground">
+                Equipos Compitiendo
+              </p>
             </div>
             <div className="text-center" data-testid="stat-players">
               <p className="text-4xl font-bold text-primary">800+</p>
@@ -364,11 +482,15 @@ export default function Home() {
             </div>
             <div className="text-center" data-testid="stat-matches">
               <p className="text-4xl font-bold text-primary">200+</p>
-              <p className="text-sm text-muted-foreground">Partidos por Temporada</p>
+              <p className="text-sm text-muted-foreground">
+                Partidos por Temporada
+              </p>
             </div>
             <div className="text-center" data-testid="stat-seasons">
               <p className="text-4xl font-bold text-primary">10</p>
-              <p className="text-sm text-muted-foreground">Años de Experiencia</p>
+              <p className="text-sm text-muted-foreground">
+                Años de Experiencia
+              </p>
             </div>
           </div>
         </div>
@@ -378,7 +500,12 @@ export default function Home() {
       <section className="py-12 sm:py-16" id="torneos">
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
-            <h2 className="mb-2 text-3xl font-bold" data-testid="text-divisions-title">Ver Torneos en Curso</h2>
+            <h2
+              className="mb-2 text-3xl font-bold"
+              data-testid="text-divisions-title"
+            >
+              Ver Torneos en Curso
+            </h2>
           </div>
 
           {/* Division Selector */}
@@ -406,7 +533,9 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="font-semibold">{division.name}</h3>
-                      <p className="text-sm text-muted-foreground">{division.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {division.description}
+                      </p>
                     </div>
                   </div>
                   {selectedDivision === division.id && (
@@ -430,7 +559,10 @@ export default function Home() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-bold" data-testid="text-tournament-name">
+                          <h3
+                            className="text-xl font-bold"
+                            data-testid="text-tournament-name"
+                          >
                             {currentTournament.name}
                           </h3>
                           {currentDivision && (
@@ -444,7 +576,10 @@ export default function Home() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground" data-testid="text-season-name">
+                        <p
+                          className="text-sm text-muted-foreground"
+                          data-testid="text-season-name"
+                        >
                           {currentTournament.seasonName}
                         </p>
                       </div>
@@ -458,25 +593,49 @@ export default function Home() {
               </Card>
 
               {/* Tournament Tabs */}
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="space-y-6"
+              >
                 <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="calendario" data-testid="tab-calendario" className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3">
+                  <TabsTrigger
+                    value="calendario"
+                    data-testid="tab-calendario"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
                     <Calendar className="h-4 w-4" />
                     <span className="text-[10px] sm:text-sm">Calendario</span>
                   </TabsTrigger>
-                  <TabsTrigger value="posiciones" data-testid="tab-posiciones" className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3">
+                  <TabsTrigger
+                    value="posiciones"
+                    data-testid="tab-posiciones"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
                     <Trophy className="h-4 w-4" />
                     <span className="text-[10px] sm:text-sm">Posiciones</span>
                   </TabsTrigger>
-                  <TabsTrigger value="goleadores" data-testid="tab-goleadores" className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3">
+                  <TabsTrigger
+                    value="goleadores"
+                    data-testid="tab-goleadores"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
                     <Target className="h-4 w-4" />
                     <span className="text-[10px] sm:text-sm">Goleadores</span>
                   </TabsTrigger>
-                  <TabsTrigger value="resultados" data-testid="tab-resultados" className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3">
+                  <TabsTrigger
+                    value="resultados"
+                    data-testid="tab-resultados"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
                     <Users className="h-4 w-4" />
                     <span className="text-[10px] sm:text-sm">Resultados</span>
                   </TabsTrigger>
-                  <TabsTrigger value="equipos" data-testid="tab-equipos" className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3">
+                  <TabsTrigger
+                    value="equipos"
+                    data-testid="tab-equipos"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
                     <Shield className="h-4 w-4" />
                     <span className="text-[10px] sm:text-sm">Equipos</span>
                   </TabsTrigger>
@@ -492,25 +651,41 @@ export default function Home() {
                           Calendario de Partidos
                         </CardTitle>
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Select value={selectedRound} onValueChange={setSelectedRound}>
-                            <SelectTrigger className="w-full sm:w-[140px]" data-testid="select-round">
+                          <Select
+                            value={selectedRound}
+                            onValueChange={setSelectedRound}
+                          >
+                            <SelectTrigger
+                              className="w-full sm:w-[140px]"
+                              data-testid="select-round"
+                            >
                               <SelectValue placeholder="Jornada" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Todas</SelectItem>
-                              {rounds.map(r => (
-                                <SelectItem key={r} value={r.toString()}>Jornada {r}</SelectItem>
+                              {rounds.map((r) => (
+                                <SelectItem key={r} value={r.toString()}>
+                                  Jornada {r}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                          <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                            <SelectTrigger className="w-full sm:w-[160px]" data-testid="select-team">
+                          <Select
+                            value={selectedTeam}
+                            onValueChange={setSelectedTeam}
+                          >
+                            <SelectTrigger
+                              className="w-full sm:w-[160px]"
+                              data-testid="select-team"
+                            >
                               <SelectValue placeholder="Equipo" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">Todos</SelectItem>
-                              {teams.map(t => (
-                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                              {teams.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.name}
+                                </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
@@ -520,7 +695,9 @@ export default function Home() {
                     <CardContent>
                       {loadingSchedule ? (
                         <div className="space-y-3">
-                          {[1, 2, 3].map(i => <Skeleton key={i} className="h-20" />)}
+                          {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-20" />
+                          ))}
                         </div>
                       ) : filteredSchedule.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
@@ -529,7 +706,7 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                          {filteredSchedule.map(match => (
+                          {filteredSchedule.map((match) => (
                             <div
                               key={match.id}
                               className="rounded border p-1.5 hover-elevate cursor-pointer"
@@ -538,21 +715,45 @@ export default function Home() {
                             >
                               <div className="flex items-center justify-between gap-1 mb-1">
                                 <div className="flex items-center gap-0.5">
-                                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-4">J{match.roundNumber}</Badge>
-                                  <Badge variant={match.status === "JUGADO" ? "default" : "secondary"} className="text-[9px] px-1 py-0 h-4">
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[9px] px-1 py-0 h-4"
+                                  >
+                                    J{match.roundNumber}
+                                  </Badge>
+                                  <Badge
+                                    variant={
+                                      match.status === "JUGADO"
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-[9px] px-1 py-0 h-4"
+                                  >
                                     {match.status === "JUGADO" ? "Fin" : "Prog"}
                                   </Badge>
                                 </div>
                                 <span className="text-[9px] text-muted-foreground">
-                                  {format(new Date(match.dateTime), "d/MM HH:mm", { locale: es })}
+                                  {format(
+                                    new Date(match.dateTime),
+                                    "d/MM HH:mm",
+                                    { locale: es },
+                                  )}
                                 </span>
                               </div>
                               <div className="flex items-center gap-1 text-[11px]">
-                                <span className="flex-1 text-right font-medium truncate" data-testid={`text-home-team-${match.id}`}>
+                                <span
+                                  className="flex-1 text-right font-medium truncate"
+                                  data-testid={`text-home-team-${match.id}`}
+                                >
                                   {match.homeTeam?.name || "Local"}
                                 </span>
-                                <span className="text-[9px] text-muted-foreground px-0.5">vs</span>
-                                <span className="flex-1 text-left font-medium truncate" data-testid={`text-away-team-${match.id}`}>
+                                <span className="text-[9px] text-muted-foreground px-0.5">
+                                  vs
+                                </span>
+                                <span
+                                  className="flex-1 text-left font-medium truncate"
+                                  data-testid={`text-away-team-${match.id}`}
+                                >
                                   {match.awayTeam?.name || "Visitante"}
                                 </span>
                               </div>
@@ -579,7 +780,9 @@ export default function Home() {
                       ) : standings.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
                           <Trophy className="mx-auto h-12 w-12 opacity-50" />
-                          <p className="mt-4">No hay datos de posiciones disponibles</p>
+                          <p className="mt-4">
+                            No hay datos de posiciones disponibles
+                          </p>
                         </div>
                       ) : (
                         <div>
@@ -595,20 +798,36 @@ export default function Home() {
                                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-bold">
                                     {index + 1}
                                   </span>
-                                  <span className="font-medium text-sm truncate max-w-[120px]">{team.teamName}</span>
+                                  <span className="font-medium text-sm truncate max-w-[120px]">
+                                    {team.teamName}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-4">
                                   <div className="text-center">
-                                    <p className="text-xs text-muted-foreground">PJ</p>
-                                    <p className="font-medium text-sm">{team.played}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      PJ
+                                    </p>
+                                    <p className="font-medium text-sm">
+                                      {team.played}
+                                    </p>
                                   </div>
                                   <div className="text-center">
-                                    <p className="text-xs text-muted-foreground">DG</p>
-                                    <p className="font-medium text-sm">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      DG
+                                    </p>
+                                    <p className="font-medium text-sm">
+                                      {team.goalDifference > 0
+                                        ? `+${team.goalDifference}`
+                                        : team.goalDifference}
+                                    </p>
                                   </div>
                                   <div className="text-center min-w-[32px]">
-                                    <p className="text-xs text-muted-foreground">PTS</p>
-                                    <p className="font-bold text-primary">{team.points}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      PTS
+                                    </p>
+                                    <p className="font-bold text-primary">
+                                      {team.points}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -628,7 +847,9 @@ export default function Home() {
                                   <th className="pb-3 pr-2 text-center">GF</th>
                                   <th className="pb-3 pr-2 text-center">GC</th>
                                   <th className="pb-3 pr-2 text-center">DG</th>
-                                  <th className="pb-3 text-center font-bold">PTS</th>
+                                  <th className="pb-3 text-center font-bold">
+                                    PTS
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -638,16 +859,38 @@ export default function Home() {
                                     className={`border-b ${index < 3 ? "bg-accent/30" : ""}`}
                                     data-testid={`row-standing-${team.teamId}`}
                                   >
-                                    <td className="py-3 pr-4 font-medium">{index + 1}</td>
-                                    <td className="py-3 pr-4 font-medium">{team.teamName}</td>
-                                    <td className="py-3 pr-2 text-center">{team.played}</td>
-                                    <td className="py-3 pr-2 text-center text-foreground">{team.won}</td>
-                                    <td className="py-3 pr-2 text-center text-primary">{team.drawn}</td>
-                                    <td className="py-3 pr-2 text-center text-destructive">{team.lost}</td>
-                                    <td className="py-3 pr-2 text-center">{team.goalsFor}</td>
-                                    <td className="py-3 pr-2 text-center">{team.goalsAgainst}</td>
-                                    <td className="py-3 pr-2 text-center font-medium">{team.goalDifference > 0 ? `+${team.goalDifference}` : team.goalDifference}</td>
-                                    <td className="py-3 text-center font-bold text-primary">{team.points}</td>
+                                    <td className="py-3 pr-4 font-medium">
+                                      {index + 1}
+                                    </td>
+                                    <td className="py-3 pr-4 font-medium">
+                                      {team.teamName}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center">
+                                      {team.played}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center text-foreground">
+                                      {team.won}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center text-primary">
+                                      {team.drawn}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center text-destructive">
+                                      {team.lost}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center">
+                                      {team.goalsFor}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center">
+                                      {team.goalsAgainst}
+                                    </td>
+                                    <td className="py-3 pr-2 text-center font-medium">
+                                      {team.goalDifference > 0
+                                        ? `+${team.goalDifference}`
+                                        : team.goalDifference}
+                                    </td>
+                                    <td className="py-3 text-center font-bold text-primary">
+                                      {team.points}
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -671,23 +914,38 @@ export default function Home() {
                     <CardContent>
                       {loadingScorers ? (
                         <div className="space-y-3">
-                          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12" />)}
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <Skeleton key={i} className="h-12" />
+                          ))}
                         </div>
                       ) : scorers.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
                           <Target className="mx-auto h-12 w-12 opacity-50" />
-                          <p className="mt-4">No hay goleadores registrados aún</p>
-                          <p className="text-sm">Los goles se registran cuando el árbitro finaliza un partido</p>
+                          <p className="mt-4">
+                            No hay goleadores registrados aún
+                          </p>
+                          <p className="text-sm">
+                            Los goles se registran cuando el árbitro finaliza un
+                            partido
+                          </p>
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
                           <table className="w-full text-sm">
                             <thead>
                               <tr className="border-b text-muted-foreground">
-                                <th className="pb-3 text-left font-medium w-12">#</th>
-                                <th className="pb-3 text-left font-medium">Jugador</th>
-                                <th className="pb-3 text-left font-medium">Equipo</th>
-                                <th className="pb-3 text-center font-medium w-16">Goles</th>
+                                <th className="pb-3 text-left font-medium w-12">
+                                  #
+                                </th>
+                                <th className="pb-3 text-left font-medium">
+                                  Jugador
+                                </th>
+                                <th className="pb-3 text-left font-medium">
+                                  Equipo
+                                </th>
+                                <th className="pb-3 text-center font-medium w-16">
+                                  Goles
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
@@ -699,22 +957,28 @@ export default function Home() {
                                 >
                                   <td className="py-3 font-bold">
                                     {idx < 3 ? (
-                                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                                        idx === 0 ? "bg-primary text-primary-foreground" :
-                                        idx === 1 ? "bg-muted text-foreground" :
-                                        "bg-secondary text-secondary-foreground"
-                                      }`}>
+                                      <div
+                                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                                          idx === 0
+                                            ? "bg-primary text-primary-foreground"
+                                            : idx === 1
+                                              ? "bg-muted text-foreground"
+                                              : "bg-secondary text-secondary-foreground"
+                                        }`}
+                                      >
                                         {idx + 1}
                                       </div>
                                     ) : (
-                                      <span className="text-muted-foreground">{idx + 1}</span>
+                                      <span className="text-muted-foreground">
+                                        {idx + 1}
+                                      </span>
                                     )}
                                   </td>
                                   <td className="py-3">
                                     <div className="flex items-center gap-2">
                                       {scorer.photoUrl ? (
-                                        <img 
-                                          src={scorer.photoUrl} 
+                                        <img
+                                          src={scorer.photoUrl}
                                           alt={scorer.playerName}
                                           className="h-8 w-8 rounded-full object-cover"
                                         />
@@ -723,12 +987,19 @@ export default function Home() {
                                           <Users className="h-4 w-4 text-primary" />
                                         </div>
                                       )}
-                                      <span className="font-medium">{scorer.playerName}</span>
+                                      <span className="font-medium">
+                                        {scorer.playerName}
+                                      </span>
                                     </div>
                                   </td>
-                                  <td className="py-3 text-muted-foreground">{scorer.teamName}</td>
+                                  <td className="py-3 text-muted-foreground">
+                                    {scorer.teamName}
+                                  </td>
                                   <td className="py-3 text-center">
-                                    <Badge variant="default" className="text-sm font-bold">
+                                    <Badge
+                                      variant="default"
+                                      className="text-sm font-bold"
+                                    >
                                       {scorer.goals}
                                     </Badge>
                                   </td>
@@ -754,7 +1025,9 @@ export default function Home() {
                     <CardContent>
                       {loadingResults ? (
                         <div className="space-y-3">
-                          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24" />)}
+                          {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-24" />
+                          ))}
                         </div>
                       ) : results.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
@@ -763,7 +1036,7 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="space-y-3">
-                          {results.map(match => (
+                          {results.map((match) => (
                             <div
                               key={match.id}
                               className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
@@ -772,27 +1045,45 @@ export default function Home() {
                             >
                               <div className="flex items-center justify-between gap-2 mb-3">
                                 <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
+                                  <Badge variant="outline" className="text-xs">
+                                    J{match.roundNumber}
+                                  </Badge>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
-                                  {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
+                                  {format(
+                                    new Date(match.dateTime),
+                                    "d MMM yyyy",
+                                    { locale: es },
+                                  )}
                                 </span>
                               </div>
                               <div className="flex items-center justify-center gap-2 sm:gap-4">
                                 <div className="flex-1 text-right">
-                                  <span className="text-sm sm:text-base font-medium truncate block">{match.homeTeam?.name}</span>
+                                  <span className="text-sm sm:text-base font-medium truncate block">
+                                    {match.homeTeam?.name}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
-                                  <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
+                                  <span
+                                    className="text-lg sm:text-2xl font-bold"
+                                    data-testid={`text-score-home-${match.id}`}
+                                  >
                                     {match.homeScore ?? 0}
                                   </span>
-                                  <span className="text-muted-foreground text-sm">-</span>
-                                  <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
+                                  <span className="text-muted-foreground text-sm">
+                                    -
+                                  </span>
+                                  <span
+                                    className="text-lg sm:text-2xl font-bold"
+                                    data-testid={`text-score-away-${match.id}`}
+                                  >
                                     {match.awayScore ?? 0}
                                   </span>
                                 </div>
                                 <div className="flex-1">
-                                  <span className="text-sm sm:text-base font-medium truncate block">{match.awayTeam?.name}</span>
+                                  <span className="text-sm sm:text-base font-medium truncate block">
+                                    {match.awayTeam?.name}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -820,7 +1111,7 @@ export default function Home() {
                         </div>
                       ) : (
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                          {teams.map(team => (
+                          {teams.map((team) => (
                             <div
                               key={team.id}
                               className="rounded-md border p-4 hover-elevate"
@@ -832,7 +1123,9 @@ export default function Home() {
                                 </div>
                                 <div className="flex-1">
                                   <h4 className="font-semibold">{team.name}</h4>
-                                  <p className="text-sm text-muted-foreground">{team.colors}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {team.colors}
+                                  </p>
                                   <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                                     <MapPin className="h-3 w-3" />
                                     {team.homeField}
@@ -856,8 +1149,12 @@ export default function Home() {
       <section className="border-t bg-card py-12 sm:py-16">
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
-            <h2 className="mb-2 text-3xl font-bold">Lo Que Tu Equipo Obtiene</h2>
-            <p className="text-muted-foreground">Beneficios exclusivos para todos los equipos inscritos</p>
+            <h2 className="mb-2 text-3xl font-bold">
+              Lo Que Tu Equipo Obtiene
+            </h2>
+            <p className="text-muted-foreground">
+              Beneficios exclusivos para todos los equipos inscritos
+            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="text-center" data-testid="feature-organization">
@@ -865,9 +1162,12 @@ export default function Home() {
                 <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
                   <Swords className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-1 text-sm font-bold">Partidos Garantizados</h3>
+                <h3 className="mb-1 text-sm font-bold">
+                  Partidos Garantizados
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Calendario fijo con partidos cada semana contra equipos de tu nivel
+                  Calendario fijo con partidos cada semana contra equipos de tu
+                  nivel
                 </p>
               </CardContent>
             </Card>
@@ -878,7 +1178,8 @@ export default function Home() {
                 </div>
                 <h3 className="mb-1 text-sm font-bold">Premios y Trofeos</h3>
                 <p className="text-xs text-muted-foreground">
-                  Copa para campeón, medallas y reconocimientos a los mejores jugadores
+                  Copa para campeón, medallas y reconocimientos a los mejores
+                  jugadores
                 </p>
               </CardContent>
             </Card>
@@ -889,7 +1190,8 @@ export default function Home() {
                 </div>
                 <h3 className="mb-1 text-sm font-bold">Portal del Capitán</h3>
                 <p className="text-xs text-muted-foreground">
-                  Gestiona tu plantilla, consulta calendario y sigue el desempeño de tu equipo
+                  Gestiona tu plantilla, consulta calendario y sigue el
+                  desempeño de tu equipo
                 </p>
               </CardContent>
             </Card>
@@ -900,7 +1202,8 @@ export default function Home() {
                 </div>
                 <h3 className="mb-1 text-sm font-bold">Estadísticas en Vivo</h3>
                 <p className="text-xs text-muted-foreground">
-                  Tabla de posiciones, goleadores y rendimiento de tu equipo actualizados en tiempo real
+                  Tabla de posiciones, goleadores y rendimiento de tu equipo
+                  actualizados en tiempo real
                 </p>
               </CardContent>
             </Card>
@@ -909,9 +1212,12 @@ export default function Home() {
                 <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/15">
                   <Shirt className="h-5 w-5 text-primary" />
                 </div>
-                <h3 className="mb-1 text-sm font-bold">Árbitros Certificados</h3>
+                <h3 className="mb-1 text-sm font-bold">
+                  Árbitros Certificados
+                </h3>
                 <p className="text-xs text-muted-foreground">
-                  Todos los partidos con árbitros profesionales que garantizan juego limpio
+                  Todos los partidos con árbitros profesionales que garantizan
+                  juego limpio
                 </p>
               </CardContent>
             </Card>
@@ -922,7 +1228,8 @@ export default function Home() {
                 </div>
                 <h3 className="mb-1 text-sm font-bold">Competencia Sana</h3>
                 <p className="text-xs text-muted-foreground">
-                  Reglamento claro, sistema de multas y fair play para una experiencia deportiva de calidad
+                  Reglamento claro, sistema de multas y fair play para una
+                  experiencia deportiva de calidad
                 </p>
               </CardContent>
             </Card>
@@ -935,19 +1242,27 @@ export default function Home() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
             <h2 className="text-3xl font-bold mb-2">¿Listo Para Competir?</h2>
-            <p className="text-muted-foreground">Inscribe a tu equipo ahora y sé parte de la mejor liga amateur</p>
+            <p className="text-muted-foreground">
+              Inscribe a tu equipo ahora y sé parte de la mejor liga amateur
+            </p>
           </div>
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card className="overflow-hidden border-primary/50" data-testid="cta-register">
+            <Card
+              className="overflow-hidden border-primary/50"
+              data-testid="cta-register"
+            >
               <CardContent className="p-6 sm:p-8">
                 <div className="flex items-start gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <UserPlus className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xl font-bold">Inscribe Tu Equipo Ahora</h3>
+                    <h3 className="mb-2 text-xl font-bold">
+                      Inscribe Tu Equipo Ahora
+                    </h3>
                     <p className="mb-4 text-muted-foreground">
-                      La temporada está por comenzar. No te quedes fuera de la competencia más emocionante de la región.
+                      La temporada está por comenzar. No te quedes fuera de la
+                      competencia más emocionante de la región.
                     </p>
                     <ul className="mb-6 space-y-2 text-sm">
                       <li className="flex items-center gap-2">
@@ -963,7 +1278,12 @@ export default function Home() {
                         Uniformes no incluidos
                       </li>
                     </ul>
-                    <Button size="lg" className="gap-2" data-testid="button-cta-register" onClick={() => setShowContactForm(true)}>
+                    <Button
+                      size="lg"
+                      className="gap-2"
+                      data-testid="button-cta-register"
+                      onClick={() => setShowContactForm(true)}
+                    >
                       <UserPlus className="h-4 w-4" />
                       Quiero Inscribirme
                     </Button>
@@ -981,7 +1301,8 @@ export default function Home() {
                   <div>
                     <h3 className="mb-2 text-xl font-bold">¿Tienes Dudas?</h3>
                     <p className="mb-4 text-muted-foreground">
-                      Consulta sobre cuotas, horarios, requisitos o cualquier duda. Te respondemos en menos de 24 horas.
+                      Consulta sobre cuotas, horarios, requisitos o cualquier
+                      duda. Te respondemos en menos de 24 horas.
                     </p>
                     <div className="mb-6 space-y-3 text-sm">
                       <div className="flex items-center gap-2">
@@ -990,11 +1311,19 @@ export default function Home() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-primary" />
-                        <span className="font-medium">inscripciones@ligafutbol.com</span>
+                        <span className="font-medium">
+                          inscripciones@ligafutbol.com
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
-                      <Button size="lg" variant="outline" className="gap-2" data-testid="button-cta-info" onClick={() => setShowContactForm(true)}>
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="gap-2"
+                        data-testid="button-cta-info"
+                        onClick={() => setShowContactForm(true)}
+                      >
                         <Mail className="h-4 w-4" />
                         Contáctanos
                       </Button>
@@ -1027,8 +1356,12 @@ export default function Home() {
               <span className="font-semibold">La Liga de Campeones</span>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <a href="/historial" className="hover:text-foreground">Historial</a>
-              <a href="/login" className="hover:text-foreground">Iniciar Sesión</a>
+              <a href="/historial" className="hover:text-foreground">
+                Historial
+              </a>
+              <a href="/login" className="hover:text-foreground">
+                Iniciar Sesión
+              </a>
             </div>
             <p className="text-sm text-muted-foreground">
               © 2026 La Liga de Campeones. Todos los derechos reservados.
@@ -1056,12 +1389,16 @@ export default function Home() {
             <div className="flex flex-col items-center gap-3 rounded-md border p-6">
               <Trophy className="h-16 w-16 text-primary" />
               <h3 className="text-lg font-bold">Primera División</h3>
-              <p className="text-3xl font-extrabold text-primary">1.500 &euro;</p>
+              <p className="text-3xl font-extrabold text-primary">
+                1.500 &euro;
+              </p>
             </div>
             <div className="flex flex-col items-center gap-3 rounded-md border p-6">
               <Trophy className="h-16 w-16 text-muted-foreground" />
               <h3 className="text-lg font-bold">Segunda División</h3>
-              <p className="text-3xl font-extrabold text-muted-foreground">1.000 &euro;</p>
+              <p className="text-3xl font-extrabold text-muted-foreground">
+                1.000 &euro;
+              </p>
             </div>
           </div>
         </DialogContent>
@@ -1085,7 +1422,11 @@ export default function Home() {
                 </DialogTitle>
               </DialogHeader>
               <p className="mb-6 text-center text-base leading-relaxed text-muted-foreground">
-                Enfr&eacute;ntate a los mejores equipos de la zona en partidos llenos de intensidad, pasi&oacute;n y emoci&oacute;n cada semana. S&uacute;mate al torneo, demuestra de qu&eacute; est&aacute; hecho tu equipo y forma parte de una liga donde cada partido cuenta.
+                Enfr&eacute;ntate a los mejores equipos de la zona en partidos
+                llenos de intensidad, pasi&oacute;n y emoci&oacute;n cada
+                semana. S&uacute;mate al torneo, demuestra de qu&eacute;
+                est&aacute; hecho tu equipo y forma parte de una liga donde cada
+                partido cuenta.
               </p>
               <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-center">
                 <p className="text-sm font-bold text-destructive">
@@ -1121,11 +1462,17 @@ export default function Home() {
               Formulario de Contacto
             </DialogTitle>
             <DialogDescription>
-              Déjanos tus datos y nos pondremos en contacto contigo para inscribir a tu equipo.
+              Déjanos tus datos y nos pondremos en contacto contigo para
+              inscribir a tu equipo.
             </DialogDescription>
           </DialogHeader>
           <Form {...contactForm}>
-            <form onSubmit={contactForm.handleSubmit((data) => contactMutation.mutate(data))} className="space-y-4">
+            <form
+              onSubmit={contactForm.handleSubmit((data) =>
+                contactMutation.mutate(data),
+              )}
+              className="space-y-4"
+            >
               <FormField
                 control={contactForm.control}
                 name="contactName"
@@ -1133,7 +1480,11 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Nombre de Contacto</FormLabel>
                     <FormControl>
-                      <Input placeholder="Tu nombre completo" {...field} data-testid="input-contact-name" />
+                      <Input
+                        placeholder="Tu nombre completo"
+                        {...field}
+                        data-testid="input-contact-name"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1146,7 +1497,11 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Teléfono</FormLabel>
                     <FormControl>
-                      <Input placeholder="+52 555 123 4567" {...field} data-testid="input-contact-phone" />
+                      <Input
+                        placeholder="+52 555 123 4567"
+                        {...field}
+                        data-testid="input-contact-phone"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1159,7 +1514,12 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Correo Electrónico</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="tu@email.com" {...field} data-testid="input-contact-email" />
+                      <Input
+                        type="email"
+                        placeholder="tu@email.com"
+                        {...field}
+                        data-testid="input-contact-email"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1172,13 +1532,24 @@ export default function Home() {
                   <FormItem>
                     <FormLabel>Comentarios</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Cuéntanos sobre tu equipo, número de jugadores, experiencia..." className="resize-none" rows={3} {...field} data-testid="input-contact-comments" />
+                      <Textarea
+                        placeholder="Cuéntanos sobre tu equipo, número de jugadores, experiencia..."
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                        data-testid="input-contact-comments"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full gap-2" disabled={contactMutation.isPending} data-testid="button-send-contact">
+              <Button
+                type="submit"
+                className="w-full gap-2"
+                disabled={contactMutation.isPending}
+                data-testid="button-send-contact"
+              >
                 <Send className="h-4 w-4" />
                 {contactMutation.isPending ? "Enviando..." : "Enviar Mensaje"}
               </Button>

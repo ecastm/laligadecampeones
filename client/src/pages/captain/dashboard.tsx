@@ -20,7 +20,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, IdCard, ScrollText } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
-import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
+import ligaLogo from "@assets/image_1771352006885.png";
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";

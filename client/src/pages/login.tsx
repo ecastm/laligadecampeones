@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
-import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
+import ligaLogo from "@assets/image_1771352006885.png";
 
 export default function Login() {
   const [, setLocation] = useLocation();
