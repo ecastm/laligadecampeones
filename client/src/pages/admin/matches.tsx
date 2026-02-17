@@ -14,16 +14,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Calendar, Edit } from "lucide-react";
+import { Plus, Trash2, Calendar, Edit, Image } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/date-picker";
+import { MatchVsImage } from "@/components/match-vs-image";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function MatchesManagement() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
+  const [vsImageMatch, setVsImageMatch] = useState<Match | null>(null);
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -364,6 +366,15 @@ export default function MatchesManagement() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setVsImageMatch(match)}
+                      data-testid={`button-vs-image-${match.id}`}
+                      title="Ver imagen VS"
+                    >
+                      <Image className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => openEditDialog(match)}
                       data-testid={`button-edit-match-${match.id}`}
                     >
@@ -400,6 +411,16 @@ export default function MatchesManagement() {
           )}
         </CardContent>
       </Card>
+
+      {vsImageMatch && (
+        <MatchVsImage
+          match={vsImageMatch}
+          homeTeam={teams.find(t => t.id === vsImageMatch.homeTeamId)}
+          awayTeam={teams.find(t => t.id === vsImageMatch.awayTeamId)}
+          open={!!vsImageMatch}
+          onOpenChange={(open) => { if (!open) setVsImageMatch(null); }}
+        />
+      )}
     </div>
   );
 }
