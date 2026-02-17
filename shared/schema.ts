@@ -81,6 +81,12 @@ export const insertTournamentTypeSchema = z.object({
 export type InsertTournamentType = z.infer<typeof insertTournamentTypeSchema>;
 
 // User
+export const UserStatus = {
+  ACTIVO: "ACTIVO",
+  INACTIVO: "INACTIVO",
+} as const;
+export type UserStatus = (typeof UserStatus)[keyof typeof UserStatus];
+
 export interface User {
   id: string;
   name: string;
@@ -88,6 +94,7 @@ export interface User {
   passwordHash: string;
   role: UserRole;
   teamId?: string;
+  status: UserStatus;
   createdAt: string;
 }
 
@@ -99,6 +106,16 @@ export const insertUserSchema = z.object({
   teamId: z.string().optional(),
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export const updateUserSchema = z.object({
+  name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
+  email: z.string().email("Email inválido").optional(),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
+  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO"]).optional(),
+  teamId: z.string().optional().nullable(),
+  status: z.enum(["ACTIVO", "INACTIVO"]).optional(),
+});
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 
 export const loginSchema = z.object({
   email: z.string().email("Email inválido"),

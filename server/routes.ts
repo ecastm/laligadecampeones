@@ -6,6 +6,7 @@ import {
   loginSchema,
   registerSchema,
   insertUserSchema,
+  updateUserSchema,
   insertTeamSchema,
   insertPlayerSchema,
   insertMatchSchema,
@@ -46,6 +47,9 @@ export async function registerRoutes(
       const valid = await verifyPassword(data.password, user.passwordHash);
       if (!valid) {
         return res.status(401).json({ message: "Credenciales inválidas" });
+      }
+      if (user.status === "INACTIVO") {
+        return res.status(403).json({ message: "Tu cuenta ha sido desactivada. Contacta al administrador." });
       }
       const token = generateToken({ userId: user.id, email: user.email, role: user.role });
       const { passwordHash, ...userWithoutPassword } = user;
@@ -425,6 +429,29 @@ export async function registerRoutes(
       const user = await storage.createUser(data);
       const { passwordHash, ...userWithoutPassword } = user;
       res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = updateUserSchema.parse(req.body);
+      if (data.email) {
+        const existing = await storage.getUserByEmail(data.email);
+        if (existing && existing.id !== req.params.id) {
+          return res.status(400).json({ message: "El email ya está registrado por otro usuario" });
+        }
+      }
+      const user = await storage.updateUser(req.params.id, data);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      const { passwordHash, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });

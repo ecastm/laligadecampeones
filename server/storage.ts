@@ -1,5 +1,5 @@
 import {
-  type User, type InsertUser,
+  type User, type InsertUser, type UpdateUser,
   type Tournament, type InsertTournament,
   type Team, type InsertTeam,
   type Player, type InsertPlayer,
@@ -29,6 +29,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   getUsers(): Promise<Omit<User, 'passwordHash'>[]>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, data: UpdateUser): Promise<User | undefined>;
   deleteUser(id: string): Promise<void>;
 
   // Tournaments
@@ -247,8 +248,24 @@ export class MemStorage implements IStorage {
       passwordHash,
       role: insertUser.role,
       teamId: insertUser.teamId,
+      status: "ACTIVO",
       createdAt: new Date().toISOString(),
     };
+    this.users.set(id, user);
+    return user;
+  }
+
+  async updateUser(id: string, data: UpdateUser): Promise<User | undefined> {
+    const user = this.users.get(id);
+    if (!user) return undefined;
+    if (data.name !== undefined) user.name = data.name;
+    if (data.email !== undefined) user.email = data.email;
+    if (data.role !== undefined) user.role = data.role;
+    if (data.teamId !== undefined) user.teamId = data.teamId || undefined;
+    if (data.status !== undefined) user.status = data.status;
+    if (data.password) {
+      user.passwordHash = await bcrypt.hash(data.password, 10);
+    }
     this.users.set(id, user);
     return user;
   }
