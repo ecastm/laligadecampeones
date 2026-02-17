@@ -33,6 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Plus, CreditCard, Receipt, AlertTriangle, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function FinancesManagement() {
   const { toast } = useToast();
@@ -501,7 +502,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Fecha de Pago</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-payment-date" />
+                      <DatePicker value={field.value} onChange={field.onChange} data-testid="input-payment-date" placeholder="Selecciona fecha de pago" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -580,7 +581,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Fecha de Pago</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-fine-payment-date" />
+                      <DatePicker value={field.value} onChange={field.onChange} data-testid="input-fine-payment-date" placeholder="Selecciona fecha de pago" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -650,7 +651,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Fecha del Gasto</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} data-testid="input-expense-date" />
+                      <DatePicker value={field.value} onChange={field.onChange} data-testid="input-expense-date" placeholder="Selecciona fecha del gasto" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

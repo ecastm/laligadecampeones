@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2, Shield } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function TournamentManagement() {
   const { toast } = useToast();
@@ -280,7 +281,12 @@ export default function TournamentManagement() {
                     <FormItem>
                       <FormLabel>Fecha de Inicio</FormLabel>
                       <FormControl>
-                        <Input type="date" data-testid="input-tournament-start-date" {...field} />
+                        <DatePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          data-testid="input-tournament-start-date"
+                          placeholder="Selecciona fecha de inicio"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -526,7 +532,11 @@ export default function TournamentManagement() {
                   <FormItem>
                     <FormLabel>Fecha de Inicio</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
+                      <DatePicker
+                        value={field.value}
+                        onChange={field.onChange}
+                        placeholder="Selecciona fecha de inicio"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

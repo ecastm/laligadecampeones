@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2, Calendar, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { DateTimePicker } from "@/components/ui/date-picker";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function MatchesManagement() {
@@ -245,7 +246,12 @@ export default function MatchesManagement() {
                     <FormItem>
                       <FormLabel>Fecha y Hora</FormLabel>
                       <FormControl>
-                        <Input type="datetime-local" data-testid="input-match-datetime" {...field} />
+                        <DateTimePicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          data-testid="input-match-datetime"
+                          placeholder="Selecciona fecha y hora del partido"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
