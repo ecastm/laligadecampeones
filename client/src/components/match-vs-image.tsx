@@ -2,10 +2,13 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Download, Image } from "lucide-react";
+import { Download, Image, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Match, Team, Tournament, Division } from "@shared/schema";
+import { uploadVsImage } from "@/lib/vs-image-generator";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import ligaLogo from "@assets/image_1771352006885.png";
 
 interface MatchVsImageProps {
@@ -19,6 +22,8 @@ interface MatchVsImageProps {
 export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: MatchVsImageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   const { data: tournaments = [] } = useQuery<Tournament[]>({
     queryKey: ["/api/tournaments/active/all"],
@@ -394,6 +399,35 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
               Regenerar
             </Button>
           </div>
+          <Button
+            variant="default"
+            className="w-full"
+            disabled={isSaving || isGenerating}
+            onClick={async () => {
+              const canvas = canvasRef.current;
+              if (!canvas) return;
+              setIsSaving(true);
+              try {
+                const blob = await new Promise<Blob>((resolve, reject) => {
+                  canvas.toBlob((b) => b ? resolve(b) : reject(new Error("No blob")), "image/png");
+                });
+                const objectPath = await uploadVsImage(blob, match.id);
+                await apiRequest("PUT", `/api/admin/matches/${match.id}`, { vsImageUrl: objectPath });
+                queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
+                toast({ title: "Imagen VS guardada correctamente" });
+              } catch (err) {
+                toast({ title: "Error al guardar imagen", variant: "destructive" });
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            data-testid="button-save-vs-image"
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {isSaving ? "Guardando..." : "Guardar Imagen VS"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

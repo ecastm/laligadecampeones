@@ -85,12 +85,10 @@ import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 export default function Home() {
   const { toast } = useToast();
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
-  const [selectedRound, setSelectedRound] = useState<string>("all");
-  const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
   const [showCompetencia, setShowCompetencia] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("calendario");
+  const [activeTab, setActiveTab] = useState<string>("posiciones");
   const [showContactForm, setShowContactForm] = useState(false);
 
   const contactForm = useForm<InsertContactMessage>({
@@ -151,20 +149,6 @@ export default function Home() {
       : null;
 
   const tournamentId = currentTournament?.id;
-
-  const { data: schedule = [], isLoading: loadingSchedule } = useQuery<
-    MatchWithTeams[]
-  >({
-    queryKey: ["/api/home/schedule", tournamentId],
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/home/schedule${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
-      if (!res.ok) throw new Error("Failed to fetch schedule");
-      return res.json();
-    },
-    enabled: !!tournamentId && !!selectedDivision,
-  });
 
   const { data: standings = [], isLoading: loadingStandings } = useQuery<
     Standing[]
@@ -243,23 +227,8 @@ export default function Home() {
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const rounds = Array.from(new Set(schedule.map((m) => m.roundNumber))).sort(
-    (a, b) => a - b,
-  );
-  const filteredSchedule = schedule.filter((m) => {
-    const matchRound =
-      selectedRound === "all" || m.roundNumber === parseInt(selectedRound);
-    const matchTeam =
-      selectedTeam === "all" ||
-      m.homeTeamId === selectedTeam ||
-      m.awayTeamId === selectedTeam;
-    return matchRound && matchTeam;
-  });
-
   const handleDivisionSelect = (divisionId: string) => {
     setSelectedDivision(divisionId);
-    setSelectedRound("all");
-    setSelectedTeam("all");
   };
 
   return (
@@ -608,15 +577,7 @@ export default function Home() {
                 onValueChange={setActiveTab}
                 className="space-y-6"
               >
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger
-                    value="calendario"
-                    data-testid="tab-calendario"
-                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span className="text-[10px] sm:text-sm">Calendario</span>
-                  </TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4">
                   <TabsTrigger
                     value="posiciones"
                     data-testid="tab-posiciones"
@@ -650,130 +611,6 @@ export default function Home() {
                     <span className="text-[10px] sm:text-sm">Equipos</span>
                   </TabsTrigger>
                 </TabsList>
-
-                {/* Calendario Tab */}
-                <TabsContent value="calendario" className="space-y-4">
-                  <Card>
-                    <CardHeader className="pb-4">
-                      <div className="flex flex-col gap-4">
-                        <CardTitle className="flex items-center gap-2">
-                          <Calendar className="h-5 w-5 text-primary" />
-                          Calendario de Partidos
-                        </CardTitle>
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                          <Select
-                            value={selectedRound}
-                            onValueChange={setSelectedRound}
-                          >
-                            <SelectTrigger
-                              className="w-full sm:w-[140px]"
-                              data-testid="select-round"
-                            >
-                              <SelectValue placeholder="Jornada" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todas</SelectItem>
-                              {rounds.map((r) => (
-                                <SelectItem key={r} value={r.toString()}>
-                                  Jornada {r}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <Select
-                            value={selectedTeam}
-                            onValueChange={setSelectedTeam}
-                          >
-                            <SelectTrigger
-                              className="w-full sm:w-[160px]"
-                              data-testid="select-team"
-                            >
-                              <SelectValue placeholder="Equipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
-                              {teams.map((t) => (
-                                <SelectItem key={t.id} value={t.id}>
-                                  {t.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {loadingSchedule ? (
-                        <div className="space-y-3">
-                          {[1, 2, 3].map((i) => (
-                            <Skeleton key={i} className="h-20" />
-                          ))}
-                        </div>
-                      ) : filteredSchedule.length === 0 ? (
-                        <div className="py-12 text-center text-muted-foreground">
-                          <Calendar className="mx-auto h-12 w-12 opacity-50" />
-                          <p className="mt-4">No hay partidos programados</p>
-                        </div>
-                      ) : (
-                        <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                          {filteredSchedule.map((match) => (
-                            <div
-                              key={match.id}
-                              className="rounded border p-1.5 hover-elevate cursor-pointer"
-                              onClick={() => setSelectedMatch(match.id)}
-                              data-testid={`card-match-${match.id}`}
-                            >
-                              <div className="flex items-center justify-between gap-1 mb-1">
-                                <div className="flex items-center gap-0.5">
-                                  <Badge
-                                    variant="outline"
-                                    className="text-[9px] px-1 py-0 h-4"
-                                  >
-                                    J{match.roundNumber}
-                                  </Badge>
-                                  <Badge
-                                    variant={
-                                      match.status === "JUGADO"
-                                        ? "default"
-                                        : "secondary"
-                                    }
-                                    className="text-[9px] px-1 py-0 h-4"
-                                  >
-                                    {match.status === "JUGADO" ? "Fin" : "Prog"}
-                                  </Badge>
-                                </div>
-                                <span className="text-[9px] text-muted-foreground">
-                                  {format(
-                                    new Date(match.dateTime),
-                                    "d/MM HH:mm",
-                                    { locale: es },
-                                  )}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 text-[11px]">
-                                <span
-                                  className="flex-1 text-right font-medium truncate"
-                                  data-testid={`text-home-team-${match.id}`}
-                                >
-                                  {match.homeTeam?.name || "Local"}
-                                </span>
-                                <span className="text-[9px] text-muted-foreground px-0.5">
-                                  vs
-                                </span>
-                                <span
-                                  className="flex-1 text-left font-medium truncate"
-                                  data-testid={`text-away-team-${match.id}`}
-                                >
-                                  {match.awayTeam?.name || "Visitante"}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
 
                 {/* Posiciones Tab */}
                 <TabsContent value="posiciones">
