@@ -80,7 +80,7 @@ import teamHuddle from "@/assets/images/team-huddle.jpg";
 import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
 import waterSplash from "@/assets/images/water-splash.jpg";
-import ligaLogo from "@assets/image_1771352006885.png";
+import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
 
 export default function Home() {
   const { toast } = useToast();
@@ -277,6 +277,13 @@ export default function Home() {
               <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
             <div className="flex items-center gap-2">
+              <a
+                href="/calendario"
+                className="hidden sm:inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium hover-elevate"
+                data-testid="link-calendar"
+              >
+                Calendario
+              </a>
               <a
                 href="/historial"
                 className="hidden sm:inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium hover-elevate"
@@ -1304,18 +1311,6 @@ export default function Home() {
                       Consulta sobre cuotas, horarios, requisitos o cualquier
                       duda. Te respondemos en menos de 24 horas.
                     </p>
-                    <div className="mb-6 space-y-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-primary" />
-                        <span className="font-medium">+52 555 123 4567</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4 text-primary" />
-                        <span className="font-medium">
-                          inscripciones@ligafutbol.com
-                        </span>
-                      </div>
-                    </div>
                     <div className="flex items-center gap-3 flex-wrap">
                       <Button
                         size="lg"
@@ -1490,23 +1485,7 @@ export default function Home() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={contactForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="+52 555 123 4567"
-                        {...field}
-                        data-testid="input-contact-phone"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={contactForm.control}
                 name="email"

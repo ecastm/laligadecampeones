@@ -145,7 +145,17 @@ La aplicación estará disponible en el puerto 5000.
   - Resultados recientes
   - Equipos participantes
 - **Secciones CTA**: "Inscribe Tu Equipo" y "Solicita Información" con datos de contacto
-- **Footer**: Enlaces a historial e inicio de sesión
+- **Footer**: Enlaces a historial, calendario e inicio de sesión
+
+### Calendario Mensual (Público - /calendario)
+- Vista tipo calendario mensual con todos los partidos programados
+- Cada día muestra los partidos como chips clickeables con nombres abreviados
+- Lista detallada de partidos del mes debajo del calendario
+- Al seleccionar un partido se muestra:
+  - Detalle con logos, marcador (si jugado), fecha, hora, cancha, jornada
+  - Imagen generada con Canvas API (1080x1080) estilo Instagram
+  - Botón para descargar la imagen como PNG
+- La imagen incluye: logo Liga de Campeones, nombres de equipos, logos, "VS", fecha, hora, cancha, tema verde/oro
 
 ### API Adicional para Landing
 - `GET /api/tournaments/active/all` - Todos los torneos activos (para selector de división)

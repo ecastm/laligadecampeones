@@ -9,6 +9,7 @@ import Login from "@/pages/login";
 import Register from "@/pages/register";
 import Dashboard from "@/pages/dashboard";
 import TournamentHistory from "@/pages/tournament-history";
+import CalendarView from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/historial" component={TournamentHistory} />
+      <Route path="/calendario" component={CalendarView} />
       <Route component={NotFound} />
     </Switch>
   );
