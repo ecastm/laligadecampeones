@@ -48,88 +48,129 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d")!;
+    const cx = W / 2;
 
-    const darkGreen = "#063A13";
-    const medGreen = "#0B5D1E";
-    const gold = "#C9A227";
-    const lightGold = "#E6C75A";
+    const darkGreen = "#031D0A";
+    const medGreen = "#0A4A1F";
+    const brightGreen = "#0F6B2E";
+    const gold = "#D4A824";
+    const lightGold = "#F0D060";
+    const brightGold = "#FFE066";
     const white = "#FFFFFF";
-    const lightGray = "#E0E0E0";
 
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, darkGreen);
-    grad.addColorStop(0.5, medGreen);
-    grad.addColorStop(1, darkGreen);
-    ctx.fillStyle = grad;
+    const bgGrad = ctx.createRadialGradient(cx, H * 0.45, 0, cx, H * 0.45, H * 0.85);
+    bgGrad.addColorStop(0, brightGreen);
+    bgGrad.addColorStop(0.5, medGreen);
+    bgGrad.addColorStop(1, darkGreen);
+    ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.strokeStyle = gold + "15";
+    ctx.save();
+    ctx.globalAlpha = 0.04;
+    ctx.strokeStyle = gold;
     ctx.lineWidth = 1;
-    for (let i = 0; i < W; i += 40) {
+    for (let i = -W; i < W * 2; i += 50) {
       ctx.beginPath();
       ctx.moveTo(i, 0);
+      ctx.lineTo(i + H * 0.3, H);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(i + H * 0.3, 0);
       ctx.lineTo(i, H);
       ctx.stroke();
     }
-    for (let i = 0; i < H; i += 40) {
-      ctx.beginPath();
-      ctx.moveTo(0, i);
-      ctx.lineTo(W, i);
-      ctx.stroke();
-    }
+    ctx.restore();
 
-    ctx.strokeStyle = gold + "30";
-    ctx.lineWidth = 2;
-    const cx = W / 2;
-    const cy = H / 2 + 30;
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.strokeStyle = lightGold;
+    ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(cx, cy, 180, 0, Math.PI * 2);
+    ctx.arc(cx, H * 0.48, 250, 0, Math.PI * 2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(cx, cy - 200);
-    ctx.lineTo(cx, cy + 200);
+    ctx.arc(cx, H * 0.48, 320, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    const topBarH = 180;
+    const topGrad = ctx.createLinearGradient(0, 0, 0, topBarH);
+    topGrad.addColorStop(0, darkGreen);
+    topGrad.addColorStop(0.7, darkGreen + "EE");
+    topGrad.addColorStop(1, "transparent");
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, W, topBarH);
+
+    const goldLineGrad = ctx.createLinearGradient(0, topBarH - 4, W, topBarH - 4);
+    goldLineGrad.addColorStop(0, "transparent");
+    goldLineGrad.addColorStop(0.15, gold);
+    goldLineGrad.addColorStop(0.85, gold);
+    goldLineGrad.addColorStop(1, "transparent");
+    ctx.strokeStyle = goldLineGrad;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, topBarH - 2);
+    ctx.lineTo(W, topBarH - 2);
     ctx.stroke();
 
     try {
       const logoImg = await loadImage(ligaLogo);
-      const logoSize = 100;
-      ctx.drawImage(logoImg, cx - logoSize / 2, 30, logoSize, logoSize);
+      ctx.drawImage(logoImg, cx - 45, 18, 90, 90);
     } catch {}
 
-    ctx.fillStyle = lightGold;
-    ctx.font = "bold 28px 'Segoe UI', Arial, sans-serif";
+    ctx.fillStyle = brightGold;
+    ctx.font = "900 38px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("LA LIGA DE CAMPEONES", cx, 160);
+    ctx.letterSpacing = "4px";
+    ctx.fillText("LA LIGA DE CAMPEONES", cx, 148);
+    ctx.letterSpacing = "0px";
 
-    ctx.fillStyle = gold;
-    ctx.font = "bold 20px 'Segoe UI', Arial, sans-serif";
     const tournament = tournaments.find(t => t.id === match.tournamentId);
     const division = tournament?.divisionId ? divisions.find(d => d.id === tournament.divisionId) : null;
-    const tournamentText = tournament ? tournament.name : "";
-    const divisionText = division ? ` • ${division.name}` : "";
-    ctx.fillText(`${tournamentText}${divisionText}`, cx, 195);
 
-    const lineY = 215;
-    const lineGrad = ctx.createLinearGradient(cx - 200, lineY, cx + 200, lineY);
-    lineGrad.addColorStop(0, "transparent");
-    lineGrad.addColorStop(0.3, gold);
-    lineGrad.addColorStop(0.7, gold);
-    lineGrad.addColorStop(1, "transparent");
-    ctx.strokeStyle = lineGrad;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - 200, lineY);
-    ctx.lineTo(cx + 200, lineY);
-    ctx.stroke();
+    const roundY = 230;
+    const roundText = `JORNADA ${match.roundNumber}`;
+    ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
+    const roundW = ctx.measureText(roundText).width + 80;
+    const roundH = 58;
 
-    ctx.fillStyle = lightGold;
-    ctx.font = "bold 22px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText(`JORNADA ${match.roundNumber}`, cx, 260);
+    const pillGrad = ctx.createLinearGradient(cx - roundW / 2, roundY - roundH / 2, cx + roundW / 2, roundY + roundH / 2);
+    pillGrad.addColorStop(0, gold);
+    pillGrad.addColorStop(0.5, lightGold);
+    pillGrad.addColorStop(1, gold);
+    ctx.fillStyle = pillGrad;
+    roundRect(ctx, cx - roundW / 2, roundY - roundH / 2, roundW, roundH, roundH / 2);
+    ctx.fill();
 
-    const teamY = 440;
-    const teamSpacing = 220;
+    ctx.fillStyle = darkGreen;
+    ctx.font = "900 36px 'Segoe UI', Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(roundText, cx, roundY + 1);
+    ctx.textBaseline = "alphabetic";
+
+    if (division) {
+      ctx.fillStyle = gold + "BB";
+      ctx.font = "600 24px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(division.name.toUpperCase(), cx, roundY + 52);
+    }
+
+    const teamCenterY = 500;
+    const teamSpacing = 260;
+    const logoSize = 200;
 
     const drawTeamLogo = async (teamLogoUrl: string | undefined, x: number, y: number, size: number) => {
+      ctx.save();
+      ctx.shadowColor = gold + "60";
+      ctx.shadowBlur = 30;
+      const outerGrad = ctx.createRadialGradient(x, y, size / 2 - 5, x, y, size / 2 + 8);
+      outerGrad.addColorStop(0, gold);
+      outerGrad.addColorStop(1, gold + "00");
+      ctx.fillStyle = outerGrad;
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2 + 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
       if (teamLogoUrl) {
         try {
           const img = await loadImage(teamLogoUrl);
@@ -140,132 +181,160 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
           ctx.clip();
           ctx.drawImage(img, x - size / 2, y - size / 2, size, size);
           ctx.restore();
-          ctx.strokeStyle = gold;
-          ctx.lineWidth = 3;
-          ctx.beginPath();
-          ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-          ctx.stroke();
         } catch {
           drawFallbackLogo(ctx, x, y, size);
         }
       } else {
         drawFallbackLogo(ctx, x, y, size);
       }
-    };
 
-    const drawFallbackLogo = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
-      const fallbackGrad = ctx.createRadialGradient(x, y, 0, x, y, size / 2);
-      fallbackGrad.addColorStop(0, gold + "40");
-      fallbackGrad.addColorStop(1, gold + "15");
-      ctx.fillStyle = fallbackGrad;
-      ctx.beginPath();
-      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-      ctx.fill();
       ctx.strokeStyle = gold;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 5;
       ctx.beginPath();
       ctx.arc(x, y, size / 2, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.fillStyle = lightGold;
-      ctx.font = "bold 40px 'Segoe UI', Arial, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("FC", x, y);
-      ctx.textBaseline = "alphabetic";
     };
 
-    const logoSize = 130;
-    await drawTeamLogo(homeTeam.logoUrl || undefined, cx - teamSpacing, teamY, logoSize);
-    await drawTeamLogo(awayTeam.logoUrl || undefined, cx + teamSpacing, teamY, logoSize);
+    const drawFallbackLogo = (c: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+      const fbGrad = c.createRadialGradient(x, y - size * 0.1, 0, x, y, size / 2);
+      fbGrad.addColorStop(0, medGreen);
+      fbGrad.addColorStop(1, darkGreen);
+      c.fillStyle = fbGrad;
+      c.beginPath();
+      c.arc(x, y, size / 2, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = brightGold;
+      c.font = "900 60px 'Segoe UI', Arial, sans-serif";
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText("FC", x, y);
+      c.textBaseline = "alphabetic";
+    };
 
+    await drawTeamLogo(homeTeam.logoUrl || undefined, cx - teamSpacing, teamCenterY, logoSize);
+    await drawTeamLogo(awayTeam.logoUrl || undefined, cx + teamSpacing, teamCenterY, logoSize);
+
+    const nameY = teamCenterY + logoSize / 2 + 50;
     ctx.fillStyle = white;
-    ctx.font = "bold 30px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    const homeNameLines = wrapText(homeTeam.name.toUpperCase(), 20);
-    homeNameLines.forEach((line, i) => {
-      ctx.fillText(line, cx - teamSpacing, teamY + logoSize / 2 + 40 + i * 35);
+    const homeLines = wrapText(homeTeam.name.toUpperCase(), 12);
+    homeLines.forEach((line, i) => {
+      ctx.fillText(line, cx - teamSpacing, nameY + i * 48);
+    });
+    const awayLines = wrapText(awayTeam.name.toUpperCase(), 12);
+    awayLines.forEach((line, i) => {
+      ctx.fillText(line, cx + teamSpacing, nameY + i * 48);
     });
 
-    const awayNameLines = wrapText(awayTeam.name.toUpperCase(), 20);
-    awayNameLines.forEach((line, i) => {
-      ctx.fillText(line, cx + teamSpacing, teamY + logoSize / 2 + 40 + i * 35);
-    });
+    const vsY = teamCenterY;
+    const vsRadius = 72;
 
-    const vsGrad = ctx.createRadialGradient(cx, teamY, 0, cx, teamY, 60);
-    vsGrad.addColorStop(0, gold);
-    vsGrad.addColorStop(1, lightGold);
-
-    ctx.fillStyle = darkGreen;
+    ctx.save();
+    ctx.shadowColor = brightGold + "80";
+    ctx.shadowBlur = 40;
+    const vsOuterGrad = ctx.createRadialGradient(cx, vsY, vsRadius - 5, cx, vsY, vsRadius + 15);
+    vsOuterGrad.addColorStop(0, brightGold + "50");
+    vsOuterGrad.addColorStop(1, "transparent");
+    ctx.fillStyle = vsOuterGrad;
     ctx.beginPath();
-    ctx.arc(cx, teamY, 55, 0, Math.PI * 2);
+    ctx.arc(cx, vsY, vsRadius + 15, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = gold;
+    ctx.restore();
+
+    const vsBgGrad = ctx.createRadialGradient(cx, vsY - 15, 0, cx, vsY, vsRadius);
+    vsBgGrad.addColorStop(0, lightGold);
+    vsBgGrad.addColorStop(0.6, gold);
+    vsBgGrad.addColorStop(1, "#8B7518");
+    ctx.fillStyle = vsBgGrad;
+    ctx.beginPath();
+    ctx.arc(cx, vsY, vsRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = brightGold;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.arc(cx, teamY, 55, 0, Math.PI * 2);
+    ctx.arc(cx, vsY, vsRadius - 6, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.fillStyle = lightGold;
-    ctx.font = "bold 50px 'Segoe UI', Arial, sans-serif";
+    ctx.fillStyle = darkGreen;
+    ctx.font = "900 68px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("VS", cx, teamY);
+    ctx.fillText("VS", cx, vsY + 2);
     ctx.textBaseline = "alphabetic";
 
     if (match.status === "JUGADO" && match.homeScore !== undefined && match.awayScore !== undefined) {
-      ctx.fillStyle = white;
-      ctx.font = "bold 70px 'Segoe UI', Arial, sans-serif";
-      ctx.fillText(String(match.homeScore), cx - teamSpacing, teamY - logoSize / 2 - 30);
-      ctx.fillText(String(match.awayScore), cx + teamSpacing, teamY - logoSize / 2 - 30);
+      const scoreY = teamCenterY - logoSize / 2 - 45;
+      ctx.save();
+      ctx.shadowColor = brightGold + "80";
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = brightGold;
+      ctx.font = "900 90px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(String(match.homeScore), cx - teamSpacing, scoreY);
+      ctx.fillText(String(match.awayScore), cx + teamSpacing, scoreY);
+      ctx.restore();
     }
 
-    const infoY = 720;
-    const infoBg = ctx.createLinearGradient(cx - 250, infoY - 30, cx + 250, infoY + 80);
-    infoBg.addColorStop(0, darkGreen + "CC");
-    infoBg.addColorStop(1, medGreen + "CC");
-    ctx.fillStyle = infoBg;
-    roundRect(ctx, cx - 280, infoY - 35, 560, 120, 15);
+    const infoY = 820;
+    const infoH = 150;
+    const infoW = 700;
+
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 25;
+    const infoBgGrad = ctx.createLinearGradient(cx - infoW / 2, infoY, cx + infoW / 2, infoY + infoH);
+    infoBgGrad.addColorStop(0, darkGreen + "F0");
+    infoBgGrad.addColorStop(1, "#021508F0");
+    ctx.fillStyle = infoBgGrad;
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 20);
     ctx.fill();
-    ctx.strokeStyle = gold + "50";
-    ctx.lineWidth = 1;
-    roundRect(ctx, cx - 280, infoY - 35, 560, 120, 15);
+    ctx.restore();
+
+    ctx.strokeStyle = gold + "80";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 20);
     ctx.stroke();
 
     const matchDate = new Date(match.dateTime);
-    ctx.fillStyle = lightGold;
-    ctx.font = "bold 24px 'Segoe UI', Arial, sans-serif";
+    ctx.fillStyle = brightGold;
+    ctx.font = "900 34px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(format(matchDate, "EEEE d 'de' MMMM, yyyy", { locale: es }).toUpperCase(), cx, infoY + 5);
+    ctx.fillText(format(matchDate, "EEEE d 'de' MMMM", { locale: es }).toUpperCase(), cx, infoY + 48);
 
-    ctx.fillStyle = lightGray;
-    ctx.font = "20px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("HORA: " + format(matchDate, "HH:mm", { locale: es }) + " hrs", cx, infoY + 40);
+    ctx.fillStyle = white;
+    ctx.font = "700 30px 'Segoe UI', Arial, sans-serif";
+    const timeText = format(matchDate, "HH:mm", { locale: es }) + " HRS";
+    const fieldText = match.field ? `  |  ${match.field.toUpperCase()}` : "";
+    ctx.fillText(timeText + fieldText, cx, infoY + 95);
 
-    if (match.field) {
-      ctx.fillText("CANCHA: " + match.field, cx, infoY + 70);
+    if (tournament) {
+      ctx.fillStyle = gold + "90";
+      ctx.font = "600 22px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(tournament.name.toUpperCase(), cx, infoY + 130);
     }
 
-    const bottomLineY = 900;
-    const bottomLineGrad = ctx.createLinearGradient(0, bottomLineY, W, bottomLineY);
-    bottomLineGrad.addColorStop(0, "transparent");
-    bottomLineGrad.addColorStop(0.2, gold);
-    bottomLineGrad.addColorStop(0.8, gold);
-    bottomLineGrad.addColorStop(1, "transparent");
-    ctx.strokeStyle = bottomLineGrad;
+    const bottomY = 1010;
+    const btmLineGrad = ctx.createLinearGradient(0, bottomY, W, bottomY);
+    btmLineGrad.addColorStop(0, "transparent");
+    btmLineGrad.addColorStop(0.1, gold + "60");
+    btmLineGrad.addColorStop(0.5, gold);
+    btmLineGrad.addColorStop(0.9, gold + "60");
+    btmLineGrad.addColorStop(1, "transparent");
+    ctx.strokeStyle = btmLineGrad;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, bottomLineY);
-    ctx.lineTo(W, bottomLineY);
+    ctx.moveTo(0, bottomY);
+    ctx.lineTo(W, bottomY);
     ctx.stroke();
 
-    ctx.fillStyle = gold + "80";
-    ctx.font = "16px 'Segoe UI', Arial, sans-serif";
+    ctx.fillStyle = gold + "AA";
+    ctx.font = "600 22px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("www.laligadecampeones.com", cx, 940);
-
-    ctx.fillStyle = gold + "50";
-    ctx.font = "14px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("@laligadecampeones", cx, 970);
+    ctx.fillText("www.laligadecampeones.com", cx - 100, bottomY + 38);
+    ctx.fillStyle = lightGold + "88";
+    ctx.fillText("@laligadecampeones", cx + 180, bottomY + 38);
 
     setIsGenerating(false);
   }, [match, homeTeam, awayTeam, tournaments, divisions]);
