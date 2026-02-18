@@ -89,6 +89,7 @@ export const matches = pgTable("matches", {
   status: text("status").notNull().default("PROGRAMADO"),
   homeScore: integer("home_score"),
   awayScore: integer("away_score"),
+  stage: text("stage"),
 });
 
 export const matchEvents = pgTable("match_events", {

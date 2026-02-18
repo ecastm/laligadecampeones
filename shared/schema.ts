@@ -15,6 +15,25 @@ export const MatchStatus = {
 } as const;
 export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
 
+export const MatchStage = {
+  JORNADA: "JORNADA",
+  OCTAVOS: "OCTAVOS",
+  CUARTOS: "CUARTOS",
+  SEMIFINAL: "SEMIFINAL",
+  TERCER_LUGAR: "TERCER_LUGAR",
+  FINAL: "FINAL",
+} as const;
+export type MatchStage = (typeof MatchStage)[keyof typeof MatchStage];
+
+export const MatchStageLabels: Record<MatchStage, string> = {
+  JORNADA: "Jornada",
+  OCTAVOS: "Octavos de Final",
+  CUARTOS: "Cuartos de Final",
+  SEMIFINAL: "Semifinal",
+  TERCER_LUGAR: "Tercer Lugar",
+  FINAL: "Final",
+};
+
 export const TournamentStatus = {
   ACTIVO: "ACTIVO",
   FINALIZADO: "FINALIZADO",
@@ -251,6 +270,7 @@ export interface Match {
   homeScore?: number;
   awayScore?: number;
   vsImageUrl?: string;
+  stage?: MatchStage;
 }
 
 export const insertMatchSchema = z.object({
@@ -265,6 +285,7 @@ export const insertMatchSchema = z.object({
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
   vsImageUrl: z.string().optional(),
+  stage: z.enum(["JORNADA", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_LUGAR", "FINAL"]).optional(),
 });
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
 

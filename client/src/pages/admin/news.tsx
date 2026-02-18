@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertNewsSchema, type InsertNews, type NewsWithAuthor, type Tournament, type MatchWithTeams } from "@shared/schema";
+import { insertNewsSchema, MatchStageLabels, type InsertNews, type NewsWithAuthor, type Tournament, type MatchWithTeams, type MatchStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -281,7 +281,9 @@ function NewsDialog({
                       <SelectItem value="none">Sin partido relacionado</SelectItem>
                       {playedMatches.map((match) => (
                         <SelectItem key={match.id} value={match.id}>
-                          J{match.roundNumber}: {match.homeTeam?.name} {match.homeScore} - {match.awayScore} {match.awayTeam?.name}
+                          {match.stage && match.stage !== "JORNADA"
+                            ? MatchStageLabels[match.stage as MatchStage]
+                            : `J${match.roundNumber}`}: {match.homeTeam?.name} {match.homeScore} - {match.awayScore} {match.awayTeam?.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

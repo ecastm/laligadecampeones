@@ -65,6 +65,8 @@ import { SiInstagram } from "react-icons/si";
 import {
   insertContactMessageSchema,
   type InsertContactMessage,
+  MatchStageLabels,
+  type MatchStage,
 } from "@shared/schema";
 import type {
   MatchWithTeams,
@@ -893,7 +895,9 @@ export default function Home() {
                               <div className="flex items-center justify-between gap-2 mb-3">
                                 <div className="flex items-center gap-2">
                                   <Badge variant="outline" className="text-xs">
-                                    J{match.roundNumber}
+                                    {match.stage && match.stage !== "JORNADA"
+                                      ? MatchStageLabels[match.stage as MatchStage]
+                                      : `J${match.roundNumber}`}
                                   </Badge>
                                 </div>
                                 <span className="text-xs text-muted-foreground">
@@ -1465,6 +1469,13 @@ function UpcomingMatchesSection() {
                 )}
               </div>
               <div className="mt-3 text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Badge variant="outline" className="text-xs">
+                    {match.stage && match.stage !== "JORNADA"
+                      ? MatchStageLabels[match.stage as MatchStage]
+                      : `Jornada ${match.roundNumber}`}
+                  </Badge>
+                </div>
                 <p className="text-sm font-medium">
                   {match.homeTeam.name} vs {match.awayTeam.name}
                 </p>

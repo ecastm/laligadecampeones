@@ -252,3 +252,12 @@ La aplicación estará disponible en el puerto 5000.
 - **Pagos de multas**: Registro de pagos de multas
 - **Gastos del torneo**: Registro de gastos (arbitraje, canchas, etc.)
 - Todos los movimientos asociados a torneo y equipo
+
+## Etapas de Torneo (Nuevo)
+- Campo `stage` opcional en partidos para indicar la etapa del torneo
+- Etapas disponibles: JORNADA, OCTAVOS, CUARTOS, SEMIFINAL, TERCER_LUGAR, FINAL
+- Se selecciona al crear/editar un partido en el panel de admin
+- Se muestra en todas las vistas públicas: calendario, homepage, detalle de partido
+- Se incluye en la imagen VS generada automáticamente
+- Si no se especifica etapa, se muestra "Jornada X" por defecto
+- MatchStageLabels en shared/schema.ts contiene los nombres en español

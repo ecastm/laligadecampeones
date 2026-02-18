@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Clock, MapPin, User, CircleDot } from "lucide-react";
-import type { MatchWithTeams } from "@shared/schema";
+import type { MatchWithTeams, MatchStage } from "@shared/schema";
+import { MatchStageLabels } from "@shared/schema";
 
 interface MatchDetailDialogProps {
   matchId: string;
@@ -40,7 +41,9 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
           <div className="space-y-6">
             <div className="text-center">
               <Badge variant="outline" className="mb-3">
-                Jornada {match.roundNumber}
+                {match.stage && match.stage !== "JORNADA"
+                  ? MatchStageLabels[match.stage as MatchStage]
+                  : `Jornada ${match.roundNumber}`}
               </Badge>
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">

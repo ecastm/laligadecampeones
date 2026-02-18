@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, insertPlayerSchema, insertCaptainProfileSchema, type Team, type Player, type InsertPlayer, type MatchWithTeams, type CaptainProfile, type InsertCaptainProfile } from "@shared/schema";
+import { insertTeamSchema, insertPlayerSchema, insertCaptainProfileSchema, MatchStageLabels, type Team, type Player, type InsertPlayer, type MatchWithTeams, type CaptainProfile, type InsertCaptainProfile, type MatchStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -670,7 +670,11 @@ function TeamSchedule() {
                   data-testid={`row-match-${match.id}`}
                 >
                   <div className="flex items-start gap-3 sm:gap-4">
-                    <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {match.stage && match.stage !== "JORNADA"
+                        ? MatchStageLabels[match.stage as MatchStage]
+                        : `J${match.roundNumber}`}
+                    </Badge>
                     <div className="min-w-0">
                       <p className="font-medium text-sm sm:text-base">
                         {match.homeTeam?.name} vs {match.awayTeam?.name}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division } from "@shared/schema";
+import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division, MatchStage, MatchStageLabels } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { generateVsImageBlob, uploadVsImage } from "@/lib/vs-image-generator";
@@ -117,6 +117,7 @@ export default function MatchesManagement() {
       awayTeamId: "",
       refereeUserId: "",
       status: "PROGRAMADO",
+      stage: undefined,
     },
   });
 
@@ -148,7 +149,7 @@ export default function MatchesManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
       toast({ title: "Partido actualizado" });
-      const needsRegeneration = updatedData.homeTeamId || updatedData.awayTeamId || updatedData.dateTime || updatedData.field || updatedData.roundNumber;
+      const needsRegeneration = updatedData.homeTeamId || updatedData.awayTeamId || updatedData.dateTime || updatedData.field || updatedData.roundNumber || updatedData.stage;
       setEditingMatch(null);
       form.reset();
       if (needsRegeneration) {
@@ -184,14 +185,16 @@ export default function MatchesManagement() {
       awayTeamId: match.awayTeamId,
       refereeUserId: match.refereeUserId || "",
       status: match.status,
+      stage: match.stage || undefined,
     });
   };
 
   const handleSubmit = (data: Omit<InsertMatch, 'tournamentId'>) => {
+    const cleanData = { ...data, stage: data.stage || undefined };
     if (editingMatch) {
-      updateMutation.mutate({ id: editingMatch.id, data });
+      updateMutation.mutate({ id: editingMatch.id, data: cleanData });
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanData);
     }
   };
 
@@ -243,6 +246,30 @@ export default function MatchesManagement() {
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="stage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Etapa del Torneo</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-match-stage">
+                            <SelectValue placeholder="Jornada regular (por defecto)" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(MatchStageLabels).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -394,7 +421,11 @@ export default function MatchesManagement() {
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3 sm:gap-4">
-                      <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                      <Badge variant="outline" className="shrink-0 text-xs">
+                        {match.stage && match.stage !== "JORNADA"
+                          ? MatchStageLabels[match.stage as MatchStage]
+                          : `J${match.roundNumber}`}
+                      </Badge>
                       <div className="min-w-0">
                         <p className="font-medium text-sm sm:text-base">
                           {getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}

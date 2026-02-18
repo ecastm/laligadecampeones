@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, insertRefereeProfileSchema, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -235,7 +235,11 @@ function RefereeMatches({
                 >
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start gap-3 sm:gap-4">
-                      <Badge variant="outline" className="shrink-0 text-xs">J{match.roundNumber}</Badge>
+                      <Badge variant="outline" className="shrink-0 text-xs">
+                        {match.stage && match.stage !== "JORNADA"
+                          ? MatchStageLabels[match.stage as MatchStage]
+                          : `J${match.roundNumber}`}
+                      </Badge>
                       <div className="min-w-0">
                         <p className="font-medium text-sm sm:text-base">
                           {match.homeTeam?.name} vs {match.awayTeam?.name}
@@ -618,7 +622,9 @@ function MatchDetailsDialog({
             Detalle del Partido
           </DialogTitle>
           <CardDescription>
-            Jornada {match.roundNumber} · {format(new Date(match.dateTime), "d MMMM yyyy", { locale: es })}
+            {match.stage && match.stage !== "JORNADA"
+              ? MatchStageLabels[match.stage as MatchStage]
+              : `Jornada ${match.roundNumber}`} · {format(new Date(match.dateTime), "d MMMM yyyy", { locale: es })}
           </CardDescription>
         </DialogHeader>
 
@@ -845,7 +851,11 @@ function ResultsSection() {
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                      <Badge variant="outline" className="text-xs">J{match.roundNumber}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        {match.stage && match.stage !== "JORNADA"
+                          ? MatchStageLabels[match.stage as MatchStage]
+                          : `J${match.roundNumber}`}
+                      </Badge>
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
                       </span>

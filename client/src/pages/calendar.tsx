@@ -20,6 +20,7 @@ import { SiInstagram } from "react-icons/si";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths, subMonths, isSameDay, isSameMonth } from "date-fns";
 import { es } from "date-fns/locale";
 import type { MatchWithTeams, Tournament, Division } from "@shared/schema";
+import { MatchStageLabels, type MatchStage } from "@shared/schema";
 import ligaLogo from "@assets/image_1771352006885.png";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -178,7 +179,10 @@ export default function CalendarView() {
     const division = tournament?.divisionId ? divisions.find(d => d.id === tournament.divisionId) : null;
 
     const roundY = 230;
-    const roundText = `JORNADA ${match.roundNumber}`;
+    const stageLabel = match.stage && match.stage !== "JORNADA"
+      ? (MatchStageLabels[match.stage as MatchStage] || match.stage).toUpperCase()
+      : null;
+    const roundText = stageLabel || `JORNADA ${match.roundNumber}`;
     ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
     const roundW = ctx.measureText(roundText).width + 80;
     const roundH = 58;
@@ -621,7 +625,11 @@ export default function CalendarView() {
                 )}
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Trophy className="h-4 w-4 text-primary" />
-                  <span>Jornada {selectedMatch.roundNumber}</span>
+                  <span>
+                    {selectedMatch.stage && selectedMatch.stage !== "JORNADA"
+                      ? MatchStageLabels[selectedMatch.stage as MatchStage]
+                      : `Jornada ${selectedMatch.roundNumber}`}
+                  </span>
                 </div>
               </div>
 

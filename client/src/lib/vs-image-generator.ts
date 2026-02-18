@@ -1,4 +1,5 @@
-import type { Match, Team, Tournament, Division } from "@shared/schema";
+import type { Match, Team, Tournament, Division, MatchStage } from "@shared/schema";
+import { MatchStageLabels } from "@shared/schema";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -135,7 +136,10 @@ export async function generateVsImageToCanvas(canvas: HTMLCanvasElement, data: V
   ctx.fillText("LA LIGA DE CAMPEONES", cx, 148);
 
   const roundY = 230;
-  const roundText = `JORNADA ${match.roundNumber}`;
+  const stageLabel = match.stage && match.stage !== "JORNADA"
+    ? (MatchStageLabels[match.stage as MatchStage] || match.stage).toUpperCase()
+    : null;
+  const roundText = stageLabel || `JORNADA ${match.roundNumber}`;
   ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
   const roundW = ctx.measureText(roundText).width + 80;
   const roundH = 58;
