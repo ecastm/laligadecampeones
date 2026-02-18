@@ -45,4 +45,3 @@ integrations = ["javascript_object_storage:2.0.0"]
 [userenv]
 
 [userenv.production]
-FORCE_RESEED = "true"

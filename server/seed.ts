@@ -86,7 +86,7 @@ export async function seedDatabase() {
   const teams: any[] = [];
   console.log("\nEquipos creados:");
   for (const teamData of teamsData) {
-    const team = await storage.createTeam({ ...teamData, tournamentId: tournament.id });
+    const team = await storage.createTeam({ ...teamData, tournamentId: tournament.id, divisionId: primeraDivision?.id });
     teams.push(team);
     console.log(`   - ${team.name}`);
   }
@@ -130,4 +130,31 @@ export async function seedDatabase() {
   console.log("\n==========================================");
   console.log("Seed completado exitosamente");
   console.log("==========================================\n");
+}
+
+export async function fixDataIntegrity() {
+  try {
+    const tournament = await storage.getActiveTournament();
+    if (!tournament) return;
+
+    const divisions = await storage.getDivisions();
+    const primeraDivision = divisions.find(d => d.theme === "PRIMERA");
+    if (!primeraDivision) return;
+
+    if (tournament.divisionId) {
+      const teams = await storage.getTeams(tournament.id);
+      let fixed = 0;
+      for (const team of teams) {
+        if (!team.divisionId) {
+          await storage.updateTeam(team.id, { divisionId: tournament.divisionId });
+          fixed++;
+        }
+      }
+      if (fixed > 0) {
+        console.log(`Integridad: ${fixed} equipos vinculados a división ${primeraDivision.name}`);
+      }
+    }
+  } catch (err) {
+    console.error("Error en corrección de integridad:", err);
+  }
 }
