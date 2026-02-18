@@ -141,18 +141,23 @@ export async function fixDataIntegrity() {
     const primeraDivision = divisions.find(d => d.theme === "PRIMERA");
     if (!primeraDivision) return;
 
-    if (tournament.divisionId) {
-      const teams = await storage.getTeams(tournament.id);
-      let fixed = 0;
-      for (const team of teams) {
-        if (!team.divisionId) {
-          await storage.updateTeam(team.id, { divisionId: tournament.divisionId });
-          fixed++;
-        }
+    const targetDivisionId = tournament.divisionId || primeraDivision.id;
+
+    if (!tournament.divisionId) {
+      await storage.updateTournament(tournament.id, { divisionId: primeraDivision.id });
+      console.log(`Integridad: Torneo "${tournament.name}" vinculado a ${primeraDivision.name}`);
+    }
+
+    const teams = await storage.getTeams(tournament.id);
+    let fixed = 0;
+    for (const team of teams) {
+      if (!team.divisionId) {
+        await storage.updateTeam(team.id, { divisionId: targetDivisionId });
+        fixed++;
       }
-      if (fixed > 0) {
-        console.log(`Integridad: ${fixed} equipos vinculados a división ${primeraDivision.name}`);
-      }
+    }
+    if (fixed > 0) {
+      console.log(`Integridad: ${fixed} equipos vinculados a división ${primeraDivision.name}`);
     }
   } catch (err) {
     console.error("Error en corrección de integridad:", err);
