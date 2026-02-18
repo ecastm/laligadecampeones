@@ -132,6 +132,15 @@ export async function seedDatabase() {
   console.log("==========================================\n");
 }
 
+const KNOWN_TEAM_LOGOS: Record<string, string> = {
+  "El Palo": "/objects/uploads/a76d92fb-4477-46ba-9818-f15189ca59f3",
+  "Fuengirola": "/objects/uploads/f2a176f1-0c44-40db-9281-ccf0cd3bc706",
+  "Millonarios": "/objects/uploads/4089ae16-bddc-4d56-88bc-74c637e3f593",
+  "Rejunte": "/objects/uploads/d4a9e6fb-f500-49a4-865d-70b00bee2606",
+};
+
+const KNOWN_VS_IMAGE = "/objects/uploads/acf9cc05-3480-4f93-8182-0c9d2de0ab93";
+
 export async function fixDataIntegrity() {
   try {
     const tournament = await storage.getActiveTournament();
@@ -149,15 +158,39 @@ export async function fixDataIntegrity() {
     }
 
     const teams = await storage.getTeams(tournament.id);
-    let fixed = 0;
+    let fixedDivision = 0;
+    let fixedLogos = 0;
     for (const team of teams) {
+      const updates: any = {};
       if (!team.divisionId) {
-        await storage.updateTeam(team.id, { divisionId: targetDivisionId });
-        fixed++;
+        updates.divisionId = targetDivisionId;
+        fixedDivision++;
+      }
+      if (!team.logoUrl && KNOWN_TEAM_LOGOS[team.name]) {
+        updates.logoUrl = KNOWN_TEAM_LOGOS[team.name];
+        fixedLogos++;
+      }
+      if (Object.keys(updates).length > 0) {
+        await storage.updateTeam(team.id, updates);
       }
     }
-    if (fixed > 0) {
-      console.log(`Integridad: ${fixed} equipos vinculados a división ${primeraDivision.name}`);
+    if (fixedDivision > 0) {
+      console.log(`Integridad: ${fixedDivision} equipos vinculados a división ${primeraDivision.name}`);
+    }
+    if (fixedLogos > 0) {
+      console.log(`Integridad: ${fixedLogos} equipos con logo restaurado`);
+    }
+
+    const matches = await storage.getMatches(tournament.id);
+    let fixedVs = 0;
+    for (const match of matches) {
+      if (!match.vsImageUrl && KNOWN_VS_IMAGE) {
+        await storage.updateMatch(match.id, { vsImageUrl: KNOWN_VS_IMAGE } as any);
+        fixedVs++;
+      }
+    }
+    if (fixedVs > 0) {
+      console.log(`Integridad: ${fixedVs} partidos con imagen VS restaurada`);
     }
   } catch (err) {
     console.error("Error en corrección de integridad:", err);
