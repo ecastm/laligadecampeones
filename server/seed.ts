@@ -1,14 +1,37 @@
 import { storage } from "./storage";
+import { pool } from "./db-storage";
+
+async function clearAllTables() {
+  console.log("FORCE_RESEED: Limpiando todas las tablas...");
+  const tables = [
+    "match_evidence", "match_lineups", "match_events", "fines", "fine_payments",
+    "team_payments", "expenses", "marketing_media", "contact_messages",
+    "news", "matches", "players", "captain_profiles", "referee_profiles",
+    "teams", "users", "tournaments", "tournament_types", "divisions"
+  ];
+  for (const table of tables) {
+    await pool.query(`DELETE FROM ${table}`);
+    console.log(`   - Tabla ${table} limpiada`);
+  }
+  console.log("Todas las tablas limpiadas.\n");
+}
 
 export async function seedDatabase() {
   console.log("\n==========================================");
   console.log("Iniciando seed de datos...");
   console.log("==========================================\n");
 
-  const existingUsers = await storage.getUsers();
-  if (existingUsers.length > 0) {
-    console.log("La base de datos ya tiene datos, omitiendo seed.");
-    return;
+  const forceReseed = process.env.FORCE_RESEED === "true";
+
+  if (forceReseed) {
+    console.log("FORCE_RESEED activado - limpiando y recreando datos...");
+    await clearAllTables();
+  } else {
+    const existingUsers = await storage.getUsers();
+    if (existingUsers.length > 0) {
+      console.log("La base de datos ya tiene datos, omitiendo seed.");
+      return;
+    }
   }
 
   const existingDivisions = await storage.getDivisions();
@@ -92,6 +115,17 @@ export async function seedDatabase() {
     await storage.createUser(ref);
     console.log(`   - ${ref.email} / ${ref.password}`);
   }
+
+  const match = await storage.createMatch({
+    tournamentId: tournament.id,
+    roundNumber: 1,
+    dateTime: "2026-02-22T20:00",
+    field: "Central",
+    homeTeamId: teams[1].id,
+    awayTeamId: teams[2].id,
+    status: "PROGRAMADO",
+  });
+  console.log(`\nPartido creado: ${teams[1].name} vs ${teams[2].name}`);
 
   console.log("\n==========================================");
   console.log("Seed completado exitosamente");
