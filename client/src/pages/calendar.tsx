@@ -50,14 +50,16 @@ export default function CalendarView() {
   const startDayOfWeek = getDay(monthStart);
   const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  const matchesByDate = allMatches.reduce<Record<string, MatchWithTeams[]>>((acc, match) => {
+  const validMatches = allMatches.filter(m => m.homeTeam && m.awayTeam);
+
+  const matchesByDate = validMatches.reduce<Record<string, MatchWithTeams[]>>((acc, match) => {
     const dateKey = format(new Date(match.dateTime), "yyyy-MM-dd");
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(match);
     return acc;
   }, {});
 
-  const matchesThisMonth = allMatches.filter((m) => {
+  const matchesThisMonth = validMatches.filter((m) => {
     const d = new Date(m.dateTime);
     return isSameMonth(d, currentMonth);
   });

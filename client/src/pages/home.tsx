@@ -1394,7 +1394,7 @@ function UpcomingMatchesSection() {
     },
   });
 
-  const upcomingMatches = allSchedule.slice(0, 3);
+  const upcomingMatches = allSchedule.filter(m => m.homeTeam && m.awayTeam).slice(0, 3);
 
   if (isLoading) {
     return (
