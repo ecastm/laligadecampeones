@@ -90,7 +90,7 @@ export default function Home() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
   const [showCompetencia, setShowCompetencia] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>("posiciones");
+  const [activeTab, setActiveTab] = useState<string>("calendario");
   const [showContactForm, setShowContactForm] = useState(false);
 
   const contactForm = useForm<InsertContactMessage>({
@@ -228,6 +228,28 @@ export default function Home() {
     },
     enabled: !!tournamentId && !!selectedDivision,
   });
+
+  const { data: allTournamentSchedule = [], isLoading: loadingSchedule } = useQuery<
+    MatchWithTeams[]
+  >({
+    queryKey: ["/api/home/schedule", tournamentId],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/home/schedule${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
+      );
+      if (!res.ok) throw new Error("Failed to fetch schedule");
+      return res.json();
+    },
+    enabled: !!tournamentId && !!selectedDivision,
+  });
+
+  const tournamentSchedule = allTournamentSchedule.filter(m => m.homeTeam && m.awayTeam);
+
+  const scheduleRounds = Array.from(new Set(tournamentSchedule.map(m => m.roundNumber))).sort((a, b) => a - b);
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const filteredScheduleMatches = selectedRound
+    ? tournamentSchedule.filter(m => m.roundNumber === selectedRound)
+    : tournamentSchedule;
 
   const handleDivisionSelect = (divisionId: string) => {
     setSelectedDivision(divisionId);
@@ -579,7 +601,15 @@ export default function Home() {
                 onValueChange={setActiveTab}
                 className="space-y-6"
               >
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
+                  <TabsTrigger
+                    value="calendario"
+                    data-testid="tab-calendario"
+                    className="flex flex-col gap-1 px-1 py-2 sm:flex-row sm:gap-2 sm:px-3"
+                  >
+                    <Calendar className="h-4 w-4" />
+                    <span className="text-[10px] sm:text-sm">Calendario</span>
+                  </TabsTrigger>
                   <TabsTrigger
                     value="posiciones"
                     data-testid="tab-posiciones"
@@ -613,6 +643,121 @@ export default function Home() {
                     <span className="text-[10px] sm:text-sm">Equipos</span>
                   </TabsTrigger>
                 </TabsList>
+
+                {/* Calendario Tab */}
+                <TabsContent value="calendario" className="space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        Calendario de Partidos
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {loadingSchedule ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <Skeleton key={i} className="h-24" />
+                          ))}
+                        </div>
+                      ) : tournamentSchedule.length === 0 ? (
+                        <div className="py-12 text-center text-muted-foreground">
+                          <Calendar className="mx-auto h-12 w-12 opacity-50" />
+                          <p className="mt-4">No hay partidos programados</p>
+                        </div>
+                      ) : (
+                        <>
+                          {scheduleRounds.length > 1 && (
+                            <div className="flex flex-wrap items-center gap-2 mb-4" data-testid="schedule-round-filters">
+                              <Button
+                                variant={selectedRound === null ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setSelectedRound(null)}
+                                data-testid="button-round-all"
+                              >
+                                Todos
+                              </Button>
+                              {scheduleRounds.map((round) => (
+                                <Button
+                                  key={round}
+                                  variant={selectedRound === round ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setSelectedRound(round)}
+                                  data-testid={`button-round-${round}`}
+                                >
+                                  Jornada {round}
+                                </Button>
+                              ))}
+                            </div>
+                          )}
+                          <div className="space-y-3">
+                            {filteredScheduleMatches.map((match) => (
+                              <div
+                                key={match.id}
+                                className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
+                                onClick={() => setSelectedMatch(match.id)}
+                                data-testid={`card-schedule-${match.id}`}
+                              >
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <Badge variant="outline" className="text-xs">
+                                    {match.stage && match.stage !== "JORNADA"
+                                      ? MatchStageLabels[match.stage as MatchStage]
+                                      : `Jornada ${match.roundNumber}`}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs ${
+                                      match.status === "JUGADO"
+                                        ? "bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30"
+                                        : match.status === "EN_CURSO"
+                                          ? "bg-yellow-600/10 text-yellow-700 dark:text-yellow-400 border-yellow-600/30"
+                                          : ""
+                                    }`}
+                                  >
+                                    {match.status === "JUGADO" ? "Jugado" : match.status === "EN_CURSO" ? "En curso" : "Programado"}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center justify-center gap-2 sm:gap-4">
+                                  <div className="flex-1 text-right">
+                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-home-${match.id}`}>
+                                      {match.homeTeam?.name}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
+                                    {match.status === "JUGADO" || match.status === "EN_CURSO" ? (
+                                      <>
+                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
+                                          {match.homeScore ?? 0}
+                                        </span>
+                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
+                                          {match.awayScore ?? 0}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-sm font-medium text-muted-foreground px-2">VS</span>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 text-left">
+                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-away-${match.id}`}>
+                                      {match.awayTeam?.name}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-2 text-center text-xs text-muted-foreground">
+                                  {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                                    ? format(new Date(match.dateTime), "EEEE d MMM, HH:mm", { locale: es })
+                                    : "Fecha por confirmar"}
+                                  {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
                 {/* Posiciones Tab */}
                 <TabsContent value="posiciones">
