@@ -690,23 +690,23 @@ export default function Home() {
                               ))}
                             </div>
                           )}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div className="space-y-3">
                             {filteredScheduleMatches.map((match) => (
                               <div
                                 key={match.id}
-                                className="rounded-md border p-2 hover-elevate cursor-pointer"
+                                className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
                                 onClick={() => setSelectedMatch(match.id)}
                                 data-testid={`card-schedule-${match.id}`}
                               >
-                                <div className="flex items-center justify-between gap-1 mb-1">
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 leading-tight">
+                                <div className="flex items-center justify-between gap-2 mb-3">
+                                  <Badge variant="outline" className="text-xs">
                                     {match.stage && match.stage !== "JORNADA"
                                       ? MatchStageLabels[match.stage as MatchStage]
-                                      : `J${match.roundNumber}`}
+                                      : `Jornada ${match.roundNumber}`}
                                   </Badge>
                                   <Badge
                                     variant="outline"
-                                    className={`text-[10px] px-1 py-0 leading-tight ${
+                                    className={`text-xs ${
                                       match.status === "JUGADO"
                                         ? "bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30"
                                         : match.status === "EN_CURSO"
@@ -714,35 +714,39 @@ export default function Home() {
                                           : ""
                                     }`}
                                   >
-                                    {match.status === "JUGADO" ? "Jugado" : match.status === "EN_CURSO" ? "En curso" : "Prog."}
+                                    {match.status === "JUGADO" ? "Jugado" : match.status === "EN_CURSO" ? "En curso" : "Programado"}
                                   </Badge>
                                 </div>
-                                <div className="flex flex-col items-center gap-0.5">
-                                  <span className="text-xs font-medium truncate w-full text-center" data-testid={`text-home-${match.id}`}>
-                                    {match.homeTeam?.name}
-                                  </span>
-                                  <div className="flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5">
+                                <div className="flex items-center justify-center gap-2 sm:gap-4">
+                                  <div className="flex-1 text-right">
+                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-home-${match.id}`}>
+                                      {match.homeTeam?.name}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
                                     {match.status === "JUGADO" || match.status === "EN_CURSO" ? (
                                       <>
-                                        <span className="text-sm font-bold" data-testid={`text-score-home-${match.id}`}>
+                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
                                           {match.homeScore ?? 0}
                                         </span>
-                                        <span className="text-muted-foreground text-xs">-</span>
-                                        <span className="text-sm font-bold" data-testid={`text-score-away-${match.id}`}>
+                                        <span className="text-muted-foreground">-</span>
+                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
                                           {match.awayScore ?? 0}
                                         </span>
                                       </>
                                     ) : (
-                                      <span className="text-xs font-medium text-muted-foreground">VS</span>
+                                      <span className="text-sm font-medium text-muted-foreground px-2">VS</span>
                                     )}
                                   </div>
-                                  <span className="text-xs font-medium truncate w-full text-center" data-testid={`text-away-${match.id}`}>
-                                    {match.awayTeam?.name}
-                                  </span>
+                                  <div className="flex-1 text-left">
+                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-away-${match.id}`}>
+                                      {match.awayTeam?.name}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="mt-1 text-center text-[10px] text-muted-foreground leading-tight">
+                                <div className="mt-2 text-center text-xs text-muted-foreground">
                                   {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                                    ? format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })
+                                    ? format(new Date(match.dateTime), "EEEE d MMM, HH:mm", { locale: es })
                                     : "Fecha por confirmar"}
                                   {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
                                 </div>
@@ -1535,7 +1539,7 @@ function UpcomingMatchesSection() {
     },
   });
 
-  const upcomingMatches = allSchedule.filter(m => m.homeTeam && m.awayTeam).slice(0, 3);
+  const upcomingMatches = allSchedule.filter(m => m.homeTeam && m.awayTeam).slice(0, 8);
 
   if (isLoading) {
     return (
@@ -1545,8 +1549,8 @@ function UpcomingMatchesSection() {
             <Skeleton className="h-8 w-64 mx-auto mb-2" />
             <Skeleton className="h-4 w-48 mx-auto" />
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {[1, 2, 3].map(i => <Skeleton key={i} className="aspect-square rounded-md" />)}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="aspect-square rounded-md" />)}
           </div>
         </div>
       </section>
@@ -1567,9 +1571,9 @@ function UpcomingMatchesSection() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {upcomingMatches.map((match) => (
-            <div key={match.id} className="group" data-testid={`card-upcoming-match-${match.id}`}>
+            <div key={match.id} className="group cursor-pointer" data-testid={`card-upcoming-match-${match.id}`}>
               <div className="overflow-hidden rounded-md border shadow-md transition-transform group-hover:scale-[1.02]">
                 {match.vsImageUrl ? (
                   <img
@@ -1579,50 +1583,46 @@ function UpcomingMatchesSection() {
                     data-testid={`img-vs-${match.id}`}
                   />
                 ) : (
-                  <div className="w-full aspect-square bg-gradient-to-br from-[#031D0A] to-[#0F6B2E] flex flex-col items-center justify-center gap-4 p-6">
-                    <div className="flex items-center gap-6">
+                  <div className="w-full aspect-square bg-gradient-to-br from-[#031D0A] to-[#0F6B2E] flex flex-col items-center justify-center gap-2 p-3">
+                    <div className="flex items-center gap-3">
                       <div className="text-center">
                         {match.homeTeam.logoUrl ? (
-                          <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-16 w-16 rounded-full object-cover border-2 border-amber-400 mx-auto" />
+                          <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
                         ) : (
-                          <div className="h-16 w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">FC</div>
+                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">FC</div>
                         )}
-                        <p className="text-white font-bold text-sm mt-2">{match.homeTeam.name.toUpperCase()}</p>
+                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{match.homeTeam.name.toUpperCase()}</p>
                       </div>
-                      <p className="text-amber-400 font-black text-3xl">VS</p>
+                      <p className="text-amber-400 font-black text-xl">VS</p>
                       <div className="text-center">
                         {match.awayTeam.logoUrl ? (
-                          <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-16 w-16 rounded-full object-cover border-2 border-amber-400 mx-auto" />
+                          <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
                         ) : (
-                          <div className="h-16 w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">FC</div>
+                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">FC</div>
                         )}
-                        <p className="text-white font-bold text-sm mt-2">{match.awayTeam.name.toUpperCase()}</p>
+                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{match.awayTeam.name.toUpperCase()}</p>
                       </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-amber-300 font-semibold text-sm">
-                        {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                          ? format(new Date(match.dateTime), "EEEE d 'de' MMMM", { locale: es }).toUpperCase()
-                          : "FECHA POR CONFIRMAR"}
-                      </p>
-                    </div>
+                    <p className="text-amber-300 font-semibold text-[10px] text-center leading-tight">
+                      {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                        ? format(new Date(match.dateTime), "EEE d MMM", { locale: es }).toUpperCase()
+                        : "POR CONFIRMAR"}
+                    </p>
                   </div>
                 )}
               </div>
-              <div className="mt-3 text-center">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Badge variant="outline" className="text-xs">
-                    {match.stage && match.stage !== "JORNADA"
-                      ? MatchStageLabels[match.stage as MatchStage]
-                      : `Jornada ${match.roundNumber}`}
-                  </Badge>
-                </div>
-                <p className="text-sm font-medium">
+              <div className="mt-1.5 text-center">
+                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                  {match.stage && match.stage !== "JORNADA"
+                    ? MatchStageLabels[match.stage as MatchStage]
+                    : `J${match.roundNumber}`}
+                </Badge>
+                <p className="text-xs font-medium mt-0.5 truncate">
                   {match.homeTeam.name} vs {match.awayTeam.name}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[10px] text-muted-foreground leading-tight">
                   {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                    ? format(new Date(match.dateTime), "EEEE d MMM, HH:mm", { locale: es })
+                    ? format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })
                     : "Fecha por confirmar"}
                   {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
                 </p>

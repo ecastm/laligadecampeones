@@ -17,6 +17,11 @@ interface MatchDetailDialogProps {
 export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDialogProps) {
   const { data: match, isLoading } = useQuery<MatchWithTeams>({
     queryKey: ["/api/matches", matchId],
+    queryFn: async () => {
+      const res = await fetch(`/api/matches/${matchId}`);
+      if (!res.ok) throw new Error("Failed to fetch match");
+      return res.json();
+    },
     enabled: open && !!matchId,
   });
 

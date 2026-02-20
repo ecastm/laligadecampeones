@@ -175,7 +175,7 @@ export async function registerRoutes(
         const dateB = new Date(b.dateTime).getTime();
         return dateA - dateB;
       });
-      res.json(allUpcoming.slice(0, 6));
+      res.json(allUpcoming.slice(0, 8));
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
