@@ -690,23 +690,23 @@ export default function Home() {
                               ))}
                             </div>
                           )}
-                          <div className="space-y-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {filteredScheduleMatches.map((match) => (
                               <div
                                 key={match.id}
-                                className="rounded-md border p-3 sm:p-4 hover-elevate cursor-pointer"
+                                className="rounded-md border p-2 hover-elevate cursor-pointer"
                                 onClick={() => setSelectedMatch(match.id)}
                                 data-testid={`card-schedule-${match.id}`}
                               >
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                  <Badge variant="outline" className="text-xs">
+                                <div className="flex items-center justify-between gap-1 mb-1">
+                                  <Badge variant="outline" className="text-[10px] px-1 py-0 leading-tight">
                                     {match.stage && match.stage !== "JORNADA"
                                       ? MatchStageLabels[match.stage as MatchStage]
-                                      : `Jornada ${match.roundNumber}`}
+                                      : `J${match.roundNumber}`}
                                   </Badge>
                                   <Badge
                                     variant="outline"
-                                    className={`text-xs ${
+                                    className={`text-[10px] px-1 py-0 leading-tight ${
                                       match.status === "JUGADO"
                                         ? "bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30"
                                         : match.status === "EN_CURSO"
@@ -714,39 +714,35 @@ export default function Home() {
                                           : ""
                                     }`}
                                   >
-                                    {match.status === "JUGADO" ? "Jugado" : match.status === "EN_CURSO" ? "En curso" : "Programado"}
+                                    {match.status === "JUGADO" ? "Jugado" : match.status === "EN_CURSO" ? "En curso" : "Prog."}
                                   </Badge>
                                 </div>
-                                <div className="flex items-center justify-center gap-2 sm:gap-4">
-                                  <div className="flex-1 text-right">
-                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-home-${match.id}`}>
-                                      {match.homeTeam?.name}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <span className="text-xs font-medium truncate w-full text-center" data-testid={`text-home-${match.id}`}>
+                                    {match.homeTeam?.name}
+                                  </span>
+                                  <div className="flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5">
                                     {match.status === "JUGADO" || match.status === "EN_CURSO" ? (
                                       <>
-                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-home-${match.id}`}>
+                                        <span className="text-sm font-bold" data-testid={`text-score-home-${match.id}`}>
                                           {match.homeScore ?? 0}
                                         </span>
-                                        <span className="text-muted-foreground">-</span>
-                                        <span className="text-lg sm:text-2xl font-bold" data-testid={`text-score-away-${match.id}`}>
+                                        <span className="text-muted-foreground text-xs">-</span>
+                                        <span className="text-sm font-bold" data-testid={`text-score-away-${match.id}`}>
                                           {match.awayScore ?? 0}
                                         </span>
                                       </>
                                     ) : (
-                                      <span className="text-sm font-medium text-muted-foreground px-2">VS</span>
+                                      <span className="text-xs font-medium text-muted-foreground">VS</span>
                                     )}
                                   </div>
-                                  <div className="flex-1 text-left">
-                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-away-${match.id}`}>
-                                      {match.awayTeam?.name}
-                                    </span>
-                                  </div>
+                                  <span className="text-xs font-medium truncate w-full text-center" data-testid={`text-away-${match.id}`}>
+                                    {match.awayTeam?.name}
+                                  </span>
                                 </div>
-                                <div className="mt-2 text-center text-xs text-muted-foreground">
+                                <div className="mt-1 text-center text-[10px] text-muted-foreground leading-tight">
                                   {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                                    ? format(new Date(match.dateTime), "EEEE d MMM, HH:mm", { locale: es })
+                                    ? format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })
                                     : "Fecha por confirmar"}
                                   {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
                                 </div>
