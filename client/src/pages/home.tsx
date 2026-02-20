@@ -388,13 +388,13 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
             {/* Benefit 1 */}
             <a
               href="https://maps.google.com/?q=Portada+Alta+C.F.,+C.+James+Joyce,+47,+Teatinos-Universidad,+29010+Málaga"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative overflow-hidden rounded-md cursor-pointer"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
               data-testid="link-instalaciones"
             >
               <img
@@ -417,7 +417,7 @@ export default function Home() {
 
             {/* Benefit 2 */}
             <div
-              className="group relative overflow-hidden rounded-md cursor-pointer"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
               onClick={() => setShowPrizes(true)}
               data-testid="link-premios"
             >
@@ -441,7 +441,7 @@ export default function Home() {
 
             {/* Benefit 3 */}
             <div
-              className="group relative overflow-hidden rounded-md cursor-pointer"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
               onClick={() => setShowCompetencia(true)}
               data-testid="link-competencia"
             >
