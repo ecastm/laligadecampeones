@@ -140,7 +140,7 @@ export async function registerRoutes(
       const result = [];
       for (const match of matches) {
         const withTeams = await storage.getMatchWithTeams(match.id);
-        if (withTeams && withTeams.homeTeam && withTeams.awayTeam) result.push(withTeams);
+        if (withTeams) result.push(withTeams);
       }
       result.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
       res.json(result);
@@ -164,7 +164,7 @@ export async function registerRoutes(
             if (isNaN(matchDate.getTime())) continue;
             if (matchDate >= now || match.status === "EN_CURSO") {
               const withTeams = await storage.getMatchWithTeams(match.id);
-              if (withTeams && withTeams.homeTeam && withTeams.awayTeam) allUpcoming.push(withTeams);
+              if (withTeams) allUpcoming.push(withTeams);
             }
           }
         }

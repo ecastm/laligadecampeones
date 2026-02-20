@@ -50,7 +50,7 @@ export default function CalendarView() {
   const startDayOfWeek = getDay(monthStart);
   const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  const validMatches = allMatches.filter(m => m.homeTeam && m.awayTeam);
+  const validMatches = allMatches;
 
   const matchesByDate = validMatches.reduce<Record<string, MatchWithTeams[]>>((acc, match) => {
     const dateKey = format(new Date(match.dateTime), "yyyy-MM-dd");
@@ -266,18 +266,18 @@ export default function CalendarView() {
       c.textBaseline = "alphabetic";
     };
 
-    await drawTeamLogo(match.homeTeam.logoUrl, cx - teamSpacing, teamCenterY, logoSize);
-    await drawTeamLogo(match.awayTeam.logoUrl, cx + teamSpacing, teamCenterY, logoSize);
+    await drawTeamLogo(match.homeTeam?.logoUrl, cx - teamSpacing, teamCenterY, logoSize);
+    await drawTeamLogo(match.awayTeam?.logoUrl, cx + teamSpacing, teamCenterY, logoSize);
 
     const nameY = teamCenterY + logoSize / 2 + 50;
     ctx.fillStyle = white;
     ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    const homeLines = wrapText(match.homeTeam.name.toUpperCase(), 12);
+    const homeLines = wrapText((match.homeTeam?.name || "POR DEFINIR").toUpperCase(), 12);
     homeLines.forEach((line, i) => {
       ctx.fillText(line, cx - teamSpacing, nameY + i * 48);
     });
-    const awayLines = wrapText(match.awayTeam.name.toUpperCase(), 12);
+    const awayLines = wrapText((match.awayTeam?.name || "POR DEFINIR").toUpperCase(), 12);
     awayLines.forEach((line, i) => {
       ctx.fillText(line, cx + teamSpacing, nameY + i * 48);
     });
@@ -398,7 +398,7 @@ export default function CalendarView() {
     const canvas = canvasRef.current;
     if (!canvas || !selectedMatch) return;
     const link = document.createElement("a");
-    link.download = `partido-${selectedMatch.homeTeam.name}-vs-${selectedMatch.awayTeam.name}.png`;
+    link.download = `partido-${selectedMatch.homeTeam?.name || "TBD"}-vs-${selectedMatch.awayTeam?.name || "TBD"}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
   }, [selectedMatch]);
@@ -502,9 +502,9 @@ export default function CalendarView() {
                             onClick={() => setSelectedMatch(match)}
                             data-testid={`button-match-${match.id}`}
                           >
-                            <span className="font-semibold">{getShortName(match.homeTeam.name)}</span>
+                            <span className="font-semibold">{getShortName(match.homeTeam?.name || "Por definir")}</span>
                             <span className="mx-0.5 opacity-60">v</span>
-                            <span className="font-semibold">{getShortName(match.awayTeam.name)}</span>
+                            <span className="font-semibold">{getShortName(match.awayTeam?.name || "Por definir")}</span>
                           </button>
                         ))}
                         {dayMatches.length > 2 && (
@@ -545,9 +545,9 @@ export default function CalendarView() {
                         {format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })}
                       </div>
                       <div className="flex-1 flex items-center gap-2 text-sm font-medium">
-                        <span className="truncate">{match.homeTeam.name}</span>
+                        <span className="truncate">{match.homeTeam?.name || "Por definir"}</span>
                         <Badge variant="outline" className="text-[10px] shrink-0">VS</Badge>
-                        <span className="truncate">{match.awayTeam.name}</span>
+                        <span className="truncate">{match.awayTeam?.name || "Por definir"}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {match.status === "JUGADO" && match.homeScore !== undefined && match.awayScore !== undefined && (
@@ -579,14 +579,14 @@ export default function CalendarView() {
             <div className="space-y-4">
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div className="text-center flex-1">
-                  {selectedMatch.homeTeam.logoUrl ? (
+                  {selectedMatch.homeTeam?.logoUrl ? (
                     <img src={selectedMatch.homeTeam.logoUrl} alt={selectedMatch.homeTeam.name} className="h-12 w-12 mx-auto rounded-md object-cover" />
                   ) : (
                     <div className="h-12 w-12 mx-auto rounded-md bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                      {selectedMatch.homeTeam.name.charAt(0)}
+                      {selectedMatch.homeTeam ? selectedMatch.homeTeam.name.charAt(0) : "?"}
                     </div>
                   )}
-                  <p className="mt-1 text-sm font-semibold">{selectedMatch.homeTeam.name}</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedMatch.homeTeam?.name || "Por definir"}</p>
                 </div>
                 <div className="text-center px-4">
                   {selectedMatch.status === "JUGADO" && selectedMatch.homeScore !== undefined && selectedMatch.awayScore !== undefined ? (
@@ -599,14 +599,14 @@ export default function CalendarView() {
                   </Badge>
                 </div>
                 <div className="text-center flex-1">
-                  {selectedMatch.awayTeam.logoUrl ? (
+                  {selectedMatch.awayTeam?.logoUrl ? (
                     <img src={selectedMatch.awayTeam.logoUrl} alt={selectedMatch.awayTeam.name} className="h-12 w-12 mx-auto rounded-md object-cover" />
                   ) : (
                     <div className="h-12 w-12 mx-auto rounded-md bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                      {selectedMatch.awayTeam.name.charAt(0)}
+                      {selectedMatch.awayTeam ? selectedMatch.awayTeam.name.charAt(0) : "?"}
                     </div>
                   )}
-                  <p className="mt-1 text-sm font-semibold">{selectedMatch.awayTeam.name}</p>
+                  <p className="mt-1 text-sm font-semibold">{selectedMatch.awayTeam?.name || "Por definir"}</p>
                 </div>
               </div>
 
@@ -643,7 +643,7 @@ export default function CalendarView() {
                 {selectedMatch.vsImageUrl ? (
                   <img
                     src={selectedMatch.vsImageUrl}
-                    alt={`${selectedMatch.homeTeam.name} vs ${selectedMatch.awayTeam.name}`}
+                    alt={`${selectedMatch.homeTeam?.name || "Por definir"} vs ${selectedMatch.awayTeam?.name || "Por definir"}`}
                     className="w-full rounded-md border"
                     style={{ aspectRatio: "1/1" }}
                     data-testid="img-saved-vs"
@@ -661,7 +661,7 @@ export default function CalendarView() {
                   onClick={selectedMatch.vsImageUrl ? () => {
                     const link = document.createElement("a");
                     link.href = selectedMatch.vsImageUrl!;
-                    link.download = `partido-${selectedMatch.homeTeam.name}-vs-${selectedMatch.awayTeam.name}.png`;
+                    link.download = `partido-${selectedMatch.homeTeam?.name || "TBD"}-vs-${selectedMatch.awayTeam?.name || "TBD"}.png`;
                     link.click();
                   } : downloadImage}
                   disabled={!selectedMatch.vsImageUrl && isGenerating}

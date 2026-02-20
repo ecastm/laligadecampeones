@@ -198,7 +198,7 @@ export default function MatchesManagement() {
     }
   };
 
-  const getTeamName = (id: string) => teams.find((t) => t.id === id)?.name || "N/A";
+  const getTeamName = (id: string) => id ? (teams.find((t) => t.id === id)?.name || "N/A") : "Por definir";
   const getRefereeName = (id?: string) => referees.find((r) => r.id === id)?.name || "Sin asignar";
 
   return (
@@ -281,7 +281,7 @@ export default function MatchesManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Equipo Local</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-home-team">
                               <SelectValue placeholder="Selecciona" />
@@ -305,7 +305,7 @@ export default function MatchesManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Equipo Visitante</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
                           <FormControl>
                             <SelectTrigger data-testid="select-away-team">
                               <SelectValue placeholder="Selecciona" />
@@ -428,7 +428,7 @@ export default function MatchesManagement() {
                       </Badge>
                       <div className="min-w-0">
                         <p className="font-medium text-sm sm:text-base">
-                          {getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}
+                          {getTeamName(match.homeTeamId || "")} vs {getTeamName(match.awayTeamId || "")}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground">
                           {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}

@@ -243,7 +243,7 @@ export default function Home() {
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const tournamentSchedule = allTournamentSchedule.filter(m => m.homeTeam && m.awayTeam);
+  const tournamentSchedule = allTournamentSchedule || [];
 
   const scheduleRounds = Array.from(new Set(tournamentSchedule.map(m => m.roundNumber))).sort((a, b) => a - b);
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
@@ -720,7 +720,7 @@ export default function Home() {
                                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                                   <div className="flex-1 text-right">
                                     <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-home-${match.id}`}>
-                                      {match.homeTeam?.name}
+                                      {match.homeTeam?.name || "Por definir"}
                                     </span>
                                   </div>
                                   <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
@@ -740,7 +740,7 @@ export default function Home() {
                                   </div>
                                   <div className="flex-1 text-left">
                                     <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-away-${match.id}`}>
-                                      {match.awayTeam?.name}
+                                      {match.awayTeam?.name || "Por definir"}
                                     </span>
                                   </div>
                                 </div>
@@ -1056,7 +1056,7 @@ export default function Home() {
                               <div className="flex items-center justify-center gap-2 sm:gap-4">
                                 <div className="flex-1 text-right">
                                   <span className="text-sm sm:text-base font-medium truncate block">
-                                    {match.homeTeam?.name}
+                                    {match.homeTeam?.name || "Por definir"}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1 sm:gap-2 rounded-md bg-primary/10 px-2 sm:px-4 py-1 sm:py-2">
@@ -1078,7 +1078,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex-1">
                                   <span className="text-sm sm:text-base font-medium truncate block">
-                                    {match.awayTeam?.name}
+                                    {match.awayTeam?.name || "Por definir"}
                                   </span>
                                 </div>
                               </div>
@@ -1539,7 +1539,7 @@ function UpcomingMatchesSection() {
     },
   });
 
-  const upcomingMatches = allSchedule.filter(m => m.homeTeam && m.awayTeam).slice(0, 8);
+  const upcomingMatches = (allSchedule || []).slice(0, 8);
 
   if (isLoading) {
     return (
@@ -1578,7 +1578,7 @@ function UpcomingMatchesSection() {
                 {match.vsImageUrl ? (
                   <img
                     src={match.vsImageUrl}
-                    alt={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
+                    alt={`${match.homeTeam?.name || "Por definir"} vs ${match.awayTeam?.name || "Por definir"}`}
                     className="w-full aspect-square object-cover"
                     data-testid={`img-vs-${match.id}`}
                   />
@@ -1586,21 +1586,21 @@ function UpcomingMatchesSection() {
                   <div className="w-full aspect-square bg-gradient-to-br from-[#031D0A] to-[#0F6B2E] flex flex-col items-center justify-center gap-2 p-3">
                     <div className="flex items-center gap-3">
                       <div className="text-center">
-                        {match.homeTeam.logoUrl ? (
+                        {match.homeTeam?.logoUrl ? (
                           <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">FC</div>
+                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">{match.homeTeam ? "FC" : "?"}</div>
                         )}
-                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{match.homeTeam.name.toUpperCase()}</p>
+                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{(match.homeTeam?.name || "POR DEFINIR").toUpperCase()}</p>
                       </div>
                       <p className="text-amber-400 font-black text-xl">VS</p>
                       <div className="text-center">
-                        {match.awayTeam.logoUrl ? (
+                        {match.awayTeam?.logoUrl ? (
                           <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">FC</div>
+                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">{match.awayTeam ? "FC" : "?"}</div>
                         )}
-                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{match.awayTeam.name.toUpperCase()}</p>
+                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{(match.awayTeam?.name || "POR DEFINIR").toUpperCase()}</p>
                       </div>
                     </div>
                     <p className="text-amber-300 font-semibold text-[10px] text-center leading-tight">
@@ -1618,7 +1618,7 @@ function UpcomingMatchesSection() {
                     : `J${match.roundNumber}`}
                 </Badge>
                 <p className="text-xs font-medium mt-0.5 truncate">
-                  {match.homeTeam.name} vs {match.awayTeam.name}
+                  {match.homeTeam?.name || "Por definir"} vs {match.awayTeam?.name || "Por definir"}
                 </p>
                 <p className="text-[10px] text-muted-foreground leading-tight">
                   {match.dateTime && new Date(match.dateTime).getFullYear() > 2000

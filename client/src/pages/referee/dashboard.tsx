@@ -414,7 +414,7 @@ function MatchResultDialog({
                     append({
                       type: "GOAL",
                       minute: 1,
-                      teamId: match.homeTeamId,
+                      teamId: match.homeTeamId || "",
                       playerId: "",
                     })
                   }
@@ -491,12 +491,16 @@ function MatchResultDialog({
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value={match.homeTeamId}>
-                                  {match.homeTeam?.name}
-                                </SelectItem>
-                                <SelectItem value={match.awayTeamId}>
-                                  {match.awayTeam?.name}
-                                </SelectItem>
+                                {match.homeTeamId && (
+                                  <SelectItem value={match.homeTeamId}>
+                                    {match.homeTeam?.name || "Por definir"}
+                                  </SelectItem>
+                                )}
+                                {match.awayTeamId && (
+                                  <SelectItem value={match.awayTeamId}>
+                                    {match.awayTeam?.name || "Por definir"}
+                                  </SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                             <FormMessage />

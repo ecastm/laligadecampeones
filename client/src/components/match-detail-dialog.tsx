@@ -71,7 +71,7 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
             <div className="flex items-center justify-center gap-6 rounded-lg bg-card p-6 border">
               <div className="flex-1 text-center">
                 <p className="text-lg font-semibold" data-testid="text-detail-home-team">
-                  {match.homeTeam?.name}
+                  {match.homeTeam?.name || "Por definir"}
                 </p>
                 <p className="text-sm text-muted-foreground">Local</p>
               </div>
@@ -92,7 +92,7 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
               )}
               <div className="flex-1 text-center">
                 <p className="text-lg font-semibold" data-testid="text-detail-away-team">
-                  {match.awayTeam?.name}
+                  {match.awayTeam?.name || "Por definir"}
                 </p>
                 <p className="text-sm text-muted-foreground">Visitante</p>
               </div>

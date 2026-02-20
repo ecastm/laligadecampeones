@@ -263,8 +263,8 @@ export interface Match {
   roundNumber: number;
   dateTime: string;
   field: string;
-  homeTeamId: string;
-  awayTeamId: string;
+  homeTeamId?: string | null;
+  awayTeamId?: string | null;
   refereeUserId?: string;
   status: MatchStatus;
   homeScore?: number;
@@ -278,8 +278,8 @@ export const insertMatchSchema = z.object({
   roundNumber: z.number().min(1, "La jornada debe ser al menos 1"),
   dateTime: z.string(),
   field: z.string().min(2, "La cancha es requerida"),
-  homeTeamId: z.string(),
-  awayTeamId: z.string(),
+  homeTeamId: z.string().optional().nullable(),
+  awayTeamId: z.string().optional().nullable(),
   refereeUserId: z.string().optional(),
   status: z.enum(["PROGRAMADO", "EN_CURSO", "JUGADO"]).default("PROGRAMADO"),
   homeScore: z.number().optional(),
@@ -386,8 +386,8 @@ export interface Standing {
 
 // Extended types with relations for frontend
 export interface MatchWithTeams extends Match {
-  homeTeam: Team;
-  awayTeam: Team;
+  homeTeam?: Team | null;
+  awayTeam?: Team | null;
   referee?: User;
   refereeProfile?: RefereeProfile;
   events?: MatchEventWithPlayer[];

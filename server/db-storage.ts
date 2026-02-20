@@ -407,16 +407,16 @@ export class DatabaseStorage implements IStorage {
     const match = await this.getMatch(id);
     if (!match) return undefined;
 
-    const homeTeam = await this.getTeam(match.homeTeamId);
-    const awayTeam = await this.getTeam(match.awayTeamId);
+    const homeTeam = match.homeTeamId ? await this.getTeam(match.homeTeamId) : null;
+    const awayTeam = match.awayTeamId ? await this.getTeam(match.awayTeamId) : null;
     const referee = match.refereeUserId ? await this.getUser(match.refereeUserId) : undefined;
     const refereeProfile = match.refereeUserId ? await this.getRefereeProfile(match.refereeUserId) : undefined;
     const events = await this.getMatchEvents(id);
 
     return {
       ...match,
-      homeTeam: homeTeam!,
-      awayTeam: awayTeam!,
+      homeTeam: homeTeam || null,
+      awayTeam: awayTeam || null,
       referee: referee ? { ...referee, passwordHash: undefined } as any : undefined,
       refereeProfile,
       events,
