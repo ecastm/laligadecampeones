@@ -271,6 +271,7 @@ export interface Match {
   awayScore?: number;
   vsImageUrl?: string;
   stage?: MatchStage;
+  refereeNotes?: string;
 }
 
 export const insertMatchSchema = z.object({
@@ -286,6 +287,7 @@ export const insertMatchSchema = z.object({
   awayScore: z.number().optional(),
   vsImageUrl: z.string().optional(),
   stage: z.enum(["JORNADA", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_LUGAR", "FINAL"]).optional(),
+  refereeNotes: z.string().optional(),
 });
 export type InsertMatch = z.infer<typeof insertMatchSchema>;
 
@@ -367,6 +369,8 @@ export const matchResultSchema = z.object({
     relatedPlayerId: z.string().optional(),
     notes: z.string().optional(),
   })),
+  refereeNotes: z.string().optional(),
+  evidenceUrls: z.array(z.string()).optional(),
 });
 export type MatchResult = z.infer<typeof matchResultSchema>;
 

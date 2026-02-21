@@ -958,8 +958,20 @@ export async function registerRoutes(
         homeScore: data.homeScore,
         awayScore: data.awayScore,
         status: "JUGADO",
-        refereeUserId: req.user!.userId, // Confirm/lock referee who registered the result
+        refereeUserId: req.user!.userId,
+        refereeNotes: data.refereeNotes || undefined,
       });
+
+      // Save evidence photos
+      if (data.evidenceUrls && data.evidenceUrls.length > 0) {
+        for (const url of data.evidenceUrls) {
+          await storage.createMatchEvidence({
+            matchId: match.id,
+            type: "PHOTO",
+            url,
+          });
+        }
+      }
 
       // Delete old events and create new ones
       await storage.deleteMatchEvents(match.id);
@@ -1246,13 +1258,24 @@ export async function registerRoutes(
         return res.status(400).json({ message: "El partido ya fue finalizado" });
       }
       
-      const { homeScore, awayScore } = matchResultSchema.pick({ homeScore: true, awayScore: true }).parse(req.body);
+      const { homeScore, awayScore, refereeNotes, evidenceUrls } = matchResultSchema.pick({ homeScore: true, awayScore: true, refereeNotes: true, evidenceUrls: true }).parse(req.body);
       
       const updated = await storage.updateMatch(req.params.id, { 
         status: "JUGADO",
         homeScore,
         awayScore,
+        refereeNotes: refereeNotes || undefined,
       });
+
+      if (evidenceUrls && evidenceUrls.length > 0) {
+        for (const url of evidenceUrls) {
+          await storage.createMatchEvidence({
+            matchId: req.params.id,
+            type: "PHOTO",
+            url,
+          });
+        }
+      }
       
       // Generate fines for card events (only if not already generated)
       const existingFines = await storage.getFines(match.tournamentId);

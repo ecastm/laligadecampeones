@@ -19,9 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText } from "lucide-react";
 import ligaLogo from "@assets/image_1771352006885.png";
 import { Textarea } from "@/components/ui/textarea";
+import { useUpload } from "@/hooks/use-upload";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -296,6 +297,29 @@ function MatchResultDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const { toast } = useToast();
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+  const { uploadFile, isUploading } = useUpload({
+    onSuccess: (response) => {
+      setUploadedPhotos(prev => [...prev, response.objectPath]);
+      toast({ title: "Foto subida correctamente" });
+    },
+    onError: () => {
+      toast({ title: "Error al subir la foto", variant: "destructive" });
+    },
+  });
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    for (let i = 0; i < files.length; i++) {
+      await uploadFile(files[i]);
+    }
+    e.target.value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
+  };
 
   const { data: homePlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.homeTeamId, "players"],
@@ -323,6 +347,8 @@ function MatchResultDialog({
       homeScore: 0,
       awayScore: 0,
       events: [],
+      refereeNotes: "",
+      evidenceUrls: [],
     },
   });
 
@@ -333,7 +359,10 @@ function MatchResultDialog({
 
   const submitMutation = useMutation({
     mutationFn: async (data: MatchResult) => {
-      return apiRequest("POST", `/api/referee/matches/${match.id}/result`, data);
+      return apiRequest("POST", `/api/referee/matches/${match.id}/result`, {
+        ...data,
+        evidenceUrls: uploadedPhotos,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/referee/matches"] });
@@ -341,6 +370,8 @@ function MatchResultDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
       toast({ title: "Resultado registrado correctamente" });
+      setUploadedPhotos([]);
+      form.reset();
       onOpenChange(false);
     },
     onError: (error) => {
@@ -552,10 +583,83 @@ function MatchResultDialog({
               )}
             </div>
 
+            <div className="space-y-3">
+              <h4 className="font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Notas del Árbitro
+              </h4>
+              <FormField
+                control={form.control}
+                name="refereeNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Observaciones, incidencias, notas sobre el partido..."
+                        className="min-h-[80px]"
+                        data-testid="textarea-referee-notes"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="font-medium flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Fotos / Evidencias
+              </h4>
+              <div className="flex flex-wrap gap-2">
+                {uploadedPhotos.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <img
+                      src={url}
+                      alt={`Evidencia ${index + 1}`}
+                      className="h-20 w-20 rounded-md object-cover border"
+                      data-testid={`img-evidence-${index}`}
+                    />
+                    <button
+                      type="button"
+                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removePhoto(index)}
+                      data-testid={`button-remove-photo-${index}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <label className="h-20 w-20 rounded-md border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+                  {isUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <Camera className="h-5 w-5 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground mt-1">Subir</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={isUploading}
+                    data-testid="input-upload-photo"
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Sube fotos del acta, cancha, o cualquier incidencia relevante
+              </p>
+            </div>
+
             <Button
               type="submit"
               className="w-full"
-              disabled={submitMutation.isPending}
+              disabled={submitMutation.isPending || isUploading}
               data-testid="button-submit-result"
             >
               {submitMutation.isPending ? "Guardando..." : "Guardar Resultado"}
@@ -736,10 +840,64 @@ function MatchDetailsDialog({
                 </CardContent>
               </Card>
             )}
+
+            {matchDetails?.refereeNotes && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Notas del Árbitro
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm whitespace-pre-wrap" data-testid="text-referee-notes">{matchDetails.refereeNotes}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            <EvidenceGallery matchId={match.id} open={open} />
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EvidenceGallery({ matchId, open }: { matchId: string; open: boolean }) {
+  const { data: evidence = [] } = useQuery<{ id: string; url: string; type: string }[]>({
+    queryKey: ["/api/referee/matches", matchId, "evidence"],
+    queryFn: async () => {
+      const response = await fetch(`/api/referee/matches/${matchId}/evidence`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  if (evidence.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Camera className="h-4 w-4" />
+          Fotos / Evidencias ({evidence.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-3 gap-2">
+          {evidence.map((item, index) => (
+            <img
+              key={item.id}
+              src={item.url}
+              alt={`Evidencia ${index + 1}`}
+              className="w-full aspect-square rounded-md object-cover border"
+              data-testid={`img-saved-evidence-${index}`}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
