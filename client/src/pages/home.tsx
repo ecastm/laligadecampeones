@@ -718,8 +718,15 @@ export default function Home() {
                                   </Badge>
                                 </div>
                                 <div className="flex items-center justify-center gap-2 sm:gap-4">
-                                  <div className="flex-1 text-right">
-                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-home-${match.id}`}>
+                                  <div className="flex-1 text-right flex flex-col items-end gap-1">
+                                    {match.homeTeam?.logoUrl ? (
+                                      <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
+                                        {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
+                                      </div>
+                                    )}
+                                    <span className="text-sm sm:text-base font-medium truncate block max-w-full" data-testid={`text-home-${match.id}`}>
                                       {match.homeTeam?.name || "Por definir"}
                                     </span>
                                   </div>
@@ -738,8 +745,15 @@ export default function Home() {
                                       <span className="text-sm font-medium text-muted-foreground px-2">VS</span>
                                     )}
                                   </div>
-                                  <div className="flex-1 text-left">
-                                    <span className="text-sm sm:text-base font-medium truncate block" data-testid={`text-away-${match.id}`}>
+                                  <div className="flex-1 text-left flex flex-col items-start gap-1">
+                                    {match.awayTeam?.logoUrl ? (
+                                      <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                    ) : (
+                                      <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
+                                        {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
+                                      </div>
+                                    )}
+                                    <span className="text-sm sm:text-base font-medium truncate block max-w-full" data-testid={`text-away-${match.id}`}>
                                       {match.awayTeam?.name || "Por definir"}
                                     </span>
                                   </div>
@@ -1054,8 +1068,15 @@ export default function Home() {
                                 </span>
                               </div>
                               <div className="flex items-center justify-center gap-2 sm:gap-4">
-                                <div className="flex-1 text-right">
-                                  <span className="text-sm sm:text-base font-medium truncate block">
+                                <div className="flex-1 text-right flex flex-col items-end gap-1">
+                                  {match.homeTeam?.logoUrl ? (
+                                    <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                  ) : (
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
+                                      {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
+                                    </div>
+                                  )}
+                                  <span className="text-sm sm:text-base font-medium truncate block max-w-full">
                                     {match.homeTeam?.name || "Por definir"}
                                   </span>
                                 </div>
@@ -1076,8 +1097,15 @@ export default function Home() {
                                     {match.awayScore ?? 0}
                                   </span>
                                 </div>
-                                <div className="flex-1">
-                                  <span className="text-sm sm:text-base font-medium truncate block">
+                                <div className="flex-1 flex flex-col items-start gap-1">
+                                  {match.awayTeam?.logoUrl ? (
+                                    <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                  ) : (
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
+                                      {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
+                                    </div>
+                                  )}
+                                  <span className="text-sm sm:text-base font-medium truncate block max-w-full">
                                     {match.awayTeam?.name || "Por definir"}
                                   </span>
                                 </div>

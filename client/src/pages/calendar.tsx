@@ -545,8 +545,18 @@ export default function CalendarView() {
                         {format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })}
                       </div>
                       <div className="flex-1 flex items-center gap-2 text-sm font-medium">
+                        {match.homeTeam?.logoUrl ? (
+                          <img src={match.homeTeam.logoUrl} alt="" className="h-5 w-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[8px] shrink-0">{match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}</div>
+                        )}
                         <span className="truncate">{match.homeTeam?.name || "Por definir"}</span>
                         <Badge variant="outline" className="text-[10px] shrink-0">VS</Badge>
+                        {match.awayTeam?.logoUrl ? (
+                          <img src={match.awayTeam.logoUrl} alt="" className="h-5 w-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[8px] shrink-0">{match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}</div>
+                        )}
                         <span className="truncate">{match.awayTeam?.name || "Por definir"}</span>
                       </div>
                       <div className="flex items-center gap-2">

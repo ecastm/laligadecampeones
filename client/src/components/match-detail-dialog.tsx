@@ -70,6 +70,13 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
 
             <div className="flex items-center justify-center gap-6 rounded-lg bg-card p-6 border">
               <div className="flex-1 text-center">
+                {match.homeTeam?.logoUrl ? (
+                  <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
+                ) : (
+                  <div className="h-14 w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-lg mb-2">
+                    {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
+                  </div>
+                )}
                 <p className="text-lg font-semibold" data-testid="text-detail-home-team">
                   {match.homeTeam?.name || "Por definir"}
                 </p>
@@ -91,6 +98,13 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
                 </div>
               )}
               <div className="flex-1 text-center">
+                {match.awayTeam?.logoUrl ? (
+                  <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
+                ) : (
+                  <div className="h-14 w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-lg mb-2">
+                    {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
+                  </div>
+                )}
                 <p className="text-lg font-semibold" data-testid="text-detail-away-team">
                   {match.awayTeam?.name || "Por definir"}
                 </p>
