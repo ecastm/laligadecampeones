@@ -1599,61 +1599,65 @@ function UpcomingMatchesSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingMatches.map((match) => (
             <div key={match.id} className="group cursor-pointer" data-testid={`card-upcoming-match-${match.id}`}>
-              <div className="overflow-hidden rounded-md border shadow-md transition-transform group-hover:scale-[1.02]">
-                {match.vsImageUrl ? (
-                  <img
-                    src={match.vsImageUrl}
-                    alt={`${match.homeTeam?.name || "Por definir"} vs ${match.awayTeam?.name || "Por definir"}`}
-                    className="w-full aspect-square object-cover"
-                    data-testid={`img-vs-${match.id}`}
-                  />
-                ) : (
-                  <div className="w-full aspect-square bg-gradient-to-br from-[#031D0A] to-[#0F6B2E] flex flex-col items-center justify-center gap-2 p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="text-center">
-                        {match.homeTeam?.logoUrl ? (
-                          <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">{match.homeTeam ? "FC" : "?"}</div>
-                        )}
-                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{(match.homeTeam?.name || "POR DEFINIR").toUpperCase()}</p>
-                      </div>
-                      <p className="text-amber-400 font-black text-xl">VS</p>
-                      <div className="text-center">
-                        {match.awayTeam?.logoUrl ? (
-                          <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-10 w-10 rounded-full object-cover border-2 border-amber-400 mx-auto" />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-xs mx-auto">{match.awayTeam ? "FC" : "?"}</div>
-                        )}
-                        <p className="text-white font-bold text-[10px] mt-1 leading-tight">{(match.awayTeam?.name || "POR DEFINIR").toUpperCase()}</p>
-                      </div>
+              <div className="overflow-hidden rounded-lg border shadow-md transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#031D0A] to-[#0F6B2E]">
+                <div className="p-4 flex flex-col items-center gap-3">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-amber-400/40 text-amber-300 bg-amber-400/10">
+                    {match.stage && match.stage !== "JORNADA"
+                      ? MatchStageLabels[match.stage as MatchStage]
+                      : `Jornada ${match.roundNumber}`}
+                  </Badge>
+
+                  <div className="flex items-center justify-center gap-4 w-full">
+                    <div className="text-center flex-1">
+                      {match.homeTeam?.logoUrl ? (
+                        <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-amber-400 mx-auto shadow-lg" />
+                      ) : (
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">
+                          {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
+                        </div>
+                      )}
+                      <p className="text-white font-bold text-xs mt-2 leading-tight truncate max-w-[100px] mx-auto">
+                        {match.homeTeam?.name || "Por definir"}
+                      </p>
                     </div>
-                    <p className="text-amber-300 font-semibold text-[10px] text-center leading-tight">
-                      {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                        ? format(new Date(match.dateTime), "EEE d MMM", { locale: es }).toUpperCase()
-                        : "POR CONFIRMAR"}
-                    </p>
+
+                    <p className="text-amber-400 font-black text-2xl shrink-0">VS</p>
+
+                    <div className="text-center flex-1">
+                      {match.awayTeam?.logoUrl ? (
+                        <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-amber-400 mx-auto shadow-lg" />
+                      ) : (
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">
+                          {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
+                        </div>
+                      )}
+                      <p className="text-white font-bold text-xs mt-2 leading-tight truncate max-w-[100px] mx-auto">
+                        {match.awayTeam?.name || "Por definir"}
+                      </p>
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="mt-1.5 text-center">
-                <Badge variant="outline" className="text-[10px] px-1 py-0">
-                  {match.stage && match.stage !== "JORNADA"
-                    ? MatchStageLabels[match.stage as MatchStage]
-                    : `J${match.roundNumber}`}
-                </Badge>
-                <p className="text-xs font-medium mt-0.5 truncate">
-                  {match.homeTeam?.name || "Por definir"} vs {match.awayTeam?.name || "Por definir"}
-                </p>
-                <p className="text-[10px] text-muted-foreground leading-tight">
-                  {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                    ? format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })
-                    : "Fecha por confirmar"}
-                  {match.field && match.field !== "Por asignar" ? ` • ${match.field}` : ""}
-                </p>
+
+                  <div className="w-full border-t border-white/10 pt-2 text-center space-y-0.5">
+                    <p className="text-amber-300 font-semibold text-xs">
+                      {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                        ? format(new Date(match.dateTime), "EEEE d 'de' MMMM", { locale: es })
+                        : "Fecha por confirmar"}
+                    </p>
+                    <p className="text-white font-bold text-sm">
+                      {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
+                        ? format(new Date(match.dateTime), "HH:mm", { locale: es }) + " hrs"
+                        : ""}
+                    </p>
+                    {match.field && match.field !== "Por asignar" && (
+                      <p className="text-emerald-300/70 text-[10px]">
+                        {match.field}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           ))}
