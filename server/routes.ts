@@ -932,12 +932,13 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/referee/matches/:id/result", authenticate, authorizeRoles("ARBITRO"), async (req: AuthRequest, res) => {
+  app.post("/api/referee/matches/:id/result", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      // Enforce mandatory profile completion before allowing result submission
-      const refereeProfile = await storage.getRefereeProfile(req.user!.userId);
-      if (!refereeProfile) {
-        return res.status(403).json({ message: "Debes completar tu perfil antes de cargar resultados" });
+      if (req.user!.role === "ARBITRO") {
+        const refereeProfile = await storage.getRefereeProfile(req.user!.userId);
+        if (!refereeProfile) {
+          return res.status(403).json({ message: "Debes completar tu perfil antes de cargar resultados" });
+        }
       }
 
       const match = await storage.getMatch(req.params.id);

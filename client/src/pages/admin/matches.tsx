@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division, MatchStage, MatchStageLabels } from "@shared/schema";
+import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division, type MatchWithTeams, MatchStage, MatchStageLabels } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { generateVsImageBlob, uploadVsImage } from "@/lib/vs-image-generator";
@@ -16,11 +16,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Calendar, Edit, Image } from "lucide-react";
+import { Plus, Trash2, Calendar, Edit, Image, Flag, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/date-picker";
 import { MatchVsImage } from "@/components/match-vs-image";
+import { SharedMatchResultDialog, SharedMatchDetailsDialog } from "@/components/match-referee-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function MatchesManagement() {
@@ -28,6 +29,8 @@ export default function MatchesManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [vsImageMatch, setVsImageMatch] = useState<Match | null>(null);
+  const [refereeMatch, setRefereeMatch] = useState<MatchWithTeams | null>(null);
+  const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -200,6 +203,12 @@ export default function MatchesManagement() {
 
   const getTeamName = (id: string) => id ? (teams.find((t) => t.id === id)?.name || "N/A") : "Por definir";
   const getRefereeName = (id?: string) => referees.find((r) => r.id === id)?.name || "Sin asignar";
+
+  const toMatchWithTeams = (match: Match): MatchWithTeams => ({
+    ...match,
+    homeTeam: match.homeTeamId ? teams.find(t => t.id === match.homeTeamId) || null : null,
+    awayTeam: match.awayTeamId ? teams.find(t => t.id === match.awayTeamId) || null : null,
+  });
 
   return (
     <div className="space-y-6">
@@ -450,6 +459,30 @@ export default function MatchesManagement() {
                         {match.status === "JUGADO" ? "Jugado" : "Programado"}
                       </Badge>
                     </div>
+                    {match.status === "PROGRAMADO" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setRefereeMatch(toMatchWithTeams(match))}
+                        data-testid={`button-referee-match-${match.id}`}
+                        title="Gestionar como árbitro"
+                      >
+                        <Flag className="mr-1 h-4 w-4" />
+                        <span className="hidden sm:inline">Arbitrar</span>
+                      </Button>
+                    )}
+                    {match.status === "JUGADO" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewingMatch(toMatchWithTeams(match))}
+                        data-testid={`button-view-match-${match.id}`}
+                        title="Ver detalles del partido"
+                      >
+                        <Eye className="mr-1 h-4 w-4" />
+                        <span className="hidden sm:inline">Detalles</span>
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -506,6 +539,22 @@ export default function MatchesManagement() {
           awayTeam={teams.find(t => t.id === vsImageMatch.awayTeamId)}
           open={!!vsImageMatch}
           onOpenChange={(open) => { if (!open) setVsImageMatch(null); }}
+        />
+      )}
+
+      {refereeMatch && (
+        <SharedMatchResultDialog
+          match={refereeMatch}
+          open={!!refereeMatch}
+          onOpenChange={(open) => { if (!open) setRefereeMatch(null); }}
+        />
+      )}
+
+      {viewingMatch && (
+        <SharedMatchDetailsDialog
+          match={viewingMatch}
+          open={!!viewingMatch}
+          onOpenChange={(open) => { if (!open) setViewingMatch(null); }}
         />
       )}
     </div>

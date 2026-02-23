@@ -163,6 +163,7 @@ La aplicación estará disponible en el puerto 5000.
 
 ### Panel Admin
 - Gestión completa de usuarios, equipos, jugadores y partidos
+- **Funcionalidad de árbitro integrada**: botón "Arbitrar" en partidos programados para cargar resultados, eventos, notas y fotos directamente desde el panel admin; botón "Detalles" en partidos jugados para ver resumen completo
 - **Catálogo de árbitros**: ver, editar y eliminar perfiles de árbitros registrados
 - **Gestión de múltiples torneos**: crear, editar, finalizar y eliminar
 - Al finalizar un torneo: guarda campeón, fecha fin y tabla de posiciones final
