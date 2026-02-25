@@ -5,6 +5,7 @@ export const UserRole = {
   ADMIN: "ADMIN",
   CAPITAN: "CAPITAN",
   ARBITRO: "ARBITRO",
+  MARKETING: "MARKETING",
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
@@ -121,7 +122,7 @@ export const insertUserSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
-  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO"]),
+  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO", "MARKETING"]),
   teamId: z.string().optional(),
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -130,7 +131,7 @@ export const updateUserSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres").optional(),
   email: z.string().email("Email inválido").optional(),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").optional(),
-  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO"]).optional(),
+  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO", "MARKETING"]).optional(),
   teamId: z.string().optional().nullable(),
   status: z.enum(["ACTIVO", "INACTIVO"]).optional(),
 });
@@ -147,7 +148,7 @@ export const registerSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
-  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO"], {
+  role: z.enum(["ADMIN", "CAPITAN", "ARBITRO", "MARKETING"], {
     required_error: "Debes seleccionar un rol",
   }),
 }).refine((data) => data.password === data.confirmPassword, {

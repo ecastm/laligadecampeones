@@ -654,8 +654,8 @@ export async function registerRoutes(
     }
   });
 
-  // News (Admin)
-  app.get("/api/admin/news", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+  // News (Admin + Marketing)
+  app.get("/api/admin/news", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req, res) => {
     try {
       const news = await storage.getNews();
       res.json(news);
@@ -664,7 +664,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/news", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  app.post("/api/admin/news", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertNewsSchema.parse(req.body);
       const news = await storage.createNews(data, req.user!.userId);
@@ -677,7 +677,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  app.put("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertNewsSchema.partial().parse(req.body);
       const news = await storage.updateNews(req.params.id, data);
@@ -693,7 +693,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+  app.delete("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req, res) => {
     try {
       await storage.deleteNews(req.params.id);
       res.status(204).send();
@@ -1502,8 +1502,8 @@ export async function registerRoutes(
     }
   });
 
-  // ==================== ADMIN MARKETING MEDIA ====================
-  app.get("/api/admin/marketing", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  // ==================== MARKETING MEDIA (Admin + Marketing) ====================
+  app.get("/api/admin/marketing", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const media = await storage.getMarketingMedia();
       res.json(media);
@@ -1512,7 +1512,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/marketing", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  app.post("/api/admin/marketing", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertMarketingMediaSchema.parse(req.body);
       const media = await storage.createMarketingMedia(data);
@@ -1525,7 +1525,7 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  app.put("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertMarketingMediaSchema.partial().parse(req.body);
       const media = await storage.updateMarketingMedia(req.params.id, data);
@@ -1539,7 +1539,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+  app.delete("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       await storage.deleteMarketingMedia(req.params.id);
       res.status(204).send();

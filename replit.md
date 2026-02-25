@@ -35,6 +35,9 @@ La aplicación estará disponible en el puerto 5000.
 - `arbitro1@liga.com` / `arbitro123`
 - `arbitro2@liga.com` / `arbitro123`
 
+### Marketing
+- `marketing@liga.com` / `marketing123`
+
 ## Roles y Permisos
 
 ### ADMIN (Administrador)
@@ -51,6 +54,11 @@ La aplicación estará disponible en el puerto 5000.
 - Ver calendario de partidos asignados
 - Cargar resultados de partidos asignados
 - Registrar eventos (goles, tarjetas amarillas/rojas)
+
+### MARKETING (Marketing)
+- Acceso solo a Fotos/Contenido y Noticias
+- Panel dedicado en /marketing/dashboard
+- Puede crear y gestionar contenido para redes sociales
 
 ## Estructura del Proyecto
 

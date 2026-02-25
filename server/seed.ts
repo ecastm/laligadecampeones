@@ -116,6 +116,16 @@ export async function seedDatabase() {
     console.log(`   - ${ref.email} / ${ref.password}`);
   }
 
+  const marketingData = [
+    { name: "Marketing Liga", email: "marketing@liga.com", password: "marketing123", role: "MARKETING" as const },
+  ];
+
+  console.log("\nMarketing creados:");
+  for (const mk of marketingData) {
+    await storage.createUser(mk);
+    console.log(`   - ${mk.email} / ${mk.password}`);
+  }
+
   const match = await storage.createMatch({
     tournamentId: tournament.id,
     roundNumber: 1,

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, UserPlus, Shield, Users, Flag } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Shield, Users, Flag, Megaphone } from "lucide-react";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -69,6 +69,12 @@ export default function Register() {
       label: "Árbitro",
       description: "Registra resultados de partidos",
       icon: Flag,
+    },
+    {
+      value: "MARKETING",
+      label: "Marketing",
+      description: "Fotos, contenido y noticias",
+      icon: Megaphone,
     },
   ];
 

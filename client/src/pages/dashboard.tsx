@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import AdminDashboard from "./admin/dashboard";
 import CaptainDashboard from "./captain/dashboard";
 import RefereeDashboard from "./referee/dashboard";
+import MarketingDashboard from "./marketing/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
@@ -39,6 +40,8 @@ export default function Dashboard() {
       return <CaptainDashboard />;
     case "ARBITRO":
       return <RefereeDashboard />;
+    case "MARKETING":
+      return <MarketingDashboard />;
     default:
       return (
         <div className="flex min-h-screen items-center justify-center">

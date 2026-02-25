@@ -155,6 +155,7 @@ export default function UsersManagement() {
       case "ADMIN": return <Badge variant="default" className="text-xs">Admin</Badge>;
       case "CAPITAN": return <Badge variant="secondary" className="text-xs">Capitán</Badge>;
       case "ARBITRO": return <Badge variant="outline" className="text-xs">Árbitro</Badge>;
+      case "MARKETING": return <Badge className="text-xs bg-purple-600 hover:bg-purple-700">Marketing</Badge>;
       default: return null;
     }
   };
@@ -243,6 +244,7 @@ export default function UsersManagement() {
                           <SelectItem value="ADMIN">Administrador</SelectItem>
                           <SelectItem value="CAPITAN">Capitán</SelectItem>
                           <SelectItem value="ARBITRO">Árbitro</SelectItem>
+                          <SelectItem value="MARKETING">Marketing</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -349,6 +351,7 @@ export default function UsersManagement() {
                         <SelectItem value="ADMIN">Administrador</SelectItem>
                         <SelectItem value="CAPITAN">Capitán</SelectItem>
                         <SelectItem value="ARBITRO">Árbitro</SelectItem>
+                        <SelectItem value="MARKETING">Marketing</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
