@@ -176,7 +176,12 @@ export default function UsersManagement() {
             Administra los usuarios del sistema
           </p>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => {
+          setIsCreateOpen(open);
+          if (open) {
+            createForm.reset({ name: "", email: "", password: "", role: "CAPITAN", teamId: undefined });
+          }
+        }}>
           <DialogTrigger asChild>
             <Button data-testid="button-add-user" className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
