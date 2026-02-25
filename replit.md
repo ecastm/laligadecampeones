@@ -169,15 +169,15 @@ La aplicación estará disponible en el puerto 5000.
 - Al finalizar un torneo: guarda campeón, fecha fin y tabla de posiciones final
 - Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
-- **Creador de contenido para redes sociales** (Marketing):
-  - Seleccionar cualquier foto subida como base
-  - Formatos: Post (1080×1080), Historia (1080×1920), Reel (1080×1920)
-  - Título y subtítulo personalizables (tamaño, color, posición)
-  - Filtros: Normal, Cálido, Frío, Blanco/Negro, Contraste
-  - Ajustes de brillo y superposición oscura
-  - Branding automático "La Liga de Campeones" (activar/desactivar)
-  - Vista previa en tiempo real con Canvas API
-  - Descarga como PNG en resolución completa
+- **Preparador de contenido para redes sociales** (Marketing):
+  - Seleccionar cualquier foto subida de la plataforma
+  - Formatos de vista previa: Post (1080×1080), Historia (1080×1920), Reel (1080×1920)
+  - Sugerencias de título y subtítulo por categorías (Partido, Resultado, Promo, Evento, Equipo, Highlight)
+  - Sugerencias de descripciones/captions para publicaciones
+  - Hashtags organizados por grupos (Principales, Partido, Resultado, Promo, General, Redes)
+  - Vista previa del texto completo (título + descripción + hashtags)
+  - Botón "Copiar Todo" para pegar directamente en redes sociales
+  - Descarga directa de la foto seleccionada
 
 ### Panel Capitán
 - **Perfil obligatorio**: Al primer acceso debe completar datos personales
