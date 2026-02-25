@@ -17,9 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2, Images } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2, Images, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { SocialMediaEditor } from "@/components/social-media-editor";
 
 async function uploadFile(file: File): Promise<string> {
   const res = await fetch("/api/uploads/request-url", {
@@ -55,6 +56,8 @@ export default function MarketingManagement() {
   const [isBulkUploading, setIsBulkUploading] = useState(false);
   const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
   const bulkInputRef = useRef<HTMLInputElement>(null);
+  const [socialEditorOpen, setSocialEditorOpen] = useState(false);
+  const [socialEditorMedia, setSocialEditorMedia] = useState<MarketingMedia | null>(null);
 
   const { data: media = [], isLoading } = useQuery<MarketingMedia[]>({
     queryKey: ["/api/admin/marketing"],
@@ -183,6 +186,19 @@ export default function MarketingManagement() {
             onChange={handleBulkUpload}
             data-testid="input-bulk-upload"
           />
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSocialEditorMedia(photos.length > 0 ? photos[0] : null);
+              setSocialEditorOpen(true);
+            }}
+            className="gap-2"
+            disabled={photos.length === 0}
+            data-testid="button-open-social-editor"
+          >
+            <Share2 className="h-4 w-4" />
+            Crear para Redes
+          </Button>
           <Button onClick={handleCreate} className="gap-2" data-testid="button-add-media">
             <Plus className="h-4 w-4" />
             Agregar Contenido
@@ -312,6 +328,21 @@ export default function MarketingManagement() {
                           Ver
                         </Button>
                       </a>
+                      {item.type === "PHOTO" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => {
+                            setSocialEditorMedia(item);
+                            setSocialEditorOpen(true);
+                          }}
+                          data-testid={`button-social-${item.id}`}
+                        >
+                          <Share2 className="h-3 w-3" />
+                          Redes
+                        </Button>
+                      )}
                       <Button size="sm" variant="outline" className="gap-1" onClick={() => handleEdit(item)} data-testid={`button-edit-${item.id}`}>
                         <Pencil className="h-3 w-3" />
                         Editar
@@ -340,6 +371,13 @@ export default function MarketingManagement() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         editingMedia={editingMedia}
+      />
+
+      <SocialMediaEditor
+        open={socialEditorOpen}
+        onOpenChange={setSocialEditorOpen}
+        media={socialEditorMedia}
+        allPhotos={photos}
       />
     </div>
   );
