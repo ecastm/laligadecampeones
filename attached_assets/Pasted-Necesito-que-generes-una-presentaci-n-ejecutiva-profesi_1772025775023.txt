@@ -1,0 +1,141 @@
+Necesito que generes una presentación ejecutiva profesional (estructura tipo PowerPoint o Google Slides) para presentar a un cliente una plataforma de gestión para compra-venta de autos usados desarrollada a la medida.
+
+⚠️ No incluir precios ni información comercial.
+Es una presentación funcional del software.
+
+🎨 Diseño y Estilo
+
+Diseño moderno, corporativo y tecnológico
+
+Mantener la gama de colores del sistema
+
+Visualmente limpia, elegante y profesional
+
+Uso de mockups realistas del software
+
+Poco texto, mensajes claros
+
+Enfocada en funcionalidad y beneficios estratégicos
+
+🧩 Estructura de la Presentación
+1️⃣ Portada
+
+Nombre de la plataforma
+
+Frase: “Plataforma de Gestión Automotriz – Desarrollo Personalizado”
+
+Imagen conceptual de control, tecnología y autos
+
+2️⃣ Contexto Operativo
+
+Explicar brevemente los retos comunes en la compra-venta de autos:
+
+Falta de control centralizado
+
+Inventario disperso
+
+Seguimiento manual de clientes
+
+Información no estructurada para decisiones
+
+Diseño visual con íconos.
+
+3️⃣ Nuestra Solución
+
+Explicar que la plataforma fue desarrollada específicamente para este cliente.
+Destacar:
+
+Sistema a la medida
+
+Adaptado a su flujo operativo
+
+Escalable
+
+Centralizado
+
+Mensaje clave:
+“No es un software genérico. Es una herramienta diseñada para su operación.”
+
+4️⃣ Módulo de Inventario
+
+Mostrar una pantalla simulada o real con:
+
+Listado de vehículos
+
+Estatus visibles (Disponible, Apartado, Vendido)
+
+Filtros por sucursal
+
+Búsqueda rápida
+
+Vista organizada y profesional
+
+5️⃣ Módulo de Seguimiento de Ventas (CRM)
+
+Pantalla tipo embudo de ventas:
+
+Prospectos
+
+Etapas del proceso
+
+Historial de seguimiento
+
+Organización clara por asesor
+
+Visual tipo dashboard moderno.
+
+6️⃣ Panel de Control / Dashboard
+
+Mostrar:
+
+Indicadores clave
+
+Gráficas de ventas
+
+Rotación de inventario
+
+Comparativa por sucursal
+
+Debe proyectar toma de decisiones estratégica.
+
+7️⃣ Multi-Sucursal
+
+Explicar visualmente:
+
+Control por sucursal
+
+Vista consolidada
+
+Operación integrada
+
+8️⃣ Seguridad y Escalabilidad
+
+Respaldo de información
+
+Plataforma adaptable
+
+Evolución continua
+
+Preparada para crecimiento
+
+9️⃣ Beneficios Estratégicos
+
+Diapositiva clara y visual:
+
+Mayor control operativo
+
+Mejor organización
+
+Seguimiento estructurado
+
+Información en tiempo real
+
+Profesionalización del negocio
+
+🔟 Cierre
+
+Frase final:
+
+“Esta plataforma fue diseñada para brindar control, claridad y crecimiento sostenible.”
+
+Agregar slide final minimalista y elegante.
