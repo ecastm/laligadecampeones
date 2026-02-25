@@ -1596,5 +1596,90 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== AI CONTENT GENERATION ====================
+  app.post("/api/ai/generate-content", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
+    try {
+      const { photoUrls, contentType, context } = req.body;
+      if (!photoUrls || !Array.isArray(photoUrls) || photoUrls.length === 0) {
+        return res.status(400).json({ message: "Se requiere al menos una URL de foto" });
+      }
+
+      const OpenAI = (await import("openai")).default;
+      const openai = new OpenAI({
+        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+      });
+
+      const protocol = req.headers["x-forwarded-proto"] || "https";
+      const host = req.headers.host || "localhost:5000";
+      const baseUrl = `${protocol}://${host}`;
+
+      const imageContents = photoUrls.slice(0, 4).map((url: string) => ({
+        type: "image_url" as const,
+        image_url: { url: url.startsWith("http") ? url : `${baseUrl}${url}` },
+      }));
+
+      const formatLabel = contentType === "story" ? "Historia de Instagram" : contentType === "reel" ? "Reel de Instagram" : "Post de Instagram (Feed)";
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `Eres el community manager de "La Liga de Campeones", una liga de fútbol amateur en Fuengirola, España. Tu trabajo es crear contenido atractivo para redes sociales (Instagram) basado en las fotos que se te proporcionan.
+
+REGLAS:
+- Escribe SIEMPRE en español (España)
+- Usa un tono entusiasta pero profesional, cercano al público
+- Si ves equipos, jugadores, un partido o acción de juego, describe lo que ves y crea contenido relacionado
+- Si ves fotos generales (grupo, celebración, entrega de premios, etc.), crea contenido acorde
+- NO inventes nombres de equipos ni jugadores si no los puedes leer/identificar en la foto
+- Si NO puedes identificar equipos/jugadores, usa descripciones genéricas sin inventar datos
+- Genera hashtags relevantes para fútbol amateur español
+
+FORMATO DE RESPUESTA (JSON estricto):
+{
+  "copy": "texto de la publicación adaptado al formato ${formatLabel}",
+  "hashtags": ["#hashtag1", "#hashtag2", ...],
+  "team1": "nombre equipo local si identificable, vacío si no",
+  "team2": "nombre equipo visitante si identificable, vacío si no",
+  "score1": "goles local si visible, vacío si no",
+  "score2": "goles visitante si visible, vacío si no",
+  "matchday": "número de jornada si visible, vacío si no",
+  "description": "breve descripción de lo que ves en las fotos (1-2 frases)"
+}
+
+${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 líneas." : contentType === "reel" ? "Para Reels: texto muy corto, 1-2 líneas con gancho." : "Para Posts: texto más desarrollado con emojis, 5-8 líneas con CTA al final."}`,
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: context
+                  ? `Analiza estas fotos y genera contenido para ${formatLabel}. Contexto adicional: ${context}`
+                  : `Analiza estas fotos y genera contenido para ${formatLabel}.`,
+              },
+              ...imageContents,
+            ],
+          },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 1000,
+      });
+
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
+        return res.status(500).json({ message: "No se pudo generar contenido" });
+      }
+
+      const parsed = JSON.parse(content);
+      res.json(parsed);
+    } catch (error: any) {
+      console.error("Error generando contenido con IA:", error);
+      res.status(500).json({ message: error.message || "Error al generar contenido con IA" });
+    }
+  });
+
   return httpServer;
 }

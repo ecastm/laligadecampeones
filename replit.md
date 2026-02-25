@@ -9,6 +9,7 @@ Aplicación web full-stack para organizar torneos de fútbol (liga) con autentic
 - **Autenticación**: JWT + bcrypt
 - **Base de datos**: PostgreSQL (Neon) con raw SQL via pg Pool
 - **Almacenamiento**: DatabaseStorage (server/db-storage.ts) - persistente
+- **IA**: OpenAI (Replit AI Integrations) - GPT-4o con visión
 - **Validación**: Zod
 
 ## Cómo Ejecutar
@@ -178,16 +179,19 @@ La aplicación estará disponible en el puerto 5000.
 - Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 - **Generador de Contenido para Redes Sociales** (Marketing):
-  - Wizard de 3 pasos: Fotos + Formato → Datos del partido → Vista previa y guardado
-  - **Paso 1**: Galería con búsqueda/filtro por fechas, selección múltiple + selector de formato (Post/Historia/Reel)
-  - **Paso 2**: Campos editables: equipos, marcador, jornada, fecha/hora, cancha, MVP, CTA
-  - **Paso 3**: Vista previa estilo Instagram (phone mockup), copy editable, hashtags editables
+  - Wizard de 3 pasos: Fotos + Formato → Datos del partido + IA → Vista previa y guardado
+  - **Paso 1**: Selector de formato (Post/Historia/Reel) + Galería con búsqueda/filtro por fechas, selección múltiple
+  - **Paso 2**: Botón "Generar con IA" que analiza las fotos con GPT-4o (visión) y genera copy, hashtags y detecta equipos + campos manuales editables
+  - **Paso 3**: Vista previa estilo Instagram (phone mockup), copy editable, hashtags editables, botón regenerar con IA
+  - La IA usa Replit AI Integrations (sin API key propia, cargos a créditos Replit)
+  - Endpoint: POST /api/ai/generate-content (requiere ADMIN o MARKETING)
   - Vista previa simula cómo se vería en Instagram con avatar, iconos y layout real
   - Botones: Descargar PNG, Guardar en Marketing, Copiar copy, Copiar hashtags, Copiar todo
   - Al guardar se sube la imagen generada y se registra como asset en Marketing
-  - Copy completamente editable con indicador "Editado" y botón "Regenerar"
+  - Copy completamente editable con indicador "Editado" y botones "IA" (regenerar con IA) y "Plantilla" (regenerar con plantilla)
   - Hashtags removibles individualmente + campo para agregar nuevos manualmente
   - Imagen generada con diseño verde/dorado de La Liga de Campeones
+  - Si no se capturan datos de partido (equipos), la imagen solo muestra la foto con branding
 
 ### Panel Capitán
 - **Perfil obligatorio**: Al primer acceso debe completar datos personales

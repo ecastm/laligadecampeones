@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   Download, Copy, Check, Hash, ChevronLeft, ChevronRight,
-  Search, Image, Sparkles, FileText, Loader2, Plus, Save
+  Search, Image, Sparkles, FileText, Loader2, Plus, Save, Wand2
 } from "lucide-react";
 
 type ContentType = "post" | "story" | "reel";
@@ -287,6 +287,9 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
   const [isRendering, setIsRendering] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [aiContext, setAiContext] = useState("");
+  const [aiDescription, setAiDescription] = useState("");
 
   useEffect(() => {
     if (open && media) setSelectedPhotos([media]);
@@ -299,8 +302,45 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
       setSelectedPhotos([]); setContentType("post");
       setFields({ ...EMPTY_FIELDS });
       setCopy(""); setHashtags([]); setCopyEdited(false);
+      setAiContext(""); setAiDescription("");
     }
   }, [open]);
+
+  const handleAIGenerate = async () => {
+    if (selectedPhotos.length === 0) return;
+    setIsGeneratingAI(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const authH: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const photoUrls = selectedPhotos.map((p) => p.url);
+      const r = await fetch("/api/ai/generate-content", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authH },
+        body: JSON.stringify({ photoUrls, contentType, context: aiContext }),
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({ message: "Error desconocido" }));
+        throw new Error(err.message);
+      }
+      const data = await r.json();
+      setCopy(data.copy || "");
+      setCopyEdited(true);
+      if (data.hashtags && Array.isArray(data.hashtags)) setHashtags(data.hashtags);
+      setFields((prev) => ({
+        ...prev,
+        team1: data.team1 || prev.team1,
+        team2: data.team2 || prev.team2,
+        score1: data.score1 || prev.score1,
+        score2: data.score2 || prev.score2,
+        matchday: data.matchday || prev.matchday,
+      }));
+      if (data.description) setAiDescription(data.description);
+      toast({ title: "Contenido generado con IA", description: data.description || "Revisa y edita el resultado." });
+    } catch (e: any) {
+      toast({ title: "Error al generar", description: e.message, variant: "destructive" });
+    }
+    setIsGeneratingAI(false);
+  };
 
   useEffect(() => {
     if (step === 3 && canvasRef.current) {
@@ -472,42 +512,80 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
 
           {step === 2 && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Equipo Local</Label>
-                  <Input value={fields.team1} onChange={(e) => updateField("team1", e.target.value)} placeholder="Ej: Fuengirola" data-testid="field-team1" />
+              <div className="rounded-lg border-2 border-dashed border-primary/30 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Wand2 className="h-5 w-5 text-primary" />
+                  <Label className="text-sm font-semibold">Generar con IA</Label>
+                  <Badge variant="secondary" className="text-[10px]">Recomendado</Badge>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Equipo Visitante</Label>
-                  <Input value={fields.team2} onChange={(e) => updateField("team2", e.target.value)} placeholder="Ej: El Palo" data-testid="field-team2" />
+                <p className="text-xs text-muted-foreground">La IA analiza tus fotos y genera automáticamente el texto, hashtags y detecta equipos si son visibles.</p>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">Contexto adicional (opcional)</Label>
+                    <Input
+                      value={aiContext}
+                      onChange={(e) => setAiContext(e.target.value)}
+                      placeholder="Ej: Semifinal, entrega de trofeos, entrenamiento..."
+                      className="text-sm"
+                      data-testid="input-ai-context"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleAIGenerate}
+                    disabled={isGeneratingAI || selectedPhotos.length === 0}
+                    className="gap-2 shrink-0"
+                    data-testid="button-ai-generate"
+                  >
+                    {isGeneratingAI ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                    {isGeneratingAI ? "Generando..." : "Generar"}
+                  </Button>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Goles Local (vacío = sin resultado)</Label>
-                  <Input value={fields.score1} onChange={(e) => updateField("score1", e.target.value)} placeholder="Ej: 2" data-testid="field-score1" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Goles Visitante</Label>
-                  <Input value={fields.score2} onChange={(e) => updateField("score2", e.target.value)} placeholder="Ej: 1" data-testid="field-score2" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Jornada / Etapa</Label>
-                  <Input value={fields.matchday} onChange={(e) => updateField("matchday", e.target.value)} placeholder="Ej: 4" data-testid="field-matchday" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Fecha y Hora</Label>
-                  <Input value={fields.datetime} onChange={(e) => updateField("datetime", e.target.value)} placeholder="Ej: Sábado 8 de marzo, 20:00" data-testid="field-datetime" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">Cancha</Label>
-                  <Input value={fields.venue} onChange={(e) => updateField("venue", e.target.value)} placeholder="Ej: Campo Central" data-testid="field-venue" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium">MVP (opcional)</Label>
-                  <Input value={fields.mvpName} onChange={(e) => updateField("mvpName", e.target.value)} placeholder="Ej: Carlos López" data-testid="field-mvp" />
-                </div>
-                <div className="space-y-1 sm:col-span-2">
-                  <Label className="text-xs font-medium">Texto final (Ej: Síguenos para más)</Label>
-                  <Input value={fields.cta} onChange={(e) => updateField("cta", e.target.value)} data-testid="field-cta" />
+                {aiDescription && (
+                  <p className="text-xs text-muted-foreground italic border-l-2 border-primary/30 pl-2 mt-2">
+                    IA: {aiDescription}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Datos del partido (opcional - edita o deja vacío)</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Equipo Local</Label>
+                    <Input value={fields.team1} onChange={(e) => updateField("team1", e.target.value)} placeholder="Ej: Fuengirola" data-testid="field-team1" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Equipo Visitante</Label>
+                    <Input value={fields.team2} onChange={(e) => updateField("team2", e.target.value)} placeholder="Ej: El Palo" data-testid="field-team2" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Goles Local (vacío = sin resultado)</Label>
+                    <Input value={fields.score1} onChange={(e) => updateField("score1", e.target.value)} placeholder="Ej: 2" data-testid="field-score1" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Goles Visitante</Label>
+                    <Input value={fields.score2} onChange={(e) => updateField("score2", e.target.value)} placeholder="Ej: 1" data-testid="field-score2" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Jornada / Etapa</Label>
+                    <Input value={fields.matchday} onChange={(e) => updateField("matchday", e.target.value)} placeholder="Ej: 4" data-testid="field-matchday" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Fecha y Hora</Label>
+                    <Input value={fields.datetime} onChange={(e) => updateField("datetime", e.target.value)} placeholder="Ej: Sábado 8 de marzo, 20:00" data-testid="field-datetime" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Cancha</Label>
+                    <Input value={fields.venue} onChange={(e) => updateField("venue", e.target.value)} placeholder="Ej: Campo Central" data-testid="field-venue" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">MVP (opcional)</Label>
+                    <Input value={fields.mvpName} onChange={(e) => updateField("mvpName", e.target.value)} placeholder="Ej: Carlos López" data-testid="field-mvp" />
+                  </div>
+                  <div className="space-y-1 sm:col-span-2">
+                    <Label className="text-xs font-medium">Texto final (Ej: Síguenos para más)</Label>
+                    <Input value={fields.cta} onChange={(e) => updateField("cta", e.target.value)} data-testid="field-cta" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -555,8 +633,12 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                       {copyEdited && <Badge variant="secondary" className="text-[10px]">Editado</Badge>}
                     </Label>
                     <div className="flex gap-1">
+                      <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={async () => { setIsGeneratingAI(true); await handleAIGenerate(); }} disabled={isGeneratingAI} data-testid="button-regenerate-ai">
+                        {isGeneratingAI ? <Loader2 className="h-3 w-3 animate-spin" /> : <Wand2 className="h-3 w-3" />}
+                        {isGeneratingAI ? "Generando..." : "IA"}
+                      </Button>
                       <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => { setCopy(buildCopy(fields, contentType)); setHashtags(buildHashtags(fields, keywords)); setCopyEdited(false); toast({ title: "Texto regenerado" }); }} data-testid="button-regenerate">
-                        <Sparkles className="h-3 w-3" /> Regenerar
+                        <Sparkles className="h-3 w-3" /> Plantilla
                       </Button>
                       <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => doCopy(copy, "copy")} data-testid="button-copy-text">
                         {copiedField === "copy" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
