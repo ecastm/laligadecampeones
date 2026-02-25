@@ -288,11 +288,11 @@ export default function FinancesManagement() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="fines" data-testid="tab-fines">Multas</TabsTrigger>
-              <TabsTrigger value="payments" data-testid="tab-payments">Pagos Equipos</TabsTrigger>
-              <TabsTrigger value="fine-payments" data-testid="tab-fine-payments">Pagos Multas</TabsTrigger>
-              <TabsTrigger value="expenses" data-testid="tab-expenses">Gastos</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+              <TabsTrigger value="fines" data-testid="tab-fines" className="text-xs sm:text-sm">Multas</TabsTrigger>
+              <TabsTrigger value="payments" data-testid="tab-payments" className="text-xs sm:text-sm">Pagos Equipos</TabsTrigger>
+              <TabsTrigger value="fine-payments" data-testid="tab-fine-payments" className="text-xs sm:text-sm">Pagos Multas</TabsTrigger>
+              <TabsTrigger value="expenses" data-testid="tab-expenses" className="text-xs sm:text-sm">Gastos</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fines" className="mt-4">

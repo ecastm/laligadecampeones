@@ -122,7 +122,7 @@ export default function CaptainDashboard() {
             <ThemeToggle />
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             {effectiveSection === "team" && <TeamInfo />}
             {effectiveSection === "players" && <TeamPlayers />}
             {effectiveSection === "schedule" && <TeamSchedule />}

@@ -128,7 +128,7 @@ export default function RefereeDashboard() {
             <ThemeToggle />
           </header>
 
-          <main className="flex-1 overflow-auto p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6">
             {(effectiveSection === "pending" || effectiveSection === "completed") && (
               <RefereeMatches
                 status={effectiveSection === "pending" ? "PROGRAMADO" : "JUGADO"}
@@ -465,13 +465,13 @@ function MatchResultDialog({
                   {fields.map((field, index) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-12 gap-2 items-end border rounded-md p-3"
+                      className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end border rounded-md p-3"
                     >
                       <FormField
                         control={form.control}
                         name={`events.${index}.type`}
                         render={({ field }) => (
-                          <FormItem className="col-span-3">
+                          <FormItem className="col-span-1 sm:col-span-3">
                             <FormLabel className="text-xs">Tipo</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
@@ -493,7 +493,7 @@ function MatchResultDialog({
                         control={form.control}
                         name={`events.${index}.minute`}
                         render={({ field }) => (
-                          <FormItem className="col-span-2">
+                          <FormItem className="col-span-1 sm:col-span-2">
                             <FormLabel className="text-xs">Min</FormLabel>
                             <FormControl>
                               <Input
@@ -513,7 +513,7 @@ function MatchResultDialog({
                         control={form.control}
                         name={`events.${index}.teamId`}
                         render={({ field }) => (
-                          <FormItem className="col-span-3">
+                          <FormItem className="col-span-1 sm:col-span-3">
                             <FormLabel className="text-xs">Equipo</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
@@ -542,7 +542,7 @@ function MatchResultDialog({
                         control={form.control}
                         name={`events.${index}.playerId`}
                         render={({ field }) => (
-                          <FormItem className="col-span-3">
+                          <FormItem className="col-span-1 sm:col-span-3">
                             <FormLabel className="text-xs">Jugador</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>

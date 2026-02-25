@@ -68,47 +68,47 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
               )}
             </div>
 
-            <div className="flex items-center justify-center gap-6 rounded-lg bg-card p-6 border">
-              <div className="flex-1 text-center">
+            <div className="flex items-center justify-center gap-3 sm:gap-6 rounded-lg bg-card p-3 sm:p-6 border">
+              <div className="flex-1 text-center min-w-0">
                 {match.homeTeam?.logoUrl ? (
-                  <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
+                  <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-10 w-10 sm:h-14 sm:w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
                 ) : (
-                  <div className="h-14 w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-lg mb-2">
+                  <div className="h-10 w-10 sm:h-14 sm:w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-sm sm:text-lg mb-2">
                     {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
                   </div>
                 )}
-                <p className="text-lg font-semibold" data-testid="text-detail-home-team">
+                <p className="text-sm sm:text-lg font-semibold truncate" data-testid="text-detail-home-team">
                   {match.homeTeam?.name || "Por definir"}
                 </p>
-                <p className="text-sm text-muted-foreground">Local</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Local</p>
               </div>
               {match.status === "JUGADO" ? (
-                <div className="flex items-center gap-3 rounded-md bg-primary/10 px-6 py-4">
-                  <span className="text-4xl font-bold" data-testid="text-detail-home-score">
+                <div className="flex items-center gap-2 sm:gap-3 rounded-md bg-primary/10 px-3 py-2 sm:px-6 sm:py-4 shrink-0">
+                  <span className="text-2xl sm:text-4xl font-bold" data-testid="text-detail-home-score">
                     {match.homeScore ?? 0}
                   </span>
-                  <span className="text-2xl text-muted-foreground">-</span>
-                  <span className="text-4xl font-bold" data-testid="text-detail-away-score">
+                  <span className="text-lg sm:text-2xl text-muted-foreground">-</span>
+                  <span className="text-2xl sm:text-4xl font-bold" data-testid="text-detail-away-score">
                     {match.awayScore ?? 0}
                   </span>
                 </div>
               ) : (
-                <div className="px-4">
+                <div className="px-2 sm:px-4 shrink-0">
                   <Badge variant="secondary">Programado</Badge>
                 </div>
               )}
-              <div className="flex-1 text-center">
+              <div className="flex-1 text-center min-w-0">
                 {match.awayTeam?.logoUrl ? (
-                  <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
+                  <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-10 w-10 sm:h-14 sm:w-14 mx-auto rounded-full object-cover border-2 border-amber-400/50 mb-2" />
                 ) : (
-                  <div className="h-14 w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-lg mb-2">
+                  <div className="h-10 w-10 sm:h-14 sm:w-14 mx-auto rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-primary font-bold text-sm sm:text-lg mb-2">
                     {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
                   </div>
                 )}
-                <p className="text-lg font-semibold" data-testid="text-detail-away-team">
+                <p className="text-sm sm:text-lg font-semibold truncate" data-testid="text-detail-away-team">
                   {match.awayTeam?.name || "Por definir"}
                 </p>
-                <p className="text-sm text-muted-foreground">Visitante</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Visitante</p>
               </div>
             </div>
 

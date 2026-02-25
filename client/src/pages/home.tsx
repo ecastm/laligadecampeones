@@ -806,7 +806,7 @@ export default function Home() {
                                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-sm font-bold">
                                     {index + 1}
                                   </span>
-                                  <span className="font-medium text-sm truncate max-w-[120px]">
+                                  <span className="font-medium text-sm truncate max-w-[100px] sm:max-w-[150px]">
                                     {team.teamName}
                                   </span>
                                 </div>
