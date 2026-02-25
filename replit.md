@@ -170,11 +170,10 @@ La aplicación estará disponible en el puerto 5000.
 - Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 - **Generador de Contenido para Redes Sociales** (Marketing):
-  - Wizard de 4 pasos: Selección de fotos → Formato + Partido → Campos editables → Resultado
-  - **Paso 1 - Selección de fuente**: Búsqueda por palabras clave y rango de fechas, galería con multiselección
-  - **Paso 2 - Formato y partido**: Post (1080×1350), Historia (1080×1920), Reel (1080×1920) + autorellenar desde partidos existentes
-  - **Paso 3 - Campos editables**: Equipos, marcador, jornada/etapa, fecha/hora, cancha, MVP, CTA
-  - **Paso 4 - Resultado**: Vista previa estilo Instagram (phone mockup), copy editable, hashtags editables
+  - Wizard de 3 pasos: Fotos + Formato → Datos del partido → Vista previa y guardado
+  - **Paso 1**: Galería con búsqueda/filtro por fechas, selección múltiple + selector de formato (Post/Historia/Reel)
+  - **Paso 2**: Campos editables: equipos, marcador, jornada, fecha/hora, cancha, MVP, CTA
+  - **Paso 3**: Vista previa estilo Instagram (phone mockup), copy editable, hashtags editables
   - Vista previa simula cómo se vería en Instagram con avatar, iconos y layout real
   - Botones: Descargar PNG, Guardar en Marketing, Copiar copy, Copiar hashtags, Copiar todo
   - Al guardar se sube la imagen generada y se registra como asset en Marketing
