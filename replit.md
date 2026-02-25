@@ -169,15 +169,19 @@ La aplicación estará disponible en el puerto 5000.
 - Al finalizar un torneo: guarda campeón, fecha fin y tabla de posiciones final
 - Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
-- **Preparador de contenido para redes sociales** (Marketing):
-  - Seleccionar cualquier foto subida de la plataforma
-  - Formatos de vista previa: Post (1080×1080), Historia (1080×1920), Reel (1080×1920)
-  - Sugerencias de título y subtítulo por categorías (Partido, Resultado, Promo, Evento, Equipo, Highlight)
-  - Sugerencias de descripciones/captions para publicaciones
-  - Hashtags organizados por grupos (Principales, Partido, Resultado, Promo, General, Redes)
-  - Vista previa del texto completo (título + descripción + hashtags)
-  - Botón "Copiar Todo" para pegar directamente en redes sociales
-  - Descarga directa de la foto seleccionada
+- **Generador de Contenido para Redes Sociales** (Marketing):
+  - Wizard de 5 pasos: Selección de fotos → Tipo de contenido → Plantilla → Campos editables → Resultado
+  - **Paso 1 - Selección de fuente**: Búsqueda por palabras clave y rango de fechas, galería con multiselección
+  - **Paso 2 - Tipo de contenido**: Post (1080×1350), Historia (1080×1920), Reel (1080×1920)
+  - **Paso 3 - Plantilla**: Marcador (resultado), MVP (figura del partido), Próximo Partido (anuncio)
+  - Autorellenado desde partidos existentes de la BD (equipos, marcador, jornada, fecha, cancha)
+  - **Paso 4 - Campos editables**: Equipos, marcador, jornada/etapa, fecha/hora, cancha, MVP, CTA
+  - **Paso 5 - Resultado**: Vista previa renderizada con Canvas API, copy generado por plantilla, hashtags automáticos
+  - Hashtags basados en: keywords (semifinal, final, MVP, clásico, goleada, fair play), equipos, cancha
+  - Copy adaptado según formato (post: 1-2 párrafos + CTA, historia: 1 línea, reel: 1-2 líneas)
+  - Botones: Descargar imagen PNG, Copiar copy, Copiar hashtags, Copiar todo
+  - Hashtags removibles individualmente, totalmente editables
+  - Imagen generada con diseño verde/dorado de La Liga de Campeones
 
 ### Panel Capitán
 - **Perfil obligatorio**: Al primer acceso debe completar datos personales

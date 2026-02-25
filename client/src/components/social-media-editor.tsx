@@ -1,119 +1,525 @@
-import { useState, useEffect } from "react";
-import type { MarketingMedia } from "@shared/schema";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
+import type { MarketingMedia, Match, Team } from "@shared/schema";
+import { MatchStageLabels } from "@shared/schema";
+import { getAuthHeader } from "@/lib/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Download, Sparkles, Hash, Copy, Check, Lightbulb, Share2, Image } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Download, Copy, Check, Hash, ChevronLeft, ChevronRight,
+  Search, Image, Sparkles, FileText, Eye, Loader2
+} from "lucide-react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
-type SocialFormat = "post" | "story" | "reel";
+type ContentType = "post" | "story" | "reel";
+type TemplateType = "score" | "mvp" | "next_match";
 
-interface FormatConfig {
-  label: string;
-  description: string;
-  aspectClass: string;
+interface MatchWithTeams extends Match {
+  homeTeam?: Team;
+  awayTeam?: Team;
 }
 
-const FORMATS: Record<SocialFormat, FormatConfig> = {
-  post: { label: "Post", description: "1080×1080", aspectClass: "aspect-square" },
-  story: { label: "Historia", description: "1080×1920", aspectClass: "aspect-[9/16]" },
-  reel: { label: "Reel", description: "1080×1920", aspectClass: "aspect-[9/16]" },
-};
-
-interface TitleSuggestion {
-  title: string;
-  subtitle: string;
-  category: string;
+interface GeneratorState {
+  keywords: string;
+  dateFrom: string;
+  dateTo: string;
+  selectedPhotos: MarketingMedia[];
+  contentType: ContentType;
+  template: TemplateType;
+  fields: {
+    team1: string;
+    team2: string;
+    score1: string;
+    score2: string;
+    matchday: string;
+    datetime: string;
+    venue: string;
+    mvpName: string;
+    cta: string;
+  };
+  copy: string;
+  hashtags: string[];
 }
 
-const TITLE_SUGGESTIONS: TitleSuggestion[] = [
-  { category: "Partido", title: "Jornada de Liga", subtitle: "La Liga de Campeones 2026" },
-  { category: "Partido", title: "Noche de Fútbol", subtitle: "Vive la emoción del partido" },
-  { category: "Partido", title: "Día de Clásico", subtitle: "El encuentro que todos esperan" },
-  { category: "Partido", title: "Gran Derbi", subtitle: "La Liga de Campeones presenta" },
-  { category: "Resultado", title: "Resultado Final", subtitle: "Resumen de la jornada" },
-  { category: "Resultado", title: "Victoria Épica", subtitle: "Otro gran partido en la Liga" },
-  { category: "Resultado", title: "Goleada Histórica", subtitle: "Momento inolvidable de la temporada" },
-  { category: "Promo", title: "Inscribe Tu Equipo", subtitle: "Temporada 2026 - Plazas limitadas" },
-  { category: "Promo", title: "Únete a La Liga", subtitle: "La mejor competición amateur" },
-  { category: "Promo", title: "Nueva Temporada", subtitle: "Abierto el plazo de inscripción" },
-  { category: "Promo", title: "Sé Parte de la Historia", subtitle: "La Liga de Campeones te espera" },
-  { category: "Evento", title: "Entrega de Premios", subtitle: "Temporada 2026" },
-  { category: "Evento", title: "Sorteo de Calendario", subtitle: "Comienza la emoción" },
-  { category: "Evento", title: "Inauguración", subtitle: "Arranca la competición" },
-  { category: "Equipo", title: "Plantilla Oficial", subtitle: "Temporada 2026" },
-  { category: "Equipo", title: "Refuerzo Confirmado", subtitle: "Bienvenido al equipo" },
-  { category: "Highlight", title: "Golazo de la Jornada", subtitle: "Momentos mágicos" },
-  { category: "Highlight", title: "Mejores Jugadas", subtitle: "Lo mejor de la jornada" },
-  { category: "Highlight", title: "MVP de la Jornada", subtitle: "El mejor jugador del partido" },
-];
-
-const HASHTAG_GROUPS = {
-  principales: [
-    "#LaLigaDeCampeones",
-    "#LigaDeCampeones2026",
-    "#FútbolAmateur",
-    "#Fuengirola",
-  ],
-  partido: [
-    "#DíaDePartido",
-    "#JornadaDeLiga",
-    "#FútbolEnVivo",
-    "#VamosEquipo",
-    "#GolGolGol",
-    "#NocheDeFútbol",
-  ],
-  resultado: [
-    "#ResultadoFinal",
-    "#Victoria",
-    "#Goleada",
-    "#ResumenDelPartido",
-    "#TresPuntos",
-  ],
-  promo: [
-    "#InscribeTuEquipo",
-    "#NuevaTemporada",
-    "#FútbolParaTodos",
-    "#CompeticiónAmateur",
-    "#TemporadaNueva",
-  ],
-  general: [
-    "#Fútbol",
-    "#Soccer",
-    "#Football",
-    "#DeporteLocal",
-    "#PasiónPorElFútbol",
-    "#FútbolEsVida",
-    "#AmorAlFútbol",
-    "#CanteraDelFútbol",
-  ],
-  redes: [
-    "#InstaFútbol",
-    "#FútbolGram",
-    "#ReelsFútbol",
-    "#MatchDay",
-    "#Gameday",
-  ],
+const INITIAL_STATE: GeneratorState = {
+  keywords: "",
+  dateFrom: "",
+  dateTo: "",
+  selectedPhotos: [],
+  contentType: "post",
+  template: "score",
+  fields: {
+    team1: "", team2: "", score1: "", score2: "",
+    matchday: "", datetime: "", venue: "", mvpName: "",
+    cta: "Síguenos para más",
+  },
+  copy: "",
+  hashtags: [],
 };
 
-const CAPTION_SUGGESTIONS: { category: string; text: string }[] = [
-  { category: "Partido", text: "Llega la jornada más esperada de la temporada. ¡Nos vemos en el campo!" },
-  { category: "Partido", text: "Todo listo para otra noche de fútbol de primer nivel." },
-  { category: "Partido", text: "El balón rueda de nuevo en La Liga de Campeones." },
-  { category: "Resultado", text: "Gran partido, gran victoria. Así se resume la jornada de hoy." },
-  { category: "Resultado", text: "Los goles, las emociones y el resultado final de una jornada inolvidable." },
-  { category: "Resultado", text: "Otro día más de fútbol espectacular. ¡Felicidades a los protagonistas!" },
-  { category: "Promo", text: "¿Quieres competir en la mejor liga amateur? ¡Inscribe tu equipo ahora! Plazas limitadas." },
-  { category: "Promo", text: "Nueva temporada, nuevos retos. La Liga de Campeones te espera. ¡Apúntate ya!" },
-  { category: "Promo", text: "Forma parte de algo grande. Inscripciones abiertas para la próxima temporada." },
-  { category: "Evento", text: "Noche de premiación. Reconocemos el esfuerzo y la pasión de todos los participantes." },
-  { category: "Evento", text: "Gran sorteo del calendario. ¡Ya sabemos los emparejamientos de la temporada!" },
-  { category: "Highlight", text: "¡Golazo! Momentos como este hacen que el fútbol sea el deporte más bonito del mundo." },
-  { category: "Highlight", text: "Las mejores jugadas de la jornada. ¿Cuál es tu favorita?" },
-  { category: "Equipo", text: "Presentamos la plantilla oficial para esta temporada. ¡A por todas!" },
-];
+const BASE_HASHTAGS = ["#Futbol", "#Torneo", "#Liga", "#Jornada", "#Goles", "#Equipo", "#Partido"];
+
+const KEYWORD_HASHTAG_MAP: Record<string, string[]> = {
+  semifinal: ["#Semifinal", "#Eliminatoria"],
+  final: ["#Final", "#Campeonato", "#GranFinal"],
+  mvp: ["#MVP", "#FiguraDelPartido", "#MejorJugador"],
+  clasico: ["#Clasico", "#GranDerbi"],
+  clásico: ["#Clasico", "#GranDerbi"],
+  goleada: ["#Goleada", "#LluviaDeGoles"],
+  fairplay: ["#FairPlay", "#Respeto", "#JuegoLimpio"],
+  "fair play": ["#FairPlay", "#Respeto"],
+  debut: ["#Debut", "#PrimerPartido"],
+  campeon: ["#Campeon", "#Campeones"],
+  campeón: ["#Campeon", "#Campeones"],
+  victoria: ["#Victoria", "#TresPuntos"],
+  empate: ["#Empate"],
+  derrota: ["#Derrota"],
+  gol: ["#Gol", "#GolesDelPartido"],
+};
+
+const CONTENT_TYPE_CONFIG: Record<ContentType, { label: string; desc: string; dims: string }> = {
+  post: { label: "Post (Feed)", desc: "Imagen para el feed", dims: "1080×1350" },
+  story: { label: "Historia", desc: "Formato vertical para stories", dims: "1080×1920" },
+  reel: { label: "Reel", desc: "Formato vertical para reels", dims: "1080×1920" },
+};
+
+const TEMPLATE_CONFIG: Record<TemplateType, { label: string; desc: string; icon: string }> = {
+  score: { label: "Marcador", desc: "Resultado del partido con equipos y marcador", icon: "⚽" },
+  mvp: { label: "MVP", desc: "Destacar al mejor jugador del partido", icon: "🌟" },
+  next_match: { label: "Próximo Partido", desc: "Anuncio del próximo encuentro", icon: "📅" },
+};
+
+function sanitizeHashtag(text: string): string {
+  return text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ0-9]/g, "");
+}
+
+function generateHashtags(state: GeneratorState): string[] {
+  const tags = new Set<string>(BASE_HASHTAGS);
+
+  tags.add("#LaLigaDeCampeones");
+  tags.add("#LigaDeCampeones2026");
+
+  const kwLower = state.keywords.toLowerCase();
+  for (const [keyword, mapped] of Object.entries(KEYWORD_HASHTAG_MAP)) {
+    if (kwLower.includes(keyword)) {
+      mapped.forEach((t) => tags.add(t));
+    }
+  }
+
+  const jMatch = kwLower.match(/jornada\s*(\d+)/);
+  if (jMatch) tags.add(`#Jornada${jMatch[1]}`);
+  if (state.fields.matchday) tags.add(`#Jornada${state.fields.matchday}`);
+
+  if (state.fields.team1) {
+    const s = sanitizeHashtag(state.fields.team1);
+    if (s) tags.add(`#${s}`);
+  }
+  if (state.fields.team2) {
+    const s = sanitizeHashtag(state.fields.team2);
+    if (s) tags.add(`#${s}`);
+  }
+
+  if (state.fields.venue) {
+    const s = sanitizeHashtag(state.fields.venue);
+    if (s) tags.add(`#${s}`);
+  }
+
+  if (state.template === "mvp" && state.fields.mvpName) {
+    tags.add("#MVP");
+    tags.add("#FiguraDelPartido");
+  }
+
+  return Array.from(tags);
+}
+
+function generateCopy(state: GeneratorState): string {
+  const { template, contentType, fields } = state;
+  const t1 = fields.team1 || "[Equipo Local]";
+  const t2 = fields.team2 || "[Equipo Visitante]";
+  const s1 = fields.score1 || "X";
+  const s2 = fields.score2 || "X";
+  const jornada = fields.matchday ? `Jornada ${fields.matchday}` : "Jornada";
+  const fecha = fields.datetime || "[Fecha por confirmar]";
+  const lugar = fields.venue || "[Cancha por confirmar]";
+  const mvp = fields.mvpName || "[Nombre del Jugador]";
+  const cta = fields.cta || "Síguenos para más";
+
+  if (template === "score") {
+    if (contentType === "post") {
+      return `⚽ ${jornada} | Resultado Final\n\n${t1} ${s1} - ${s2} ${t2}\n\n📅 ${fecha}\n📍 ${lugar}\n\nOtra gran jornada en La Liga de Campeones. ¡El balón no deja de rodar!\n\n👉 ${cta}`;
+    }
+    if (contentType === "story") {
+      return `⚽ ${t1} ${s1} - ${s2} ${t2}\n${jornada} | ${cta}`;
+    }
+    return `⚽ ${t1} ${s1}-${s2} ${t2}\n${cta}`;
+  }
+
+  if (template === "mvp") {
+    if (contentType === "post") {
+      return `🌟 Figura del Partido\n\n${mvp}\n\nDestacó en el encuentro entre ${t1} y ${t2} en la ${jornada} de La Liga de Campeones.\n\n📅 ${fecha}\n📍 ${lugar}\n\n¡Enhorabuena!\n\n👉 ${cta}`;
+    }
+    if (contentType === "story") {
+      return `🌟 MVP: ${mvp}\n${t1} vs ${t2} | ${cta}`;
+    }
+    return `🌟 ${mvp} | MVP\n${cta}`;
+  }
+
+  if (contentType === "post") {
+    return `📅 Próximo Partido\n\n${t1} vs ${t2}\n\n🗓️ ${fecha}\n📍 ${lugar}\n🏆 ${jornada} - La Liga de Campeones\n\n¡No te lo pierdas!\n\n👉 ${cta}`;
+  }
+  if (contentType === "story") {
+    return `📅 ${t1} vs ${t2}\n${fecha} | ${lugar}\n${cta}`;
+  }
+  return `📅 ${t1} vs ${t2}\n¡Próximamente! ${cta}`;
+}
+
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function wrapTextCanvas(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const test = current ? current + " " + word : word;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+async function renderTemplate(
+  canvas: HTMLCanvasElement,
+  state: GeneratorState
+): Promise<void> {
+  const dims: Record<ContentType, [number, number]> = {
+    post: [1080, 1350],
+    story: [1080, 1920],
+    reel: [1080, 1920],
+  };
+  const [W, H] = dims[state.contentType];
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d")!;
+
+  const darkGreen = "#031D0A";
+  const medGreen = "#0A4A1F";
+  const brightGreen = "#0F6B2E";
+  const gold = "#D4A824";
+  const lightGold = "#F0D060";
+  const white = "#FFFFFF";
+
+  const bgGrad = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, H * 0.8);
+  bgGrad.addColorStop(0, brightGreen);
+  bgGrad.addColorStop(0.5, medGreen);
+  bgGrad.addColorStop(1, darkGreen);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  ctx.globalAlpha = 0.04;
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1;
+  for (let i = -W; i < W * 2; i += 50) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + H * 0.3, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(i + H * 0.3, 0); ctx.lineTo(i, H); ctx.stroke();
+  }
+  ctx.restore();
+
+  if (state.selectedPhotos.length > 0) {
+    try {
+      const img = await loadImage(state.selectedPhotos[0].url);
+      const imgRatio = img.width / img.height;
+      const canvasRatio = W / H;
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+      if (imgRatio > canvasRatio) { sw = img.height * canvasRatio; sx = (img.width - sw) / 2; }
+      else { sh = img.width / canvasRatio; sy = (img.height - sh) / 2; }
+      ctx.globalAlpha = 0.3;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      ctx.globalAlpha = 1.0;
+    } catch {}
+  }
+
+  const topH = 160;
+  const topGrad = ctx.createLinearGradient(0, 0, 0, topH);
+  topGrad.addColorStop(0, darkGreen);
+  topGrad.addColorStop(0.8, darkGreen + "EE");
+  topGrad.addColorStop(1, "transparent");
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(0, 0, W, topH);
+
+  const goldLineGrad = ctx.createLinearGradient(0, topH - 4, W, topH - 4);
+  goldLineGrad.addColorStop(0, "transparent");
+  goldLineGrad.addColorStop(0.15, gold);
+  goldLineGrad.addColorStop(0.85, gold);
+  goldLineGrad.addColorStop(1, "transparent");
+  ctx.strokeStyle = goldLineGrad;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, topH - 2); ctx.lineTo(W, topH - 2); ctx.stroke();
+
+  ctx.fillStyle = lightGold;
+  ctx.font = "900 34px 'Segoe UI', Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("LA LIGA DE CAMPEONES", W / 2, topH - 35);
+
+  const { fields, template } = state;
+  const t1 = fields.team1 || "Equipo Local";
+  const t2 = fields.team2 || "Equipo Visitante";
+  const cx = W / 2;
+
+  if (template === "score") {
+    const jornada = fields.matchday ? `JORNADA ${fields.matchday}` : "JORNADA";
+    const pillY = topH + 60;
+    ctx.font = "900 36px 'Segoe UI', Arial, sans-serif";
+    const pillW = ctx.measureText(jornada).width + 80;
+    const pillH = 56;
+    const pillGrad = ctx.createLinearGradient(cx - pillW / 2, pillY, cx + pillW / 2, pillY + pillH);
+    pillGrad.addColorStop(0, gold); pillGrad.addColorStop(0.5, lightGold); pillGrad.addColorStop(1, gold);
+    ctx.fillStyle = pillGrad;
+    roundRect(ctx, cx - pillW / 2, pillY, pillW, pillH, pillH / 2);
+    ctx.fill();
+    ctx.fillStyle = darkGreen;
+    ctx.font = "900 32px 'Segoe UI', Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText(jornada, cx, pillY + pillH / 2);
+    ctx.textBaseline = "alphabetic";
+
+    const teamY = H * 0.42;
+    ctx.fillStyle = white;
+    ctx.font = "900 44px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    const t1lines = wrapTextCanvas(ctx, t1.toUpperCase(), 420);
+    t1lines.forEach((l, i) => ctx.fillText(l, cx - 220, teamY + i * 52));
+    const t2lines = wrapTextCanvas(ctx, t2.toUpperCase(), 420);
+    t2lines.forEach((l, i) => ctx.fillText(l, cx + 220, teamY + i * 52));
+
+    ctx.fillStyle = "transparent";
+    const vsY = teamY - 30;
+    const vsR = 55;
+    const vsBg = ctx.createRadialGradient(cx, vsY, 0, cx, vsY, vsR);
+    vsBg.addColorStop(0, lightGold); vsBg.addColorStop(0.6, gold); vsBg.addColorStop(1, "#8B7518");
+    ctx.fillStyle = vsBg;
+    ctx.beginPath(); ctx.arc(cx, vsY, vsR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = darkGreen;
+    ctx.font = "900 50px 'Segoe UI', Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("VS", cx, vsY + 2);
+    ctx.textBaseline = "alphabetic";
+
+    const s1 = fields.score1 || "0";
+    const s2 = fields.score2 || "0";
+    const scoreY = H * 0.60;
+    ctx.save();
+    ctx.shadowColor = lightGold + "80"; ctx.shadowBlur = 20;
+    ctx.fillStyle = lightGold;
+    ctx.font = "900 120px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(s1, cx - 180, scoreY);
+    ctx.fillText("-", cx, scoreY);
+    ctx.fillText(s2, cx + 180, scoreY);
+    ctx.restore();
+
+    ctx.fillStyle = gold + "BB";
+    ctx.font = "600 26px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("RESULTADO FINAL", cx, scoreY + 50);
+
+    const infoY = H * 0.75;
+    const infoW = 650;
+    const infoH = 120;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 20;
+    ctx.fillStyle = darkGreen + "E8";
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 16);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = gold + "60"; ctx.lineWidth = 2;
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 16);
+    ctx.stroke();
+
+    if (fields.datetime) {
+      ctx.fillStyle = lightGold;
+      ctx.font = "700 28px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(fields.datetime.toUpperCase(), cx, infoY + 45);
+    }
+    if (fields.venue) {
+      ctx.fillStyle = white;
+      ctx.font = "600 24px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(`📍 ${fields.venue}`, cx, infoY + 85);
+    }
+  }
+
+  if (template === "mvp") {
+    const mvpName = fields.mvpName || "Nombre del Jugador";
+    const midY = H * 0.40;
+    ctx.fillStyle = lightGold;
+    ctx.font = "900 40px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("🌟 FIGURA DEL PARTIDO 🌟", cx, midY);
+
+    ctx.fillStyle = white;
+    ctx.font = "900 64px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(mvpName.toUpperCase(), cx, midY + 90);
+
+    ctx.fillStyle = gold;
+    ctx.font = "700 30px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(`${t1} vs ${t2}`, cx, midY + 150);
+
+    const jornada = fields.matchday ? `Jornada ${fields.matchday}` : "";
+    if (jornada) {
+      ctx.fillStyle = gold + "BB";
+      ctx.font = "600 26px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(jornada, cx, midY + 200);
+    }
+
+    if (fields.datetime || fields.venue) {
+      const infoY = H * 0.72;
+      ctx.fillStyle = darkGreen + "E8";
+      roundRect(ctx, cx - 300, infoY, 600, 100, 16);
+      ctx.fill();
+      ctx.strokeStyle = gold + "60"; ctx.lineWidth = 2;
+      roundRect(ctx, cx - 300, infoY, 600, 100, 16);
+      ctx.stroke();
+      if (fields.datetime) {
+        ctx.fillStyle = lightGold;
+        ctx.font = "700 26px 'Segoe UI', Arial, sans-serif";
+        ctx.fillText(fields.datetime, cx, infoY + 40);
+      }
+      if (fields.venue) {
+        ctx.fillStyle = white;
+        ctx.font = "600 22px 'Segoe UI', Arial, sans-serif";
+        ctx.fillText(`📍 ${fields.venue}`, cx, infoY + 75);
+      }
+    }
+  }
+
+  if (template === "next_match") {
+    const midY = H * 0.32;
+    ctx.fillStyle = lightGold;
+    ctx.font = "900 36px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("📅 PRÓXIMO PARTIDO", cx, midY);
+
+    const jornada = fields.matchday ? `JORNADA ${fields.matchday}` : "";
+    if (jornada) {
+      const pillY = midY + 30;
+      ctx.font = "900 30px 'Segoe UI', Arial, sans-serif";
+      const pillW = ctx.measureText(jornada).width + 60;
+      const pillH = 48;
+      const pillGrad = ctx.createLinearGradient(cx - pillW / 2, pillY, cx + pillW / 2, pillY + pillH);
+      pillGrad.addColorStop(0, gold); pillGrad.addColorStop(0.5, lightGold); pillGrad.addColorStop(1, gold);
+      ctx.fillStyle = pillGrad;
+      roundRect(ctx, cx - pillW / 2, pillY, pillW, pillH, pillH / 2);
+      ctx.fill();
+      ctx.fillStyle = darkGreen;
+      ctx.font = "900 26px 'Segoe UI', Arial, sans-serif";
+      ctx.textBaseline = "middle";
+      ctx.fillText(jornada, cx, pillY + pillH / 2);
+      ctx.textBaseline = "alphabetic";
+    }
+
+    const teamY = H * 0.50;
+    ctx.fillStyle = white;
+    ctx.font = "900 48px 'Segoe UI', Arial, sans-serif";
+    const t1lines = wrapTextCanvas(ctx, t1.toUpperCase(), 400);
+    t1lines.forEach((l, i) => ctx.fillText(l, cx - 200, teamY + i * 56));
+    const t2lines = wrapTextCanvas(ctx, t2.toUpperCase(), 400);
+    t2lines.forEach((l, i) => ctx.fillText(l, cx + 200, teamY + i * 56));
+
+    const vsY = teamY - 20;
+    const vsR = 50;
+    const vsBg = ctx.createRadialGradient(cx, vsY, 0, cx, vsY, vsR);
+    vsBg.addColorStop(0, lightGold); vsBg.addColorStop(0.6, gold); vsBg.addColorStop(1, "#8B7518");
+    ctx.fillStyle = vsBg;
+    ctx.beginPath(); ctx.arc(cx, vsY, vsR, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = darkGreen;
+    ctx.font = "900 44px 'Segoe UI', Arial, sans-serif";
+    ctx.textBaseline = "middle";
+    ctx.fillText("VS", cx, vsY + 2);
+    ctx.textBaseline = "alphabetic";
+
+    const infoY = H * 0.68;
+    const infoW = 700;
+    const infoH = 140;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 20;
+    ctx.fillStyle = darkGreen + "E8";
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 16);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = gold + "60"; ctx.lineWidth = 2;
+    roundRect(ctx, cx - infoW / 2, infoY, infoW, infoH, 16);
+    ctx.stroke();
+
+    if (fields.datetime) {
+      ctx.fillStyle = lightGold;
+      ctx.font = "900 30px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(fields.datetime.toUpperCase(), cx, infoY + 50);
+    }
+    if (fields.venue) {
+      ctx.fillStyle = white;
+      ctx.font = "600 26px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(`📍 ${fields.venue}`, cx, infoY + 95);
+    }
+
+    ctx.fillStyle = white;
+    ctx.font = "700 28px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("¡NO TE LO PIERDAS!", cx, infoY + infoH + 60);
+  }
+
+  const btmY = H - 55;
+  const btmGrad = ctx.createLinearGradient(0, btmY - 40, 0, H);
+  btmGrad.addColorStop(0, "transparent");
+  btmGrad.addColorStop(1, darkGreen + "DD");
+  ctx.fillStyle = btmGrad;
+  ctx.fillRect(0, btmY - 40, W, 95);
+
+  const btmLine = ctx.createLinearGradient(0, btmY - 30, W, btmY - 30);
+  btmLine.addColorStop(0, "transparent");
+  btmLine.addColorStop(0.15, gold + "60");
+  btmLine.addColorStop(0.85, gold + "60");
+  btmLine.addColorStop(1, "transparent");
+  ctx.strokeStyle = btmLine; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, btmY - 30); ctx.lineTo(W, btmY - 30); ctx.stroke();
+
+  ctx.fillStyle = gold + "BB";
+  ctx.font = "600 20px 'Segoe UI', Arial, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("www.laligadecampeones.es  |  @laligadecampeones", cx, btmY + 10);
+}
 
 interface SocialMediaEditorProps {
   open: boolean;
@@ -124,324 +530,535 @@ interface SocialMediaEditorProps {
 
 export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: SocialMediaEditorProps) {
   const { toast } = useToast();
-  const [format, setFormat] = useState<SocialFormat>("post");
-  const [selectedPhoto, setSelectedPhoto] = useState<MarketingMedia | null>(media);
-  const [selectedHashtags, setSelectedHashtags] = useState<Set<string>>(new Set(HASHTAG_GROUPS.principales));
+  const [step, setStep] = useState(1);
+  const [state, setState] = useState<GeneratorState>({ ...INITIAL_STATE });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isRendering, setIsRendering] = useState(false);
+  const [copiedCopy, setCopiedCopy] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
-  const [copiedCaption, setCopiedCaption] = useState(false);
-  const [suggestionCategory, setSuggestionCategory] = useState<string>("all");
-  const [selectedTitle, setSelectedTitle] = useState<TitleSuggestion | null>(null);
-  const [selectedCaption, setSelectedCaption] = useState<string>("");
+
+  const { data: matchesRaw = [] } = useQuery<MatchWithTeams[]>({
+    queryKey: ["/api/home/schedule"],
+    enabled: open,
+  });
+
+  const { data: teams = [] } = useQuery<Team[]>({
+    queryKey: ["/api/home/teams"],
+    enabled: open,
+  });
 
   useEffect(() => {
-    if (media) setSelectedPhoto(media);
-  }, [media]);
+    if (open && media) {
+      setState((prev) => ({ ...prev, selectedPhotos: [media] }));
+    }
+  }, [open, media]);
 
-  const toggleHashtag = (tag: string) => {
-    setSelectedHashtags((prev) => {
-      const next = new Set(prev);
-      if (next.has(tag)) next.delete(tag);
-      else next.add(tag);
-      return next;
+  useEffect(() => {
+    if (!open) {
+      setStep(1);
+      setState({ ...INITIAL_STATE });
+    }
+  }, [open]);
+
+  const filteredPhotos = allPhotos.filter((p) => {
+    const kw = state.keywords.toLowerCase().trim();
+    if (!kw && !state.dateFrom && !state.dateTo) return true;
+    let matchesKw = true;
+    let matchesDate = true;
+    if (kw) {
+      matchesKw = p.title.toLowerCase().includes(kw) ||
+        (p.description || "").toLowerCase().includes(kw);
+    }
+    if (state.dateFrom) {
+      matchesDate = new Date(p.createdAt) >= new Date(state.dateFrom);
+    }
+    if (state.dateTo && matchesDate) {
+      matchesDate = new Date(p.createdAt) <= new Date(state.dateTo + "T23:59:59");
+    }
+    return matchesKw && matchesDate;
+  });
+
+  const togglePhoto = (photo: MarketingMedia) => {
+    setState((prev) => {
+      const exists = prev.selectedPhotos.find((p) => p.id === photo.id);
+      return {
+        ...prev,
+        selectedPhotos: exists
+          ? prev.selectedPhotos.filter((p) => p.id !== photo.id)
+          : [...prev.selectedPhotos, photo],
+      };
     });
-    setCopiedHashtags(false);
   };
 
-  const copyHashtags = async () => {
-    const text = Array.from(selectedHashtags).join(" ");
+  const autoFillFromMatch = (match: MatchWithTeams) => {
+    const dateStr = match.dateTime
+      ? (() => {
+          try {
+            const d = new Date(match.dateTime);
+            return !isNaN(d.getTime()) ? format(d, "EEEE d 'de' MMMM, HH:mm", { locale: es }) : "";
+          } catch { return ""; }
+        })()
+      : "";
+    const stageLabel = match.stage && match.stage !== "JORNADA"
+      ? (MatchStageLabels[match.stage as keyof typeof MatchStageLabels] || "")
+      : "";
+
+    setState((prev) => ({
+      ...prev,
+      fields: {
+        ...prev.fields,
+        team1: match.homeTeam?.name || "",
+        team2: match.awayTeam?.name || "",
+        score1: match.homeScore !== undefined && match.homeScore !== null ? String(match.homeScore) : "",
+        score2: match.awayScore !== undefined && match.awayScore !== null ? String(match.awayScore) : "",
+        matchday: stageLabel || String(match.roundNumber),
+        datetime: dateStr,
+        venue: match.field || "",
+      },
+    }));
+  };
+
+  const doRender = useCallback(async () => {
+    if (!canvasRef.current) return;
+    setIsRendering(true);
     try {
-      await navigator.clipboard.writeText(text);
-      setCopiedHashtags(true);
-      toast({ title: "Hashtags copiados al portapapeles" });
-      setTimeout(() => setCopiedHashtags(false), 2000);
-    } catch {
-      toast({ title: "No se pudo copiar", variant: "destructive" });
-    }
-  };
+      await renderTemplate(canvasRef.current, state);
+    } catch { }
+    setIsRendering(false);
+  }, [state]);
 
-  const copyFullCaption = async () => {
-    const parts: string[] = [];
-    if (selectedTitle) {
-      parts.push(selectedTitle.title.toUpperCase());
-      parts.push(selectedTitle.subtitle);
-      parts.push("");
+  useEffect(() => {
+    if (step === 5 && canvasRef.current) {
+      const copy = generateCopy(state);
+      const hashtags = generateHashtags(state);
+      setState((prev) => ({ ...prev, copy, hashtags }));
+      const t = setTimeout(doRender, 150);
+      return () => clearTimeout(t);
     }
-    if (selectedCaption) {
-      parts.push(selectedCaption);
-      parts.push("");
-    }
-    if (selectedHashtags.size > 0) {
-      parts.push(Array.from(selectedHashtags).join(" "));
-    }
-    const text = parts.join("\n");
-    if (!text.trim()) {
-      toast({ title: "No hay contenido para copiar", variant: "destructive" });
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedCaption(true);
-      toast({ title: "Texto completo copiado al portapapeles" });
-      setTimeout(() => setCopiedCaption(false), 2000);
-    } catch {
-      toast({ title: "No se pudo copiar", variant: "destructive" });
-    }
-  };
+  }, [step, state.template, state.contentType, state.fields, state.selectedPhotos, doRender]);
 
-  const handleDownloadPhoto = () => {
-    if (!selectedPhoto) return;
+  const handleDownload = async () => {
+    if (!canvasRef.current) return;
+    await renderTemplate(canvasRef.current, state);
+    const blob = await new Promise<Blob>((res, rej) =>
+      canvasRef.current!.toBlob((b) => (b ? res(b) : rej(new Error("fail"))), "image/png")
+    );
+    const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = selectedPhoto.url;
-    a.download = `liga-${FORMATS[format].label.toLowerCase()}-${Date.now()}.jpg`;
-    a.target = "_blank";
+    a.href = url;
+    a.download = `liga-${state.contentType}-${state.template}-${Date.now()}.png`;
     a.click();
-    toast({ title: "Descargando foto..." });
+    URL.revokeObjectURL(url);
+    toast({ title: "Imagen descargada" });
   };
 
-  const applySuggestion = (s: TitleSuggestion) => {
-    setSelectedTitle(s);
+  const copyText = async (text: string, type: "copy" | "hashtags") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === "copy") { setCopiedCopy(true); setTimeout(() => setCopiedCopy(false), 2000); }
+      else { setCopiedHashtags(true); setTimeout(() => setCopiedHashtags(false), 2000); }
+      toast({ title: "Copiado al portapapeles" });
+    } catch {
+      toast({ title: "No se pudo copiar", variant: "destructive" });
+    }
   };
 
-  const categories = ["all", ...Array.from(new Set(TITLE_SUGGESTIONS.map((s) => s.category)))];
-  const filteredSuggestions = suggestionCategory === "all"
-    ? TITLE_SUGGESTIONS
-    : TITLE_SUGGESTIONS.filter((s) => s.category === suggestionCategory);
+  const updateField = (field: string, value: string) => {
+    setState((prev) => ({ ...prev, fields: { ...prev.fields, [field]: value } }));
+  };
 
-  const filteredCaptions = suggestionCategory === "all"
-    ? CAPTION_SUGGESTIONS
-    : CAPTION_SUGGESTIONS.filter((c) => c.category === suggestionCategory);
+  const totalSteps = 5;
+  const canNext = (): boolean => {
+    if (step === 1) return state.selectedPhotos.length > 0;
+    return true;
+  };
 
-  const fmt = FORMATS[format];
-  const previewMaxW = format === "post" ? "max-w-[350px]" : "max-w-[250px]";
-
-  const captionPreview = (() => {
-    const parts: string[] = [];
-    if (selectedTitle) {
-      parts.push(selectedTitle.title.toUpperCase());
-      parts.push(selectedTitle.subtitle);
-    }
-    if (selectedCaption) {
-      if (parts.length > 0) parts.push("");
-      parts.push(selectedCaption);
-    }
-    if (selectedHashtags.size > 0) {
-      if (parts.length > 0) parts.push("");
-      parts.push(Array.from(selectedHashtags).join(" "));
-    }
-    return parts.join("\n");
-  })();
+  const previewScale = state.contentType === "post" ? 0.28 : 0.2;
+  const dims: Record<ContentType, [number, number]> = {
+    post: [1080, 1350], story: [1080, 1920], reel: [1080, 1920],
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5" />
-            Preparar Contenido para Redes Sociales
+            <Sparkles className="h-5 w-5" />
+            Contenido para Redes — Paso {step} de {totalSteps}
           </DialogTitle>
           <DialogDescription>
-            Selecciona una foto, elige el formato, y copia el texto sugerido para tu publicación.
+            {step === 1 && "Busca y selecciona las imágenes que usarás."}
+            {step === 2 && "Elige el tipo de contenido a generar."}
+            {step === 3 && "Selecciona la plantilla para tu publicación."}
+            {step === 4 && "Completa o edita los datos del contenido."}
+            {step === 5 && "Vista previa, descarga y copia el texto."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
-          <div className="flex flex-col items-center gap-4">
-            <Tabs value={format} onValueChange={(v) => setFormat(v as SocialFormat)}>
-              <TabsList>
-                <TabsTrigger value="post" data-testid="tab-format-post">Post</TabsTrigger>
-                <TabsTrigger value="story" data-testid="tab-format-story">Historia</TabsTrigger>
-                <TabsTrigger value="reel" data-testid="tab-format-reel">Reel</TabsTrigger>
-              </TabsList>
-            </Tabs>
+        <div className="flex gap-1 mb-4">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div
+              key={i}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                i < step ? "bg-primary" : "bg-muted"
+              }`}
+            />
+          ))}
+        </div>
 
-            <div className={`relative ${previewMaxW} w-full rounded-lg overflow-hidden border shadow-lg bg-muted`}>
-              {selectedPhoto ? (
-                <div className={`w-full ${fmt.aspectClass} overflow-hidden`}>
-                  <img
-                    src={selectedPhoto.url}
-                    alt={selectedPhoto.title}
-                    className="w-full h-full object-cover"
-                    data-testid="img-preview"
+        <div className="min-h-[400px]">
+          {step === 1 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Palabras clave</Label>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={state.keywords}
+                      onChange={(e) => setState((p) => ({ ...p, keywords: e.target.value }))}
+                      placeholder="Ej: semifinal, MVP..."
+                      className="pl-9"
+                      data-testid="input-keywords"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Desde</Label>
+                  <Input
+                    type="date"
+                    value={state.dateFrom}
+                    onChange={(e) => setState((p) => ({ ...p, dateFrom: e.target.value }))}
+                    data-testid="input-date-from"
                   />
                 </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Hasta</Label>
+                  <Input
+                    type="date"
+                    value={state.dateTo}
+                    onChange={(e) => setState((p) => ({ ...p, dateTo: e.target.value }))}
+                    data-testid="input-date-to"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {filteredPhotos.length} foto{filteredPhotos.length !== 1 ? "s" : ""} encontrada{filteredPhotos.length !== 1 ? "s" : ""}
+                  {state.selectedPhotos.length > 0 && ` · ${state.selectedPhotos.length} seleccionada${state.selectedPhotos.length !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+
+              {filteredPhotos.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Image className="h-12 w-12 mb-2" />
+                    <p>No se encontraron fotos</p>
+                  </CardContent>
+                </Card>
               ) : (
-                <div className={`w-full ${fmt.aspectClass} flex flex-col items-center justify-center gap-2 text-muted-foreground`}>
-                  <Image className="h-12 w-12" />
-                  <p className="text-sm">Selecciona una foto</p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[350px] overflow-y-auto rounded-md border p-2">
+                  {filteredPhotos.map((p) => {
+                    const isSelected = state.selectedPhotos.some((s) => s.id === p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => togglePhoto(p)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          isSelected ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-muted-foreground/30"
+                        }`}
+                        data-testid={`photo-select-${p.id}`}
+                      >
+                        <img src={p.url} alt={p.title} className="h-full w-full object-cover" />
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                            <Check className="h-3 w-3" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1 py-0.5">
+                          <p className="text-[10px] text-white truncate">{p.title}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
-              <div className="absolute bottom-2 right-2">
-                <Badge variant="secondary" className="text-[10px]">{fmt.description}</Badge>
-              </div>
             </div>
+          )}
 
-            <Button onClick={handleDownloadPhoto} disabled={!selectedPhoto} className="gap-2 w-full max-w-[250px]" data-testid="button-download-photo">
-              <Download className="h-4 w-4" />
-              Descargar Foto
-            </Button>
-
-            <div className="space-y-2 w-full">
-              <Label className="text-sm font-semibold">Seleccionar Foto</Label>
-              <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto rounded-md border p-2">
-                {allPhotos.map((p) => (
+          {step === 2 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Elige el formato del contenido:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(Object.entries(CONTENT_TYPE_CONFIG) as [ContentType, typeof CONTENT_TYPE_CONFIG["post"]][]).map(([key, cfg]) => (
                   <button
-                    key={p.id}
-                    onClick={() => setSelectedPhoto(p)}
-                    className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-                      selectedPhoto?.id === p.id ? "border-primary ring-2 ring-primary/30" : "border-transparent hover:border-muted-foreground/30"
+                    key={key}
+                    onClick={() => setState((p) => ({ ...p, contentType: key }))}
+                    className={`rounded-xl border-2 p-6 text-left transition-all hover:shadow-md ${
+                      state.contentType === key ? "border-primary bg-primary/5 shadow-md" : "border-border"
                     }`}
-                    data-testid={`button-select-photo-${p.id}`}
+                    data-testid={`type-${key}`}
                   >
-                    <img src={p.url} alt={p.title} className="h-full w-full object-cover" />
-                  </button>
-                ))}
-                {allPhotos.length === 0 && (
-                  <p className="col-span-4 text-xs text-muted-foreground text-center py-4">No hay fotos subidas</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-5 overflow-y-auto max-h-[75vh] pr-1">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Lightbulb className="h-4 w-4 text-amber-500" />
-                <Label className="text-sm font-semibold">Título y Subtítulo Sugerido</Label>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {categories.map((cat) => {
-                  const catLabels: Record<string, string> = {
-                    all: "Todos", Partido: "Partido", Resultado: "Resultado",
-                    Promo: "Promo", Evento: "Evento", Equipo: "Equipo", Highlight: "Highlight",
-                  };
-                  return (
-                    <Button
-                      key={cat}
-                      size="sm"
-                      variant={suggestionCategory === cat ? "default" : "ghost"}
-                      className="h-7 text-xs px-2"
-                      onClick={() => setSuggestionCategory(cat)}
-                      data-testid={`button-suggestion-cat-${cat}`}
-                    >
-                      {catLabels[cat] || cat}
-                    </Button>
-                  );
-                })}
-              </div>
-              <div className="grid gap-1.5 max-h-40 overflow-y-auto">
-                {filteredSuggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => applySuggestion(s)}
-                    className={`flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-                      selectedTitle?.title === s.title && selectedTitle?.subtitle === s.subtitle
-                        ? "border-primary bg-primary/5"
-                        : ""
-                    }`}
-                    data-testid={`button-suggestion-${i}`}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate">{s.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">{s.subtitle}</p>
-                    </div>
-                    <Badge variant="outline" className="ml-auto shrink-0 text-[10px] h-5">
-                      {s.category}
-                    </Badge>
+                    <p className="text-lg font-bold">{cfg.label}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{cfg.desc}</p>
+                    <Badge variant="outline" className="mt-3">{cfg.dims}</Badge>
                   </button>
                 ))}
               </div>
             </div>
+          )}
 
-            <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-purple-500" />
-                <Label className="text-sm font-semibold">Descripción Sugerida</Label>
-              </div>
-              <div className="grid gap-1.5 max-h-36 overflow-y-auto">
-                {filteredCaptions.map((c, i) => (
+          {step === 3 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Elige la plantilla:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {(Object.entries(TEMPLATE_CONFIG) as [TemplateType, typeof TEMPLATE_CONFIG["score"]][]).map(([key, cfg]) => (
                   <button
-                    key={i}
-                    onClick={() => setSelectedCaption(c.text)}
-                    className={`rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-accent ${
-                      selectedCaption === c.text ? "border-primary bg-primary/5" : ""
+                    key={key}
+                    onClick={() => setState((p) => ({ ...p, template: key }))}
+                    className={`rounded-xl border-2 p-6 text-left transition-all hover:shadow-md ${
+                      state.template === key ? "border-primary bg-primary/5 shadow-md" : "border-border"
                     }`}
-                    data-testid={`button-caption-${i}`}
+                    data-testid={`template-${key}`}
                   >
-                    <p className="text-sm">{c.text}</p>
-                    <Badge variant="outline" className="mt-1 text-[10px] h-5">{c.category}</Badge>
+                    <p className="text-3xl mb-2">{cfg.icon}</p>
+                    <p className="text-lg font-bold">{cfg.label}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{cfg.desc}</p>
                   </button>
                 ))}
               </div>
-            </div>
 
-            <div className="space-y-3 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-blue-500" />
-                  <Label className="text-sm font-semibold">Hashtags</Label>
+              {matchesRaw.length > 0 && (
+                <div className="space-y-2 border-t pt-4">
+                  <Label className="text-sm font-semibold">Autorellenar desde partido existente</Label>
+                  <div className="grid gap-2 max-h-48 overflow-y-auto">
+                    {matchesRaw.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => autoFillFromMatch(m)}
+                        className="flex items-center gap-3 rounded-md border px-3 py-2 text-left text-sm hover:bg-accent transition-colors"
+                        data-testid={`match-fill-${m.id}`}
+                      >
+                        <Badge variant={m.status === "JUGADO" ? "default" : "outline"} className="shrink-0 text-[10px]">
+                          {m.status === "JUGADO" ? "Jugado" : m.status === "EN_CURSO" ? "En curso" : "Programado"}
+                        </Badge>
+                        <span className="font-medium truncate">
+                          {m.homeTeam?.name || "?"} {m.status === "JUGADO" ? `${m.homeScore}-${m.awayScore}` : "vs"} {m.awayTeam?.name || "?"}
+                        </span>
+                        <span className="text-xs text-muted-foreground ml-auto shrink-0">J{m.roundNumber}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1 text-xs"
-                  onClick={copyHashtags}
-                  disabled={selectedHashtags.size === 0}
-                  data-testid="button-copy-hashtags"
+              )}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">Completa o edita los campos. Se autorellenaron si seleccionaste un partido.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Equipo Local</Label>
+                  <Input value={state.fields.team1} onChange={(e) => updateField("team1", e.target.value)} placeholder="Ej: Fuengirola" data-testid="field-team1" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Equipo Visitante</Label>
+                  <Input value={state.fields.team2} onChange={(e) => updateField("team2", e.target.value)} placeholder="Ej: El Palo" data-testid="field-team2" />
+                </div>
+                {state.template === "score" && (
+                  <>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Goles Local</Label>
+                      <Input value={state.fields.score1} onChange={(e) => updateField("score1", e.target.value)} placeholder="0" data-testid="field-score1" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Goles Visitante</Label>
+                      <Input value={state.fields.score2} onChange={(e) => updateField("score2", e.target.value)} placeholder="0" data-testid="field-score2" />
+                    </div>
+                  </>
+                )}
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Jornada / Etapa</Label>
+                  <Input value={state.fields.matchday} onChange={(e) => updateField("matchday", e.target.value)} placeholder="Ej: 4 o Semifinal" data-testid="field-matchday" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Fecha y Hora</Label>
+                  <Input value={state.fields.datetime} onChange={(e) => updateField("datetime", e.target.value)} placeholder="Ej: Sábado 8 de marzo, 20:00" data-testid="field-datetime" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Lugar / Cancha</Label>
+                  <Input value={state.fields.venue} onChange={(e) => updateField("venue", e.target.value)} placeholder="Ej: Campo Central" data-testid="field-venue" />
+                </div>
+                {state.template === "mvp" && (
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">Nombre del MVP</Label>
+                    <Input value={state.fields.mvpName} onChange={(e) => updateField("mvpName", e.target.value)} placeholder="Ej: Carlos López" data-testid="field-mvp" />
+                  </div>
+                )}
+                <div className="space-y-1 sm:col-span-2">
+                  <Label className="text-xs font-medium">CTA (Call to Action)</Label>
+                  <Input value={state.fields.cta} onChange={(e) => updateField("cta", e.target.value)} placeholder="Ej: Síguenos para más" data-testid="field-cta" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
+              <div className="flex flex-col items-center gap-3">
+                <div
+                  className="relative border rounded-lg overflow-hidden bg-muted shadow-lg"
+                  style={{
+                    width: dims[state.contentType][0] * previewScale,
+                    height: dims[state.contentType][1] * previewScale,
+                  }}
                 >
-                  {copiedHashtags ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  {copiedHashtags ? "Copiados" : `Copiar (${selectedHashtags.size})`}
+                  <canvas
+                    ref={canvasRef}
+                    style={{
+                      width: dims[state.contentType][0] * previewScale,
+                      height: dims[state.contentType][1] * previewScale,
+                    }}
+                    data-testid="canvas-preview"
+                  />
+                  {isRendering && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <Loader2 className="h-6 w-6 animate-spin text-white" />
+                    </div>
+                  )}
+                </div>
+                <Badge variant="outline">{CONTENT_TYPE_CONFIG[state.contentType].dims} · {TEMPLATE_CONFIG[state.template].label}</Badge>
+                <Button onClick={handleDownload} className="gap-2 w-full" data-testid="button-download">
+                  <Download className="h-4 w-4" />
+                  Descargar Imagen
                 </Button>
               </div>
-              {(Object.entries(HASHTAG_GROUPS) as [string, string[]][]).map(([group, tags]) => {
-                const groupLabels: Record<string, string> = {
-                  principales: "Principales", partido: "Partido", resultado: "Resultado",
-                  promo: "Promoción", general: "General", redes: "Redes Sociales",
-                };
-                return (
-                  <div key={group} className="space-y-1">
-                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{groupLabels[group] || group}</p>
-                    <div className="flex flex-wrap gap-1">
-                      {tags.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => toggleHashtag(tag)}
-                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border ${
-                            selectedHashtags.has(tag)
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background text-muted-foreground border-border hover:border-primary/50"
-                          }`}
-                          data-testid={`hashtag-${tag.slice(1)}`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {captionPreview && (
-              <div className="space-y-3 border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-sm font-semibold">Vista Previa del Texto</Label>
+              <div className="space-y-4 overflow-y-auto max-h-[60vh]">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Copy para Publicación
+                    </Label>
+                    <Button
+                      size="sm" variant="outline" className="h-7 gap-1 text-xs"
+                      onClick={() => copyText(state.copy, "copy")}
+                      data-testid="button-copy-text"
+                    >
+                      {copiedCopy ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedCopy ? "Copiado" : "Copiar"}
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={state.copy}
+                    onChange={(e) => setState((p) => ({ ...p, copy: e.target.value }))}
+                    rows={6}
+                    className="text-sm"
+                    data-testid="textarea-copy"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-semibold flex items-center gap-2">
+                      <Hash className="h-4 w-4" />
+                      Hashtags
+                    </Label>
+                    <Button
+                      size="sm" variant="outline" className="h-7 gap-1 text-xs"
+                      onClick={() => copyText(state.hashtags.join(" "), "hashtags")}
+                      data-testid="button-copy-hashtags"
+                    >
+                      {copiedHashtags ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedHashtags ? "Copiados" : `Copiar (${state.hashtags.length})`}
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {state.hashtags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() =>
+                          setState((p) => ({
+                            ...p,
+                            hashtags: p.hashtags.includes(tag)
+                              ? p.hashtags.filter((t) => t !== tag)
+                              : p.hashtags,
+                          }))
+                        }
+                        className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground border border-primary transition-colors hover:bg-primary/80"
+                        data-testid={`tag-${tag.slice(1)}`}
+                      >
+                        {tag} ✕
+                      </button>
+                    ))}
+                  </div>
+                  <div className="rounded-md bg-muted/50 border p-2 text-xs text-muted-foreground break-all leading-relaxed">
+                    {state.hashtags.join(" ")}
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t pt-3">
+                  <Label className="text-sm font-semibold">Texto Completo para Redes</Label>
+                  <div className="rounded-md bg-muted/50 border p-3 text-sm whitespace-pre-line leading-relaxed" data-testid="full-caption-preview">
+                    {state.copy}
+                    {"\n\n"}
+                    {state.hashtags.join(" ")}
+                  </div>
                   <Button
-                    size="sm"
-                    className="h-7 gap-1 text-xs"
-                    onClick={copyFullCaption}
-                    data-testid="button-copy-full-caption"
+                    className="gap-2 w-full"
+                    onClick={() => copyText(state.copy + "\n\n" + state.hashtags.join(" "), "copy")}
+                    data-testid="button-copy-all"
                   >
-                    {copiedCaption ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    {copiedCaption ? "Copiado" : "Copiar Todo"}
+                    {copiedCopy ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    Copiar Todo
                   </Button>
                 </div>
-                <div className="rounded-md bg-muted/50 border p-3 text-sm whitespace-pre-line leading-relaxed" data-testid="text-caption-preview">
-                  {captionPreview}
-                </div>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setStep((s) => Math.max(1, s - 1))}
+            disabled={step === 1}
+            className="gap-1"
+            data-testid="button-prev"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Anterior
+          </Button>
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: totalSteps }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => { if (i + 1 <= step || canNext()) setStep(i + 1); }}
+                className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                  i + 1 === step ? "bg-primary" : i + 1 < step ? "bg-primary/50" : "bg-muted"
+                }`}
+                data-testid={`step-dot-${i + 1}`}
+              />
+            ))}
           </div>
+          {step < totalSteps ? (
+            <Button
+              onClick={() => setStep((s) => Math.min(totalSteps, s + 1))}
+              disabled={!canNext()}
+              className="gap-1"
+              data-testid="button-next"
+            >
+              Siguiente
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => onOpenChange(false)} data-testid="button-close">
+              Cerrar
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
