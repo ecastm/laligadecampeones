@@ -170,17 +170,16 @@ La aplicación estará disponible en el puerto 5000.
 - Historial de torneos completados con tabla de posiciones archivada
 - Gestión de noticias (crear, editar, eliminar reseñas de partidos)
 - **Generador de Contenido para Redes Sociales** (Marketing):
-  - Wizard de 5 pasos: Selección de fotos → Tipo de contenido → Plantilla → Campos editables → Resultado
+  - Wizard de 4 pasos: Selección de fotos → Formato + Partido → Campos editables → Resultado
   - **Paso 1 - Selección de fuente**: Búsqueda por palabras clave y rango de fechas, galería con multiselección
-  - **Paso 2 - Tipo de contenido**: Post (1080×1350), Historia (1080×1920), Reel (1080×1920)
-  - **Paso 3 - Plantilla**: Marcador (resultado), MVP (figura del partido), Próximo Partido (anuncio)
-  - Autorellenado desde partidos existentes de la BD (equipos, marcador, jornada, fecha, cancha)
-  - **Paso 4 - Campos editables**: Equipos, marcador, jornada/etapa, fecha/hora, cancha, MVP, CTA
-  - **Paso 5 - Resultado**: Vista previa renderizada con Canvas API, copy generado por plantilla, hashtags automáticos
-  - Hashtags basados en: keywords (semifinal, final, MVP, clásico, goleada, fair play), equipos, cancha
-  - Copy adaptado según formato (post: 1-2 párrafos + CTA, historia: 1 línea, reel: 1-2 líneas)
-  - Botones: Descargar imagen PNG, Copiar copy, Copiar hashtags, Copiar todo
-  - Hashtags removibles individualmente, totalmente editables
+  - **Paso 2 - Formato y partido**: Post (1080×1350), Historia (1080×1920), Reel (1080×1920) + autorellenar desde partidos existentes
+  - **Paso 3 - Campos editables**: Equipos, marcador, jornada/etapa, fecha/hora, cancha, MVP, CTA
+  - **Paso 4 - Resultado**: Vista previa estilo Instagram (phone mockup), copy editable, hashtags editables
+  - Vista previa simula cómo se vería en Instagram con avatar, iconos y layout real
+  - Botones: Descargar PNG, Guardar en Marketing, Copiar copy, Copiar hashtags, Copiar todo
+  - Al guardar se sube la imagen generada y se registra como asset en Marketing
+  - Copy completamente editable con indicador "Editado" y botón "Regenerar"
+  - Hashtags removibles individualmente + campo para agregar nuevos manualmente
   - Imagen generada con diseño verde/dorado de La Liga de Campeones
 
 ### Panel Capitán
