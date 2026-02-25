@@ -456,7 +456,6 @@ export async function registerRoutes(
       const data = insertUserSchema.parse(req.body);
       const existing = await storage.getUserByEmail(data.email);
       if (existing) {
-        console.log(`[DEBUG] Email duplicado: "${data.email}" ya existe con id=${existing.id}, role=${existing.role}`);
         return res.status(400).json({ message: "El email ya está registrado" });
       }
       const user = await storage.createUser(data);

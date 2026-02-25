@@ -23,9 +23,12 @@ import { es } from "date-fns/locale";
 import { SocialMediaEditor } from "@/components/social-media-editor";
 
 async function uploadFile(file: File): Promise<string> {
+  const token = localStorage.getItem("auth_token");
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
   const res = await fetch("/api/uploads/request-url", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders },
     body: JSON.stringify({
       name: file.name,
       size: file.size,
@@ -33,7 +36,10 @@ async function uploadFile(file: File): Promise<string> {
     }),
   });
 
-  if (!res.ok) throw new Error("Error al obtener URL de subida");
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Error al obtener URL de subida: ${res.status} ${errText}`);
+  }
 
   const { uploadURL, objectPath } = await res.json();
 
@@ -43,7 +49,10 @@ async function uploadFile(file: File): Promise<string> {
     headers: { "Content-Type": file.type || "application/octet-stream" },
   });
 
-  if (!uploadRes.ok) throw new Error("Error al subir archivo al almacenamiento");
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text().catch(() => "");
+    throw new Error(`Error al subir archivo: ${uploadRes.status} ${errText}`);
+  }
 
   return objectPath;
 }
@@ -104,6 +113,7 @@ export default function MarketingManagement() {
     const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (imageFiles.length === 0) {
       toast({ title: "No se encontraron imágenes válidas", variant: "destructive" });
+      if (bulkInputRef.current) bulkInputRef.current.value = "";
       return;
     }
 
@@ -113,40 +123,45 @@ export default function MarketingManagement() {
     let successCount = 0;
     let errorCount = 0;
 
-    for (let i = 0; i < imageFiles.length; i++) {
-      const file = imageFiles[i];
-      setBulkProgress({ current: i + 1, total: imageFiles.length });
+    try {
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        setBulkProgress({ current: i + 1, total: imageFiles.length });
 
-      try {
-        const objectPath = await uploadFile(file);
-        const title = file.name.replace(/\.[^/.]+$/, "");
+        try {
+          const objectPath = await uploadFile(file);
+          const title = file.name.replace(/\.[^/.]+$/, "");
 
-        await apiRequest("POST", "/api/admin/marketing", {
-          title,
-          type: "PHOTO",
-          url: objectPath,
-        });
-        successCount++;
-      } catch (err) {
-        errorCount++;
-        console.error(`Error uploading ${file.name}:`, err);
+          await apiRequest("POST", "/api/admin/marketing", {
+            title,
+            type: "PHOTO",
+            url: objectPath,
+          });
+          successCount++;
+        } catch (err) {
+          errorCount++;
+          console.error(`Error uploading ${file.name}:`, err);
+        }
       }
+
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/marketing"] });
+
+      if (errorCount === 0) {
+        toast({ title: `${successCount} fotos subidas correctamente` });
+      } else {
+        toast({
+          title: `Subida completada: ${successCount} exitosas, ${errorCount} con error`,
+          variant: errorCount > 0 ? "destructive" : "default",
+        });
+      }
+    } catch (err) {
+      console.error("Error inesperado en subida masiva:", err);
+      toast({ title: "Error inesperado al subir fotos", variant: "destructive" });
+    } finally {
+      setIsBulkUploading(false);
+      setBulkProgress({ current: 0, total: 0 });
+      if (bulkInputRef.current) bulkInputRef.current.value = "";
     }
-
-    queryClient.invalidateQueries({ queryKey: ["/api/admin/marketing"] });
-
-    if (errorCount === 0) {
-      toast({ title: `${successCount} fotos subidas correctamente` });
-    } else {
-      toast({
-        title: `Subida completada: ${successCount} exitosas, ${errorCount} con error`,
-        variant: errorCount > 0 ? "destructive" : "default",
-      });
-    }
-
-    setIsBulkUploading(false);
-    setBulkProgress({ current: 0, total: 0 });
-    if (bulkInputRef.current) bulkInputRef.current.value = "";
   };
 
   const filteredMedia = filter === "all" ? media : media.filter(m => m.type === filter);

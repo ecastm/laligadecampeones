@@ -375,9 +375,11 @@ export async function generateVsImageBlob(data: VsImageData): Promise<Blob> {
 }
 
 export async function uploadVsImage(blob: Blob, matchId: string): Promise<string> {
+  const token = localStorage.getItem("auth_token");
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
   const requestRes = await fetch("/api/uploads/request-url", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeaders },
     body: JSON.stringify({
       name: `vs-match-${matchId}.png`,
       size: blob.size,

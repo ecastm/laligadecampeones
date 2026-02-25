@@ -62,10 +62,13 @@ export function useUpload(options: UseUploadOptions = {}) {
    */
   const requestUploadUrl = useCallback(
     async (file: File): Promise<UploadResponse> => {
+      const token = localStorage.getItem("auth_token");
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await fetch("/api/uploads/request-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           name: file.name,
@@ -161,11 +164,13 @@ export function useUpload(options: UseUploadOptions = {}) {
       url: string;
       headers?: Record<string, string>;
     }> => {
-      // Use the actual file properties to request a per-file presigned URL
+      const token = localStorage.getItem("auth_token");
+      const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await fetch("/api/uploads/request-url", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify({
           name: file.name,

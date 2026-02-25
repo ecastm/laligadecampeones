@@ -326,8 +326,10 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
       const blob = await new Promise<Blob>((res, rej) => canvasRef.current!.toBlob((b) => b ? res(b) : rej(), "image/png"));
       const file = new File([blob], `social-${contentType}-${Date.now()}.png`, { type: "image/png" });
 
+      const token = localStorage.getItem("auth_token");
+      const authH: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const r = await fetch("/api/uploads/request-url", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...authH },
         body: JSON.stringify({ name: file.name, size: file.size, contentType: file.type }),
       });
       if (!r.ok) throw new Error();

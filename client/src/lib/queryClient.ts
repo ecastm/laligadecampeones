@@ -8,12 +8,13 @@ function getAuthHeaders(): Record<string, string> {
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    let message = `${res.status}: ${text}`;
     try {
       const json = JSON.parse(text);
-      throw new Error(json.message || `${res.status}: ${text}`);
+      if (json.message) message = json.message;
     } catch {
-      throw new Error(`${res.status}: ${text}`);
     }
+    throw new Error(message);
   }
 }
 
