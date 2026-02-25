@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { MarketingMedia } from "@shared/schema";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Loader2, RotateCcw, Type, Palette } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Download, Loader2, RotateCcw, Type, Palette, Sparkles, Hash, Copy, Check, Lightbulb } from "lucide-react";
 
 type SocialFormat = "post" | "story" | "reel";
 
@@ -315,6 +316,82 @@ async function renderCanvas(
   drawTextOverlay(state.subtitle, false);
 }
 
+interface TitleSuggestion {
+  title: string;
+  subtitle: string;
+  category: string;
+}
+
+const TITLE_SUGGESTIONS: TitleSuggestion[] = [
+  { category: "Partido", title: "Jornada de Liga", subtitle: "La Liga de Campeones 2026" },
+  { category: "Partido", title: "Noche de Fútbol", subtitle: "Vive la emoción del partido" },
+  { category: "Partido", title: "Día de Clásico", subtitle: "El encuentro que todos esperan" },
+  { category: "Partido", title: "Gran Derbi", subtitle: "La Liga de Campeones presenta" },
+  { category: "Resultado", title: "Resultado Final", subtitle: "Resumen de la jornada" },
+  { category: "Resultado", title: "Victoria Épica", subtitle: "Otro gran partido en la Liga" },
+  { category: "Resultado", title: "Goleada Histórica", subtitle: "Momento inolvidable de la temporada" },
+  { category: "Promo", title: "Inscribe Tu Equipo", subtitle: "Temporada 2026 - Plazas limitadas" },
+  { category: "Promo", title: "Únete a La Liga", subtitle: "La mejor competición amateur" },
+  { category: "Promo", title: "Nueva Temporada", subtitle: "Abierto el plazo de inscripción" },
+  { category: "Promo", title: "Sé Parte de la Historia", subtitle: "La Liga de Campeones te espera" },
+  { category: "Evento", title: "Entrega de Premios", subtitle: "Temporada 2026" },
+  { category: "Evento", title: "Sorteo de Calendario", subtitle: "Comienza la emoción" },
+  { category: "Evento", title: "Inauguración", subtitle: "Arranca la competición" },
+  { category: "Equipo", title: "Plantilla Oficial", subtitle: "Temporada 2026" },
+  { category: "Equipo", title: "Refuerzo Confirmado", subtitle: "Bienvenido al equipo" },
+  { category: "Highlight", title: "Golazo de la Jornada", subtitle: "Momentos mágicos" },
+  { category: "Highlight", title: "Mejores Jugadas", subtitle: "Lo mejor de la jornada" },
+  { category: "Highlight", title: "MVP de la Jornada", subtitle: "El mejor jugador del partido" },
+];
+
+const HASHTAG_GROUPS = {
+  principales: [
+    "#LaLigaDeCampeones",
+    "#LigaDeCampeones2026",
+    "#FútbolAmateur",
+    "#Fuengirola",
+  ],
+  partido: [
+    "#DíaDePartido",
+    "#JornadaDeLiga",
+    "#FútbolEnVivo",
+    "#VamosEquipo",
+    "#GolGolGol",
+    "#NocheDeFútbol",
+  ],
+  resultado: [
+    "#ResultadoFinal",
+    "#Victoria",
+    "#Goleada",
+    "#ResumenDelPartido",
+    "#TressPuntos",
+  ],
+  promo: [
+    "#InscribeTuEquipo",
+    "#NuevaTemporada",
+    "#FútbolParaTodos",
+    "#CompeticiónAmateur",
+    "#TemporadaNueva",
+  ],
+  general: [
+    "#Fútbol",
+    "#Soccer",
+    "#Football",
+    "#DeporteLocal",
+    "#PasiónPorElFútbol",
+    "#FútbolEsVida",
+    "#AmorAlFútbol",
+    "#CanteraDelFútbol",
+  ],
+  redes: [
+    "#InstaFútbol",
+    "#FútbolGram",
+    "#ReelsFútbol",
+    "#MatchDay",
+    "#Gameday",
+  ],
+};
+
 interface SocialMediaEditorProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -330,6 +407,9 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<MarketingMedia | null>(media);
   const renderTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const [selectedHashtags, setSelectedHashtags] = useState<Set<string>>(new Set(HASHTAG_GROUPS.principales));
+  const [copiedHashtags, setCopiedHashtags] = useState(false);
+  const [suggestionCategory, setSuggestionCategory] = useState<string>("all");
 
   useEffect(() => {
     if (media) {
@@ -400,6 +480,38 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
     setState((prev) => ({ ...prev, subtitle: { ...prev.subtitle, ...partial } }));
   };
 
+  const toggleHashtag = (tag: string) => {
+    setSelectedHashtags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+    setCopiedHashtags(false);
+  };
+
+  const copyHashtags = async () => {
+    const text = Array.from(selectedHashtags).join(" ");
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedHashtags(true);
+      toast({ title: "Hashtags copiados al portapapeles" });
+      setTimeout(() => setCopiedHashtags(false), 2000);
+    } catch {
+      toast({ title: "No se pudo copiar", variant: "destructive" });
+    }
+  };
+
+  const applySuggestion = (s: TitleSuggestion) => {
+    updateTitle({ text: s.title });
+    updateSubtitle({ text: s.subtitle });
+  };
+
+  const categories = ["all", ...Array.from(new Set(TITLE_SUGGESTIONS.map((s) => s.category)))];
+  const filteredSuggestions = suggestionCategory === "all"
+    ? TITLE_SUGGESTIONS
+    : TITLE_SUGGESTIONS.filter((s) => s.category === suggestionCategory);
+
   const fmt = FORMATS[state.format];
   const previewScale = state.format === "post" ? 0.35 : 0.25;
 
@@ -411,6 +523,9 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
             <Palette className="h-5 w-5" />
             Crear Contenido para Redes Sociales
           </DialogTitle>
+          <DialogDescription>
+            Selecciona una foto, personaliza el diseño y descarga la imagen lista para publicar.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
@@ -567,6 +682,113 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <Lightbulb className="h-4 w-4 text-amber-500" />
+                <Label className="text-sm font-semibold">Sugerencias de Texto</Label>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {categories.map((cat) => {
+                  const catLabels: Record<string, string> = {
+                    all: "Todos",
+                    Partido: "Partido",
+                    Resultado: "Resultado",
+                    Promo: "Promo",
+                    Evento: "Evento",
+                    Equipo: "Equipo",
+                    Highlight: "Highlight",
+                  };
+                  return (
+                    <Button
+                      key={cat}
+                      size="sm"
+                      variant={suggestionCategory === cat ? "default" : "ghost"}
+                      className="h-7 text-xs px-2"
+                      onClick={() => setSuggestionCategory(cat)}
+                      data-testid={`button-suggestion-cat-${cat}`}
+                    >
+                      {catLabels[cat] || cat}
+                    </Button>
+                  );
+                })}
+              </div>
+              <div className="grid gap-1.5 max-h-36 overflow-y-auto">
+                {filteredSuggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => applySuggestion(s)}
+                    className="flex items-start gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                    data-testid={`button-suggestion-${i}`}
+                  >
+                    <Sparkles className="h-3.5 w-3.5 mt-0.5 shrink-0 text-amber-500" />
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{s.title}</p>
+                      <p className="text-xs text-muted-foreground truncate">{s.subtitle}</p>
+                    </div>
+                    <Badge variant="outline" className="ml-auto shrink-0 text-[10px] h-5">
+                      {s.category}
+                    </Badge>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Hash className="h-4 w-4 text-blue-500" />
+                  <Label className="text-sm font-semibold">Hashtags Sugeridos</Label>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-xs"
+                  onClick={copyHashtags}
+                  disabled={selectedHashtags.size === 0}
+                  data-testid="button-copy-hashtags"
+                >
+                  {copiedHashtags ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                  {copiedHashtags ? "Copiados" : `Copiar (${selectedHashtags.size})`}
+                </Button>
+              </div>
+              {selectedHashtags.size > 0 && (
+                <div className="rounded-md bg-muted/50 p-2 text-xs text-muted-foreground break-all leading-relaxed">
+                  {Array.from(selectedHashtags).join(" ")}
+                </div>
+              )}
+              {(Object.entries(HASHTAG_GROUPS) as [string, string[]][]).map(([group, tags]) => {
+                const groupLabels: Record<string, string> = {
+                  principales: "Principales",
+                  partido: "Partido",
+                  resultado: "Resultado",
+                  promo: "Promoción",
+                  general: "General",
+                  redes: "Redes Sociales",
+                };
+                return (
+                  <div key={group} className="space-y-1">
+                    <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">{groupLabels[group] || group}</p>
+                    <div className="flex flex-wrap gap-1">
+                      {tags.map((tag) => (
+                        <button
+                          key={tag}
+                          onClick={() => toggleHashtag(tag)}
+                          className={`rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors border ${
+                            selectedHashtags.has(tag)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background text-muted-foreground border-border hover:border-primary/50"
+                          }`}
+                          data-testid={`hashtag-${tag.slice(1)}`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="space-y-3 border-t pt-4">
