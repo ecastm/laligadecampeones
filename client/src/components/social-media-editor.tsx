@@ -416,6 +416,18 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
 
           {step === 1 && (
             <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-semibold mb-2 block">Formato</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([["post", "Post", "1080×1350"], ["story", "Historia", "1080×1920"], ["reel", "Reel", "1080×1920"]] as const).map(([k, label, dim]) => (
+                    <button key={k} onClick={() => setContentType(k)} className={`rounded-lg border-2 p-3 text-center transition-all ${contentType === k ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/40"}`} data-testid={`type-${k}`}>
+                      <p className="text-sm font-bold">{label}</p>
+                      <p className="text-[10px] text-muted-foreground">{dim}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <Label className="text-xs font-medium">Buscar</Label>
@@ -455,18 +467,6 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                   })}
                 </div>
               )}
-
-              <div className="border-t pt-4">
-                <Label className="text-sm font-semibold mb-2 block">Formato</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([["post", "Post", "1080×1350"], ["story", "Historia", "1080×1920"], ["reel", "Reel", "1080×1920"]] as const).map(([k, label, dim]) => (
-                    <button key={k} onClick={() => setContentType(k)} className={`rounded-lg border-2 p-3 text-center transition-all ${contentType === k ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/40"}`} data-testid={`type-${k}`}>
-                      <p className="text-sm font-bold">{label}</p>
-                      <p className="text-[10px] text-muted-foreground">{dim}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 
