@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,16 +15,46 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2, Images } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+
+async function uploadFile(file: File): Promise<string> {
+  const res = await fetch("/api/uploads/request-url", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: file.name,
+      size: file.size,
+      contentType: file.type || "application/octet-stream",
+    }),
+  });
+
+  if (!res.ok) throw new Error("Error al obtener URL de subida");
+
+  const { uploadURL, objectPath } = await res.json();
+
+  const uploadRes = await fetch(uploadURL, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type || "application/octet-stream" },
+  });
+
+  if (!uploadRes.ok) throw new Error("Error al subir archivo al almacenamiento");
+
+  return objectPath;
+}
 
 export default function MarketingManagement() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMedia, setEditingMedia] = useState<MarketingMedia | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const bulkInputRef = useRef<HTMLInputElement>(null);
 
   const { data: media = [], isLoading } = useQuery<MarketingMedia[]>({
     queryKey: ["/api/admin/marketing"],
@@ -64,6 +94,58 @@ export default function MarketingManagement() {
     setIsDialogOpen(true);
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) {
+      toast({ title: "No se encontraron imágenes válidas", variant: "destructive" });
+      return;
+    }
+
+    setIsBulkUploading(true);
+    setBulkProgress({ current: 0, total: imageFiles.length });
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (let i = 0; i < imageFiles.length; i++) {
+      const file = imageFiles[i];
+      setBulkProgress({ current: i + 1, total: imageFiles.length });
+
+      try {
+        const objectPath = await uploadFile(file);
+        const title = file.name.replace(/\.[^/.]+$/, "");
+
+        await apiRequest("POST", "/api/admin/marketing", {
+          title,
+          type: "PHOTO",
+          url: objectPath,
+        });
+        successCount++;
+      } catch (err) {
+        errorCount++;
+        console.error(`Error uploading ${file.name}:`, err);
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/marketing"] });
+
+    if (errorCount === 0) {
+      toast({ title: `${successCount} fotos subidas correctamente` });
+    } else {
+      toast({
+        title: `Subida completada: ${successCount} exitosas, ${errorCount} con error`,
+        variant: errorCount > 0 ? "destructive" : "default",
+      });
+    }
+
+    setIsBulkUploading(false);
+    setBulkProgress({ current: 0, total: 0 });
+    if (bulkInputRef.current) bulkInputRef.current.value = "";
+  };
+
   const filteredMedia = filter === "all" ? media : media.filter(m => m.type === filter);
   const photos = media.filter(m => m.type === "PHOTO");
   const videos = media.filter(m => m.type === "VIDEO");
@@ -77,11 +159,48 @@ export default function MarketingManagement() {
             Gestiona fotos y videos promocionales del torneo
           </p>
         </div>
-        <Button onClick={handleCreate} className="gap-2" data-testid="button-add-media">
-          <Plus className="h-4 w-4" />
-          Agregar Contenido
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => bulkInputRef.current?.click()}
+            className="gap-2"
+            disabled={isBulkUploading}
+            data-testid="button-bulk-upload"
+          >
+            {isBulkUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Images className="h-4 w-4" />
+            )}
+            {isBulkUploading ? `Subiendo ${bulkProgress.current}/${bulkProgress.total}...` : "Subida Masiva"}
+          </Button>
+          <input
+            ref={bulkInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleBulkUpload}
+            data-testid="input-bulk-upload"
+          />
+          <Button onClick={handleCreate} className="gap-2" data-testid="button-add-media">
+            <Plus className="h-4 w-4" />
+            Agregar Contenido
+          </Button>
+        </div>
       </div>
+
+      {isBulkUploading && bulkProgress.total > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Subiendo fotos...</span>
+              <span className="text-muted-foreground">{bulkProgress.current} de {bulkProgress.total}</span>
+            </div>
+            <Progress value={(bulkProgress.current / bulkProgress.total) * 100} />
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
@@ -142,10 +261,16 @@ export default function MarketingManagement() {
                   <Image className="h-12 w-12 text-muted-foreground mb-4" />
                 )}
                 <p className="text-muted-foreground">No hay contenido registrado</p>
-                <Button variant="outline" className="mt-4 gap-2" onClick={handleCreate} data-testid="button-add-first">
-                  <Plus className="h-4 w-4" />
-                  Agregar primer contenido
-                </Button>
+                <div className="flex items-center gap-2 mt-4 flex-wrap justify-center">
+                  <Button variant="outline" className="gap-2" onClick={handleCreate} data-testid="button-add-first">
+                    <Plus className="h-4 w-4" />
+                    Agregar contenido
+                  </Button>
+                  <Button variant="outline" className="gap-2" onClick={() => bulkInputRef.current?.click()} data-testid="button-bulk-first">
+                    <Images className="h-4 w-4" />
+                    Subida masiva
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -250,28 +375,8 @@ function MediaFormDialog({
 
     setIsUploading(true);
     try {
-      const res = await fetch("/api/uploads/request-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: file.name,
-          size: file.size,
-          contentType: file.type || "application/octet-stream",
-        }),
-      });
-
-      if (!res.ok) throw new Error("Error al obtener URL de subida");
-
-      const { uploadURL, objectPath } = await res.json();
-
-      await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type || "application/octet-stream" },
-      });
-
-      const servingUrl = objectPath;
-      form.setValue("url", servingUrl, { shouldValidate: true });
+      const objectPath = await uploadFile(file);
+      form.setValue("url", objectPath, { shouldValidate: true });
 
       if (!form.getValues("title")) {
         form.setValue("title", file.name.replace(/\.[^/.]+$/, ""));

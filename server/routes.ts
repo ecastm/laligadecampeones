@@ -1406,6 +1406,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("Error creating payment:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
@@ -1449,6 +1450,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("Error creating fine payment:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
@@ -1486,6 +1488,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("Error creating expense:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
@@ -1555,6 +1558,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("Error creating contact message:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

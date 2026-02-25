@@ -553,12 +553,12 @@ export interface TeamPayment {
 }
 
 export const insertTeamPaymentSchema = z.object({
-  tournamentId: z.string(),
-  teamId: z.string(),
-  amount: z.number().min(0),
+  tournamentId: z.string().min(1, "El torneo es requerido"),
+  teamId: z.string().min(1, "El equipo es requerido"),
+  amount: z.number().min(1, "El monto debe ser mayor a 0"),
   method: z.string().optional(),
   notes: z.string().optional(),
-  paidAt: z.string(),
+  paidAt: z.string().min(1, "La fecha es requerida"),
 });
 export type InsertTeamPayment = z.infer<typeof insertTeamPaymentSchema>;
 
@@ -574,11 +574,12 @@ export interface FinePayment {
 }
 
 export const insertFinePaymentSchema = z.object({
-  tournamentId: z.string(),
-  teamId: z.string(),
-  amount: z.number().min(0),
+  tournamentId: z.string().min(1, "El torneo es requerido"),
+  teamId: z.string().min(1, "El equipo es requerido"),
+  fineId: z.string().optional(),
+  amount: z.number().min(1, "El monto debe ser mayor a 0"),
   notes: z.string().optional(),
-  paidAt: z.string(),
+  paidAt: z.string().min(1, "La fecha es requerida"),
 });
 export type InsertFinePayment = z.infer<typeof insertFinePaymentSchema>;
 
@@ -595,10 +596,10 @@ export interface Expense {
 }
 
 export const insertExpenseSchema = z.object({
-  tournamentId: z.string(),
+  tournamentId: z.string().min(1, "El torneo es requerido"),
   concept: z.string().min(2, "El concepto es requerido"),
-  amount: z.number().min(0),
-  expenseAt: z.string(),
+  amount: z.number().min(1, "El monto debe ser mayor a 0"),
+  expenseAt: z.string().min(1, "La fecha es requerida"),
   notes: z.string().optional(),
   receiptUrl: z.string().optional(),
 });

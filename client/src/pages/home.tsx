@@ -1505,6 +1505,24 @@ export default function Home() {
 
               <FormField
                 control={contactForm.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Teléfono</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="600 123 456"
+                        {...field}
+                        data-testid="input-contact-phone"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={contactForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>

@@ -139,52 +139,86 @@ export default function FinancesManagement() {
     },
   });
 
+  const openPaymentDialog = () => {
+    paymentForm.reset({
+      tournamentId: effectiveTournamentId,
+      teamId: "",
+      amount: 0,
+      method: "",
+      notes: "",
+      paidAt: new Date().toISOString().split('T')[0],
+    });
+    setIsPaymentDialogOpen(true);
+  };
+
+  const openFinePaymentDialog = () => {
+    finePaymentForm.reset({
+      tournamentId: effectiveTournamentId,
+      teamId: "",
+      amount: 0,
+      notes: "",
+      paidAt: new Date().toISOString().split('T')[0],
+    });
+    setIsFinePaymentDialogOpen(true);
+  };
+
+  const openExpenseDialog = () => {
+    expenseForm.reset({
+      tournamentId: effectiveTournamentId,
+      concept: "",
+      amount: 0,
+      expenseAt: new Date().toISOString().split('T')[0],
+      notes: "",
+    });
+    setIsExpenseDialogOpen(true);
+  };
+
   const createPaymentMutation = useMutation({
     mutationFn: async (data: InsertTeamPayment) => {
-      const res = await apiRequest("POST", "/api/admin/payments", { ...data, tournamentId: effectiveTournamentId });
+      const payload = { ...data, tournamentId: effectiveTournamentId };
+      const res = await apiRequest("POST", "/api/admin/payments", payload);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/payments", effectiveTournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/payments"] });
       toast({ title: "Pago registrado exitosamente" });
       setIsPaymentDialogOpen(false);
-      paymentForm.reset();
     },
-    onError: () => {
-      toast({ title: "Error al registrar pago", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error al registrar pago", description: error.message, variant: "destructive" });
     },
   });
 
   const createFinePaymentMutation = useMutation({
     mutationFn: async (data: InsertFinePayment) => {
-      const res = await apiRequest("POST", "/api/admin/fine-payments", { ...data, tournamentId: effectiveTournamentId });
+      const payload = { ...data, tournamentId: effectiveTournamentId };
+      const res = await apiRequest("POST", "/api/admin/fine-payments", payload);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fine-payments", effectiveTournamentId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines", effectiveTournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fine-payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines"] });
       toast({ title: "Pago de multa registrado exitosamente" });
       setIsFinePaymentDialogOpen(false);
-      finePaymentForm.reset();
     },
-    onError: () => {
-      toast({ title: "Error al registrar pago de multa", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error al registrar pago de multa", description: error.message, variant: "destructive" });
     },
   });
 
   const createExpenseMutation = useMutation({
     mutationFn: async (data: InsertExpense) => {
-      const res = await apiRequest("POST", "/api/admin/expenses", { ...data, tournamentId: effectiveTournamentId });
+      const payload = { ...data, tournamentId: effectiveTournamentId };
+      const res = await apiRequest("POST", "/api/admin/expenses", payload);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/expenses", effectiveTournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/expenses"] });
       toast({ title: "Gasto registrado exitosamente" });
       setIsExpenseDialogOpen(false);
-      expenseForm.reset();
     },
-    onError: () => {
-      toast({ title: "Error al registrar gasto", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error al registrar gasto", description: error.message, variant: "destructive" });
     },
   });
 
@@ -194,11 +228,11 @@ export default function FinancesManagement() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines", effectiveTournamentId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fines"] });
       toast({ title: "Multa actualizada" });
     },
-    onError: () => {
-      toast({ title: "Error al actualizar multa", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error al actualizar multa", description: error.message, variant: "destructive" });
     },
   });
 
@@ -317,7 +351,7 @@ export default function FinancesManagement() {
 
             <TabsContent value="payments" className="mt-4">
               <div className="mb-4 flex justify-end">
-                <Button onClick={() => setIsPaymentDialogOpen(true)} className="gap-2" data-testid="button-add-payment">
+                <Button onClick={openPaymentDialog} className="gap-2" data-testid="button-add-payment">
                   <Plus className="h-4 w-4" />
                   Registrar Pago
                 </Button>
@@ -359,7 +393,7 @@ export default function FinancesManagement() {
 
             <TabsContent value="fine-payments" className="mt-4">
               <div className="mb-4 flex justify-end">
-                <Button onClick={() => setIsFinePaymentDialogOpen(true)} className="gap-2" data-testid="button-add-fine-payment">
+                <Button onClick={openFinePaymentDialog} className="gap-2" data-testid="button-add-fine-payment">
                   <Plus className="h-4 w-4" />
                   Registrar Pago de Multa
                 </Button>
@@ -399,7 +433,7 @@ export default function FinancesManagement() {
 
             <TabsContent value="expenses" className="mt-4">
               <div className="mb-4 flex justify-end">
-                <Button onClick={() => setIsExpenseDialogOpen(true)} className="gap-2" data-testid="button-add-expense">
+                <Button onClick={openExpenseDialog} className="gap-2" data-testid="button-add-expense">
                   <Plus className="h-4 w-4" />
                   Registrar Gasto
                 </Button>
