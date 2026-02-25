@@ -71,7 +71,17 @@ function buildHashtags(fields: Fields, keywords: string): string[] {
   return Array.from(tags);
 }
 
+function hasMatchData(fields: Fields): boolean {
+  return !!(fields.team1 || fields.team2);
+}
+
 function buildCopy(fields: Fields, contentType: ContentType): string {
+  const cta = fields.cta || "Síguenos para más";
+
+  if (!hasMatchData(fields)) {
+    return `📸 La Liga de Campeones\n\n👉 ${cta}`;
+  }
+
   const t1 = fields.team1 || "[Equipo Local]";
   const t2 = fields.team2 || "[Equipo Visitante]";
   const s1 = fields.score1 || "X";
@@ -79,7 +89,6 @@ function buildCopy(fields: Fields, contentType: ContentType): string {
   const jornada = fields.matchday ? `Jornada ${fields.matchday}` : "Jornada";
   const fecha = fields.datetime || "[Fecha por confirmar]";
   const lugar = fields.venue || "[Cancha por confirmar]";
-  const cta = fields.cta || "Síguenos para más";
   const hasScore = fields.score1 && fields.score2;
 
   if (contentType === "story") {
@@ -150,6 +159,8 @@ async function renderCanvas(canvas: HTMLCanvasElement, fields: Fields, contentTy
   }
   ctx.restore();
 
+  const isMatchMode = hasMatchData(fields);
+
   if (photos.length > 0) {
     try {
       const img = await loadImage(photos[0].url);
@@ -157,7 +168,9 @@ async function renderCanvas(canvas: HTMLCanvasElement, fields: Fields, contentTy
       let sx = 0, sy = 0, sw = img.width, sh = img.height;
       if (ir > cr) { sw = img.height * cr; sx = (img.width - sw) / 2; }
       else { sh = img.width / cr; sy = (img.height - sh) / 2; }
-      ctx.globalAlpha = 0.3; ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H); ctx.globalAlpha = 1;
+      ctx.globalAlpha = isMatchMode ? 0.3 : 0.85;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
+      ctx.globalAlpha = 1;
     } catch {}
   }
 
@@ -174,57 +187,65 @@ async function renderCanvas(canvas: HTMLCanvasElement, fields: Fields, contentTy
   ctx.fillStyle = lg; ctx.font = "900 34px 'Segoe UI', Arial, sans-serif"; ctx.textAlign = "center";
   ctx.fillText("LA LIGA DE CAMPEONES", W/2, topH - 35);
 
-  const t1 = fields.team1 || "Equipo Local", t2 = fields.team2 || "Equipo Visitante";
-  const cx = W / 2, hasScore = fields.score1 && fields.score2;
+  const cx = W / 2;
 
-  const jText = fields.matchday ? `JORNADA ${fields.matchday}` : "JORNADA";
-  const pY = topH + 60;
-  ctx.font = "900 36px 'Segoe UI', Arial, sans-serif";
-  const pW = ctx.measureText(jText).width + 80, pH = 56;
-  const pg = ctx.createLinearGradient(cx-pW/2, pY, cx+pW/2, pY+pH);
-  pg.addColorStop(0, gd); pg.addColorStop(0.5, lg); pg.addColorStop(1, gd);
-  ctx.fillStyle = pg; roundRect(ctx, cx-pW/2, pY, pW, pH, pH/2); ctx.fill();
-  ctx.fillStyle = dk; ctx.font = "900 32px 'Segoe UI', Arial, sans-serif";
-  ctx.textBaseline = "middle"; ctx.fillText(jText, cx, pY + pH/2); ctx.textBaseline = "alphabetic";
+  if (isMatchMode) {
+    const t1 = fields.team1 || "Equipo Local", t2 = fields.team2 || "Equipo Visitante";
+    const hasScore = fields.score1 && fields.score2;
 
-  const tY = H * 0.42;
-  ctx.fillStyle = wh; ctx.font = "900 44px 'Segoe UI', Arial, sans-serif"; ctx.textAlign = "center";
-  wrapText(ctx, t1.toUpperCase(), 420).forEach((l, i) => ctx.fillText(l, cx-220, tY + i*52));
-  wrapText(ctx, t2.toUpperCase(), 420).forEach((l, i) => ctx.fillText(l, cx+220, tY + i*52));
+    if (fields.matchday) {
+      const jText = `JORNADA ${fields.matchday}`;
+      const pY = topH + 60;
+      ctx.font = "900 36px 'Segoe UI', Arial, sans-serif";
+      const pW = ctx.measureText(jText).width + 80, pH = 56;
+      const pg = ctx.createLinearGradient(cx-pW/2, pY, cx+pW/2, pY+pH);
+      pg.addColorStop(0, gd); pg.addColorStop(0.5, lg); pg.addColorStop(1, gd);
+      ctx.fillStyle = pg; roundRect(ctx, cx-pW/2, pY, pW, pH, pH/2); ctx.fill();
+      ctx.fillStyle = dk; ctx.font = "900 32px 'Segoe UI', Arial, sans-serif";
+      ctx.textBaseline = "middle"; ctx.fillText(jText, cx, pY + pH/2); ctx.textBaseline = "alphabetic";
+    }
 
-  const vY = tY - 30, vR = 55;
-  const vb = ctx.createRadialGradient(cx, vY, 0, cx, vY, vR);
-  vb.addColorStop(0, lg); vb.addColorStop(0.6, gd); vb.addColorStop(1, "#8B7518");
-  ctx.fillStyle = vb; ctx.beginPath(); ctx.arc(cx, vY, vR, 0, Math.PI*2); ctx.fill();
-  ctx.fillStyle = dk; ctx.font = "900 50px 'Segoe UI', Arial, sans-serif";
-  ctx.textBaseline = "middle"; ctx.fillText("VS", cx, vY+2); ctx.textBaseline = "alphabetic";
+    const tY = H * 0.42;
+    ctx.fillStyle = wh; ctx.font = "900 44px 'Segoe UI', Arial, sans-serif"; ctx.textAlign = "center";
+    wrapText(ctx, t1.toUpperCase(), 420).forEach((l, i) => ctx.fillText(l, cx-220, tY + i*52));
+    wrapText(ctx, t2.toUpperCase(), 420).forEach((l, i) => ctx.fillText(l, cx+220, tY + i*52));
 
-  if (hasScore) {
-    const sY = H * 0.60;
-    ctx.save(); ctx.shadowColor = lg + "80"; ctx.shadowBlur = 20;
-    ctx.fillStyle = lg; ctx.font = "900 120px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText(fields.score1, cx-180, sY); ctx.fillText("-", cx, sY); ctx.fillText(fields.score2, cx+180, sY);
-    ctx.restore();
-    ctx.fillStyle = gd + "BB"; ctx.font = "600 26px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("RESULTADO FINAL", cx, sY + 50);
-  } else {
-    ctx.fillStyle = wh; ctx.font = "700 28px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("¡NO TE LO PIERDAS!", cx, H * 0.58);
+    const vY = tY - 30, vR = 55;
+    const vb = ctx.createRadialGradient(cx, vY, 0, cx, vY, vR);
+    vb.addColorStop(0, lg); vb.addColorStop(0.6, gd); vb.addColorStop(1, "#8B7518");
+    ctx.fillStyle = vb; ctx.beginPath(); ctx.arc(cx, vY, vR, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = dk; ctx.font = "900 50px 'Segoe UI', Arial, sans-serif";
+    ctx.textBaseline = "middle"; ctx.fillText("VS", cx, vY+2); ctx.textBaseline = "alphabetic";
+
+    if (hasScore) {
+      const sY = H * 0.60;
+      ctx.save(); ctx.shadowColor = lg + "80"; ctx.shadowBlur = 20;
+      ctx.fillStyle = lg; ctx.font = "900 120px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(fields.score1, cx-180, sY); ctx.fillText("-", cx, sY); ctx.fillText(fields.score2, cx+180, sY);
+      ctx.restore();
+      ctx.fillStyle = gd + "BB"; ctx.font = "600 26px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText("RESULTADO FINAL", cx, sY + 50);
+    } else {
+      ctx.fillStyle = wh; ctx.font = "700 28px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText("¡NO TE LO PIERDAS!", cx, H * 0.58);
+    }
+
+    if (fields.mvpName) {
+      const mY = hasScore ? H*0.70 : H*0.65;
+      ctx.fillStyle = lg; ctx.font = "900 28px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText("🌟 MVP: " + fields.mvpName.toUpperCase(), cx, mY);
+    }
+
+    if (fields.datetime || fields.venue) {
+      const iY = H * 0.78, iW = 650, iH = 120;
+      ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 20;
+      ctx.fillStyle = dk + "E8"; roundRect(ctx, cx-iW/2, iY, iW, iH, 16); ctx.fill(); ctx.restore();
+      ctx.strokeStyle = gd + "60"; ctx.lineWidth = 2; roundRect(ctx, cx-iW/2, iY, iW, iH, 16); ctx.stroke();
+
+      if (fields.datetime) { ctx.fillStyle = lg; ctx.font = "700 28px 'Segoe UI', Arial, sans-serif"; ctx.fillText(fields.datetime.toUpperCase(), cx, iY+45); }
+      if (fields.venue) { ctx.fillStyle = wh; ctx.font = "600 24px 'Segoe UI', Arial, sans-serif"; ctx.fillText("📍 " + fields.venue, cx, iY+85); }
+    }
   }
-
-  if (fields.mvpName) {
-    const mY = hasScore ? H*0.70 : H*0.65;
-    ctx.fillStyle = lg; ctx.font = "900 28px 'Segoe UI', Arial, sans-serif";
-    ctx.fillText("🌟 MVP: " + fields.mvpName.toUpperCase(), cx, mY);
-  }
-
-  const iY = H * 0.78, iW = 650, iH = 120;
-  ctx.save(); ctx.shadowColor = "rgba(0,0,0,0.4)"; ctx.shadowBlur = 20;
-  ctx.fillStyle = dk + "E8"; roundRect(ctx, cx-iW/2, iY, iW, iH, 16); ctx.fill(); ctx.restore();
-  ctx.strokeStyle = gd + "60"; ctx.lineWidth = 2; roundRect(ctx, cx-iW/2, iY, iW, iH, 16); ctx.stroke();
-
-  if (fields.datetime) { ctx.fillStyle = lg; ctx.font = "700 28px 'Segoe UI', Arial, sans-serif"; ctx.fillText(fields.datetime.toUpperCase(), cx, iY+45); }
-  if (fields.venue) { ctx.fillStyle = wh; ctx.font = "600 24px 'Segoe UI', Arial, sans-serif"; ctx.fillText("📍 " + fields.venue, cx, iY+85); }
 
   const bY = H - 55;
   const bg2 = ctx.createLinearGradient(0, bY-40, 0, H);
