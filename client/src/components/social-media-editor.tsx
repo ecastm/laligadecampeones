@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Download, Copy, Check, Hash, ChevronLeft, ChevronRight,
-  Search, Image, Sparkles, FileText, Eye, Loader2
+  Search, Image, Sparkles, FileText, Eye, Loader2, Plus
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -536,6 +536,8 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
   const [isRendering, setIsRendering] = useState(false);
   const [copiedCopy, setCopiedCopy] = useState(false);
   const [copiedHashtags, setCopiedHashtags] = useState(false);
+  const [copyManuallyEdited, setCopyManuallyEdited] = useState(false);
+  const [hashtagsManuallyEdited, setHashtagsManuallyEdited] = useState(false);
 
   const { data: matchesRaw = [] } = useQuery<MatchWithTeams[]>({
     queryKey: ["/api/home/schedule"],
@@ -557,6 +559,8 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
     if (!open) {
       setStep(1);
       setState({ ...INITIAL_STATE });
+      setCopyManuallyEdited(false);
+      setHashtagsManuallyEdited(false);
     }
   }, [open]);
 
@@ -629,13 +633,27 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
 
   useEffect(() => {
     if (step === 5 && canvasRef.current) {
-      const copy = generateCopy(state);
-      const hashtags = generateHashtags(state);
-      setState((prev) => ({ ...prev, copy, hashtags }));
+      if (!copyManuallyEdited) {
+        const copy = generateCopy(state);
+        setState((prev) => ({ ...prev, copy }));
+      }
+      if (!hashtagsManuallyEdited) {
+        const hashtags = generateHashtags(state);
+        setState((prev) => ({ ...prev, hashtags }));
+      }
       const t = setTimeout(doRender, 150);
       return () => clearTimeout(t);
     }
-  }, [step, state.template, state.contentType, state.fields, state.selectedPhotos, doRender]);
+  }, [step, state.template, state.contentType, state.fields, state.selectedPhotos, doRender, copyManuallyEdited, hashtagsManuallyEdited]);
+
+  const regenerateCopy = () => {
+    const copy = generateCopy(state);
+    const hashtags = generateHashtags(state);
+    setState((prev) => ({ ...prev, copy, hashtags }));
+    setCopyManuallyEdited(false);
+    setHashtagsManuallyEdited(false);
+    toast({ title: "Texto regenerado" });
+  };
 
   const handleDownload = async () => {
     if (!canvasRef.current) return;
@@ -942,21 +960,38 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                     <Label className="text-sm font-semibold flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Copy para Publicación
+                      {copyManuallyEdited && (
+                        <Badge variant="secondary" className="text-[10px] ml-1">Editado</Badge>
+                      )}
                     </Label>
-                    <Button
-                      size="sm" variant="outline" className="h-7 gap-1 text-xs"
-                      onClick={() => copyText(state.copy, "copy")}
-                      data-testid="button-copy-text"
-                    >
-                      {copiedCopy ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      {copiedCopy ? "Copiado" : "Copiar"}
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        size="sm" variant="outline" className="h-7 gap-1 text-xs"
+                        onClick={regenerateCopy}
+                        data-testid="button-regenerate-copy"
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Regenerar
+                      </Button>
+                      <Button
+                        size="sm" variant="outline" className="h-7 gap-1 text-xs"
+                        onClick={() => copyText(state.copy, "copy")}
+                        data-testid="button-copy-text"
+                      >
+                        {copiedCopy ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        {copiedCopy ? "Copiado" : "Copiar"}
+                      </Button>
+                    </div>
                   </div>
                   <Textarea
                     value={state.copy}
-                    onChange={(e) => setState((p) => ({ ...p, copy: e.target.value }))}
+                    onChange={(e) => {
+                      setState((p) => ({ ...p, copy: e.target.value }));
+                      setCopyManuallyEdited(true);
+                    }}
                     rows={6}
                     className="text-sm"
+                    placeholder="Escribe o edita el texto de tu publicación..."
                     data-testid="textarea-copy"
                   />
                 </div>
@@ -980,14 +1015,13 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                     {state.hashtags.map((tag) => (
                       <button
                         key={tag}
-                        onClick={() =>
+                        onClick={() => {
                           setState((p) => ({
                             ...p,
-                            hashtags: p.hashtags.includes(tag)
-                              ? p.hashtags.filter((t) => t !== tag)
-                              : p.hashtags,
-                          }))
-                        }
+                            hashtags: p.hashtags.filter((t) => t !== tag),
+                          }));
+                          setHashtagsManuallyEdited(true);
+                        }}
                         className="rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground border border-primary transition-colors hover:bg-primary/80"
                         data-testid={`tag-${tag.slice(1)}`}
                       >
@@ -995,6 +1029,33 @@ export function SocialMediaEditor({ open, onOpenChange, media, allPhotos }: Soci
                       </button>
                     ))}
                   </div>
+                  <form
+                    className="flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      const input = (e.target as HTMLFormElement).elements.namedItem("newTag") as HTMLInputElement;
+                      let val = input.value.trim();
+                      if (!val) return;
+                      if (!val.startsWith("#")) val = "#" + val;
+                      val = "#" + sanitizeHashtag(val.slice(1));
+                      if (val.length > 1 && !state.hashtags.includes(val)) {
+                        setState((p) => ({ ...p, hashtags: [...p.hashtags, val] }));
+                        setHashtagsManuallyEdited(true);
+                      }
+                      input.value = "";
+                    }}
+                  >
+                    <Input
+                      name="newTag"
+                      placeholder="Agregar hashtag..."
+                      className="h-8 text-xs flex-1"
+                      data-testid="input-new-hashtag"
+                    />
+                    <Button type="submit" size="sm" variant="outline" className="h-8 text-xs gap-1" data-testid="button-add-hashtag">
+                      <Plus className="h-3 w-3" />
+                      Agregar
+                    </Button>
+                  </form>
                   <div className="rounded-md bg-muted/50 border p-2 text-xs text-muted-foreground break-all leading-relaxed">
                     {state.hashtags.join(" ")}
                   </div>
