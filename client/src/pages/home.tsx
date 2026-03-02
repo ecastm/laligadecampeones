@@ -243,7 +243,15 @@ export default function Home() {
     enabled: !!tournamentId && !!selectedDivision,
   });
 
-  const tournamentSchedule = allTournamentSchedule || [];
+  const tournamentSchedule = (allTournamentSchedule || []).filter(m => {
+    if (m.status === "JUGADO") return false;
+    if (m.status === "EN_CURSO") return true;
+    const matchDate = new Date(m.dateTime);
+    if (isNaN(matchDate.getTime())) return true;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return matchDate >= now;
+  });
 
   const scheduleRounds = Array.from(new Set(tournamentSchedule.map(m => m.roundNumber))).sort((a, b) => a - b);
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
@@ -650,7 +658,7 @@ export default function Home() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
-                        Calendario de Partidos
+                        Próximos Partidos
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -663,7 +671,8 @@ export default function Home() {
                       ) : tournamentSchedule.length === 0 ? (
                         <div className="py-12 text-center text-muted-foreground">
                           <Calendar className="mx-auto h-12 w-12 opacity-50" />
-                          <p className="mt-4">No hay partidos programados</p>
+                          <p className="mt-4">No hay partidos pendientes</p>
+                          <p className="text-sm mt-1">Consulta los resultados en la pestaña correspondiente</p>
                         </div>
                       ) : (
                         <>
