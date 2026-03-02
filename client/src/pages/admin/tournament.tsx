@@ -129,6 +129,10 @@ export default function TournamentManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tournaments/completed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
       setFinishingTournament(null);
       finishForm.reset();
       toast({ title: "Torneo finalizado correctamente" });
@@ -170,6 +174,9 @@ export default function TournamentManagement() {
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       setGeneratingSchedule(null);
       setDoubleRound(false);
       toast({ title: "Calendario generado", description: data.message });

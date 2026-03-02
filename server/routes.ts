@@ -945,7 +945,7 @@ export async function registerRoutes(
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
-      if (match.refereeUserId !== req.user!.userId) {
+      if (req.user!.role !== "ADMIN" && match.refereeUserId !== req.user!.userId) {
         return res.status(403).json({ message: "No estás asignado a este partido" });
       }
       if (match.status === "JUGADO") {

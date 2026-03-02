@@ -369,6 +369,7 @@ function MatchResultDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
       toast({ title: "Resultado registrado correctamente" });
       setUploadedPhotos([]);
       form.reset();

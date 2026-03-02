@@ -105,6 +105,7 @@ export function SharedMatchResultDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
       for (const key of extraInvalidateKeys) {
         queryClient.invalidateQueries({ queryKey: key });
       }

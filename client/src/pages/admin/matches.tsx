@@ -132,6 +132,7 @@ export default function MatchesManagement() {
     onSuccess: async (createdMatch: Match) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
       toast({ title: "Partido creado correctamente" });
       setIsDialogOpen(false);
       const formData = form.getValues();
@@ -151,6 +152,9 @@ export default function MatchesManagement() {
     onSuccess: async ({ id, data: updatedData, match: updatedMatch }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       toast({ title: "Partido actualizado" });
       const needsRegeneration = updatedData.homeTeamId || updatedData.awayTeamId || updatedData.dateTime || updatedData.field || updatedData.roundNumber || updatedData.stage;
       setEditingMatch(null);
@@ -171,6 +175,9 @@ export default function MatchesManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
       queryClient.invalidateQueries({ queryKey: ["/api/home/schedule"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/schedule/upcoming"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/standings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/home/results"] });
       toast({ title: "Partido eliminado" });
     },
     onError: (error) => {
