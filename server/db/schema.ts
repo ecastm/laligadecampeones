@@ -61,6 +61,7 @@ export const teams = pgTable("teams", {
   logoUrl: text("logo_url"),
   captainUserId: text("captain_user_id"),
   coachName: text("coach_name"),
+  instagramUrl: text("instagram_url"),
 });
 
 export const players = pgTable("players", {

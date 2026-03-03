@@ -214,6 +214,7 @@ export interface Team {
   logoUrl?: string;
   captainUserId?: string;
   coachName?: string;
+  instagramUrl?: string;
 }
 
 export const insertTeamSchema = z.object({
@@ -225,6 +226,7 @@ export const insertTeamSchema = z.object({
   logoUrl: z.string().optional(),
   captainUserId: z.string().optional(),
   coachName: z.string().optional(),
+  instagramUrl: z.string().optional(),
 });
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 

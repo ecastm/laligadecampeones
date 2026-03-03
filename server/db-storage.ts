@@ -245,20 +245,20 @@ export class DatabaseStorage implements IStorage {
   async getTeams(tournamentId?: string): Promise<Team[]> {
     if (tournamentId) {
       const result = await this.pool.query(
-        `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName" FROM teams WHERE tournament_id = $1`,
+        `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl" FROM teams WHERE tournament_id = $1`,
         [tournamentId]
       );
       return result.rows;
     }
     const result = await this.pool.query(
-      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName" FROM teams`
+      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl" FROM teams`
     );
     return result.rows;
   }
 
   async getTeam(id: string): Promise<Team | undefined> {
     const result = await this.pool.query(
-      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName" FROM teams WHERE id = $1`,
+      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl" FROM teams WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -266,7 +266,7 @@ export class DatabaseStorage implements IStorage {
 
   async getTeamByCaptain(userId: string): Promise<Team | undefined> {
     const result = await this.pool.query(
-      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName" FROM teams WHERE captain_user_id = $1`,
+      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl" FROM teams WHERE captain_user_id = $1`,
       [userId]
     );
     return result.rows[0] || undefined;
@@ -274,10 +274,10 @@ export class DatabaseStorage implements IStorage {
 
   async createTeam(insertTeam: InsertTeam): Promise<Team> {
     const result = await this.pool.query(
-      `INSERT INTO teams (id, tournament_id, division_id, name, colors, home_field, logo_url, captain_user_id, coach_name)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName"`,
-      [insertTeam.tournamentId, insertTeam.divisionId || null, insertTeam.name, insertTeam.colors, insertTeam.homeField, insertTeam.logoUrl || null, insertTeam.captainUserId || null, insertTeam.coachName || null]
+      `INSERT INTO teams (id, tournament_id, division_id, name, colors, home_field, logo_url, captain_user_id, coach_name, instagram_url)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl"`,
+      [insertTeam.tournamentId, insertTeam.divisionId || null, insertTeam.name, insertTeam.colors, insertTeam.homeField, insertTeam.logoUrl || null, insertTeam.captainUserId || null, insertTeam.coachName || null, insertTeam.instagramUrl || null]
     );
     return result.rows[0];
   }
@@ -295,13 +295,14 @@ export class DatabaseStorage implements IStorage {
     if (data.logoUrl !== undefined) { setClauses.push(`logo_url = $${paramIndex++}`); values.push(data.logoUrl || null); }
     if (data.captainUserId !== undefined) { setClauses.push(`captain_user_id = $${paramIndex++}`); values.push(data.captainUserId || null); }
     if (data.coachName !== undefined) { setClauses.push(`coach_name = $${paramIndex++}`); values.push(data.coachName || null); }
+    if (data.instagramUrl !== undefined) { setClauses.push(`instagram_url = $${paramIndex++}`); values.push(data.instagramUrl || null); }
 
     if (setClauses.length === 0) return this.getTeam(id);
 
     values.push(id);
     const result = await this.pool.query(
       `UPDATE teams SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName"`,
+       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl"`,
       values
     );
     return result.rows[0] || undefined;

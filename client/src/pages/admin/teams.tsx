@@ -105,6 +105,7 @@ export default function TeamsManagement() {
       logoUrl: "",
       coachName: "",
       divisionId: "",
+      instagramUrl: "",
     },
   });
 
@@ -266,6 +267,7 @@ export default function TeamsManagement() {
       logoUrl: team.logoUrl || "",
       coachName: team.coachName || "",
       divisionId: team.divisionId || "",
+      instagramUrl: team.instagramUrl || "",
     });
   };
 
@@ -396,6 +398,24 @@ export default function TeamsManagement() {
                           label="Subir logo"
                           shape="square"
                           size="md"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="instagramUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instagram del Equipo (opcional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="https://instagram.com/tu_equipo"
+                          data-testid="input-team-instagram"
+                          {...field}
+                          value={field.value || ""}
                         />
                       </FormControl>
                       <FormMessage />

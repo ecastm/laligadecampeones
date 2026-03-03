@@ -158,6 +158,7 @@ function TeamInfo() {
       colors: "",
       homeField: "",
       logoUrl: "",
+      instagramUrl: "",
     },
   });
 
@@ -197,6 +198,7 @@ function TeamInfo() {
         colors: team.colors,
         homeField: team.homeField,
         logoUrl: team.logoUrl || "",
+        instagramUrl: team.instagramUrl || "",
       });
     }
 
@@ -266,6 +268,24 @@ function TeamInfo() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name="instagramUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Instagram del Equipo</FormLabel>
+                    <FormControl>
+                      <Input
+                        data-testid="input-edit-team-instagram"
+                        placeholder="https://instagram.com/tu_equipo"
+                        {...field}
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="flex gap-2">
                 <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save-team">
                   <Save className="mr-2 h-4 w-4" />
@@ -311,6 +331,20 @@ function TeamInfo() {
             <p className="text-sm text-muted-foreground">Colores</p>
             <p className="font-medium" data-testid="text-team-colors">{team.colors}</p>
           </div>
+          {team.instagramUrl && (
+            <div className="rounded-md border p-4 sm:col-span-2">
+              <p className="text-sm text-muted-foreground">Instagram</p>
+              <a
+                href={team.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+                data-testid="link-team-instagram"
+              >
+                {team.instagramUrl}
+              </a>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
