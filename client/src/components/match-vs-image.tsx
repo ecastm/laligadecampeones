@@ -56,12 +56,12 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
     const ctx = canvas.getContext("2d")!;
     const cx = W / 2;
 
-    const darkGreen = "#031D0A";
-    const medGreen = "#0A4A1F";
-    const brightGreen = "#0F6B2E";
-    const gold = "#D4A824";
-    const lightGold = "#F0D060";
-    const brightGold = "#FFE066";
+    const darkGreen = "#0D0D0D";
+    const medGreen = "#1A1A1A";
+    const brightGreen = "#252525";
+    const gold = "#C6A052";
+    const lightGold = "#D4B86A";
+    const brightGold = "#E0C878";
     const white = "#FFFFFF";
 
     const bgGrad = ctx.createRadialGradient(cx, H * 0.45, 0, cx, H * 0.45, H * 0.85);

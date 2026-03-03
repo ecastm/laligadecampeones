@@ -68,8 +68,8 @@ export default function CalendarView() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "JUGADO": return "bg-green-600/20 text-green-700 dark:text-green-400 border-green-600/30";
-      case "EN_CURSO": return "bg-yellow-600/20 text-yellow-700 dark:text-yellow-400 border-yellow-600/30";
+      case "JUGADO": return "bg-sport-green/20 text-sport-green border-sport-green/30";
+      case "EN_CURSO": return "bg-primary/20 text-primary border-primary/30";
       default: return "bg-primary/10 text-primary border-primary/20";
     }
   };
@@ -104,12 +104,12 @@ export default function CalendarView() {
     const ctx = canvas.getContext("2d")!;
     const cx = W / 2;
 
-    const darkGreen = "#031D0A";
-    const medGreen = "#0A4A1F";
-    const brightGreen = "#0F6B2E";
-    const gold = "#D4A824";
-    const lightGold = "#F0D060";
-    const brightGold = "#FFE066";
+    const darkGreen = "#0D0D0D";
+    const medGreen = "#1A1A1A";
+    const brightGreen = "#252525";
+    const gold = "#C6A052";
+    const lightGold = "#D4B86A";
+    const brightGold = "#E0C878";
     const white = "#FFFFFF";
 
     const bgGrad = ctx.createRadialGradient(cx, H * 0.45, 0, cx, H * 0.45, H * 0.85);

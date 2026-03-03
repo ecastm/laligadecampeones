@@ -75,11 +75,18 @@ export default {
           foreground: "hsl(var(--sidebar-accent-foreground) / <alpha-value>)",
           border: "var(--sidebar-accent-border)"
         },
+        "sport-green": {
+          DEFAULT: "hsl(var(--sport-green) / <alpha-value>)",
+        },
+        silver: {
+          DEFAULT: "hsl(var(--silver) / <alpha-value>)",
+          muted: "hsl(var(--silver-muted) / <alpha-value>)",
+        },
         status: {
-          online: "rgb(34 197 94)",
+          online: "hsl(var(--sport-green))",
           away: "rgb(245 158 11)",
           busy: "rgb(239 68 68)",
-          offline: "rgb(156 163 175)",
+          offline: "hsl(var(--silver-muted))",
         },
       },
       fontFamily: {

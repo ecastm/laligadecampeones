@@ -147,7 +147,7 @@ async function renderCanvas(canvas: HTMLCanvasElement, fields: Fields, contentTy
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
 
-  const dk = "#031D0A", md = "#0A4A1F", br = "#0F6B2E", gd = "#D4A824", lg = "#F0D060", wh = "#FFFFFF";
+  const dk = "#0D0D0D", md = "#1A1A1A", br = "#252525", gd = "#C6A052", lg = "#D4B86A", wh = "#FFFFFF";
   const bg = ctx.createRadialGradient(W/2, H*0.4, 0, W/2, H*0.4, H*0.8);
   bg.addColorStop(0, br); bg.addColorStop(0.5, md); bg.addColorStop(1, dk);
   ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);

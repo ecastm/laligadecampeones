@@ -316,7 +316,7 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroFootball})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#063A13]/90 via-[#063A13]/70 to-[#0B5D1E]/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/92 via-[#0D0D0D]/80 to-[#111111]/60" />
 
         <div className="container relative mx-auto px-4 py-20 sm:py-28">
           <div className="max-w-2xl">
@@ -725,9 +725,9 @@ export default function Home() {
                                     variant="outline"
                                     className={`text-xs ${
                                       match.status === "JUGADO"
-                                        ? "bg-green-600/10 text-green-700 dark:text-green-400 border-green-600/30"
+                                        ? "bg-sport-green/10 text-sport-green border-sport-green/30"
                                         : match.status === "EN_CURSO"
-                                          ? "bg-yellow-600/10 text-yellow-700 dark:text-yellow-400 border-yellow-600/30"
+                                          ? "bg-primary/10 text-primary border-primary/30"
                                           : ""
                                     }`}
                                   >
@@ -737,7 +737,7 @@ export default function Home() {
                                 <div className="flex items-center justify-center gap-2 sm:gap-4">
                                   <div className="flex-1 text-right flex flex-col items-end gap-1">
                                     {match.homeTeam?.logoUrl ? (
-                                      <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                      <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-primary/50" />
                                     ) : (
                                       <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
                                         {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
@@ -764,7 +764,7 @@ export default function Home() {
                                   </div>
                                   <div className="flex-1 text-left flex flex-col items-start gap-1">
                                     {match.awayTeam?.logoUrl ? (
-                                      <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                      <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-primary/50" />
                                     ) : (
                                       <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
                                         {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
@@ -1087,7 +1087,7 @@ export default function Home() {
                               <div className="flex items-center justify-center gap-2 sm:gap-4">
                                 <div className="flex-1 text-right flex flex-col items-end gap-1">
                                   {match.homeTeam?.logoUrl ? (
-                                    <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                    <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-8 w-8 rounded-full object-cover border border-primary/50" />
                                   ) : (
                                     <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
                                       {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
@@ -1116,7 +1116,7 @@ export default function Home() {
                                 </div>
                                 <div className="flex-1 flex flex-col items-start gap-1">
                                   {match.awayTeam?.logoUrl ? (
-                                    <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-amber-400/50" />
+                                    <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-8 w-8 rounded-full object-cover border border-primary/50" />
                                   ) : (
                                     <div className="h-8 w-8 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-bold text-xs">
                                       {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
@@ -1637,9 +1637,9 @@ function UpcomingMatchesSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {upcomingMatches.map((match) => (
             <div key={match.id} className="group cursor-pointer" data-testid={`card-upcoming-match-${match.id}`}>
-              <div className="overflow-hidden rounded-lg border shadow-md transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#031D0A] to-[#0F6B2E]">
+              <div className="overflow-hidden rounded-lg border shadow-md transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#0D0D0D] to-[#1a1a1a]">
                 <div className="p-4 flex flex-col items-center gap-3">
-                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-amber-400/40 text-amber-300 bg-amber-400/10">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-primary/40 text-primary bg-primary/10">
                     {match.stage && match.stage !== "JORNADA"
                       ? MatchStageLabels[match.stage as MatchStage]
                       : `Jornada ${match.roundNumber}`}
@@ -1648,9 +1648,9 @@ function UpcomingMatchesSection() {
                   <div className="flex items-center justify-center gap-4 w-full">
                     <div className="text-center flex-1">
                       {match.homeTeam?.logoUrl ? (
-                        <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-amber-400 mx-auto shadow-lg" />
+                        <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-primary mx-auto shadow-lg" />
                       ) : (
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-bold text-lg mx-auto">
                           {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
                         </div>
                       )}
@@ -1659,13 +1659,13 @@ function UpcomingMatchesSection() {
                       </p>
                     </div>
 
-                    <p className="text-amber-400 font-black text-2xl shrink-0">VS</p>
+                    <p className="text-primary font-black text-2xl shrink-0">VS</p>
 
                     <div className="text-center flex-1">
                       {match.awayTeam?.logoUrl ? (
-                        <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-amber-400 mx-auto shadow-lg" />
+                        <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-primary mx-auto shadow-lg" />
                       ) : (
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-amber-400/20 border-2 border-amber-400 flex items-center justify-center text-amber-400 font-bold text-lg mx-auto">
+                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-bold text-lg mx-auto">
                           {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
                         </div>
                       )}
@@ -1676,7 +1676,7 @@ function UpcomingMatchesSection() {
                   </div>
 
                   <div className="w-full border-t border-white/10 pt-2 text-center space-y-0.5">
-                    <p className="text-amber-300 font-semibold text-xs">
+                    <p className="text-primary font-semibold text-xs">
                       {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
                         ? format(new Date(match.dateTime), "EEEE d 'de' MMMM", { locale: es })
                         : "Fecha por confirmar"}
@@ -1687,7 +1687,7 @@ function UpcomingMatchesSection() {
                         : ""}
                     </p>
                     {match.field && match.field !== "Por asignar" && (
-                      <p className="text-emerald-300/70 text-[10px]">
+                      <p className="text-silver text-[10px]">
                         {match.field}
                       </p>
                     )}
