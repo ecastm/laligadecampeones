@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTeamSchema, insertPlayerSchema, insertCaptainProfileSchema, MatchStageLabels, type Team, type Player, type InsertPlayer, type MatchWithTeams, type CaptainProfile, type InsertCaptainProfile, type MatchStage } from "@shared/schema";
+import { insertTeamSchema, insertPlayerSchema, insertCaptainProfileSchema, MatchStageLabels, identificationTypeLabels, type IdentificationType, type Team, type Player, type InsertPlayer, type MatchWithTeams, type CaptainProfile, type InsertCaptainProfile, type MatchStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -501,22 +502,46 @@ function TeamPlayers() {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="identificationId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2">
-                        <IdCard className="h-4 w-4" />
-                        Número de Identificación (DNI/INE)
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="identificationType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center gap-2">
+                          <IdCard className="h-4 w-4" />
+                          Tipo de Documento
+                        </FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-player-identificationType">
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="identificationId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Número de Identificación</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="photoUrls"
@@ -749,6 +774,7 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
     resolver: zodResolver(insertCaptainProfileSchema),
     defaultValues: {
       fullName: "",
+      identificationType: "DNI" as const,
       identificationNumber: "",
       phone: "",
       email: "",
@@ -763,6 +789,7 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
     if (profile) {
       form.reset({
         fullName: profile.fullName,
+        identificationType: (profile.identificationType as "DNI" | "NIE" | "PASAPORTE") || "DNI",
         identificationNumber: profile.identificationNumber,
         phone: profile.phone,
         email: profile.email,
@@ -840,6 +867,28 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
                         <FormControl>
                           <Input {...field} data-testid="input-fullName" />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="identificationType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tipo de Documento *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-identificationType">
+                              <SelectValue placeholder="Seleccionar tipo" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>{label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -955,6 +1004,10 @@ function ProfileSection({ profile }: { profile: CaptainProfile | null | undefine
                 <div>
                   <p className="text-sm text-muted-foreground">Nombre Completo</p>
                   <p className="font-medium">{profile.fullName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Tipo de Documento</p>
+                  <p className="font-medium">{identificationTypeLabels[(profile.identificationType || "DNI") as IdentificationType]}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Número de Identificación</p>

@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -1056,6 +1056,7 @@ function ProfileSection({ profile }: { profile: RefereeProfile | null | undefine
     resolver: zodResolver(insertRefereeProfileSchema),
     defaultValues: {
       fullName: profile?.fullName || user?.name || "",
+      identificationType: (profile?.identificationType as "DNI" | "NIE" | "PASAPORTE") || "DNI",
       identificationNumber: profile?.identificationNumber || "",
       phone: profile?.phone || "",
       email: profile?.email || user?.email || "",
@@ -1118,10 +1119,32 @@ function ProfileSection({ profile }: { profile: RefereeProfile | null | undefine
                 />
                 <FormField
                   control={form.control}
+                  name="identificationType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Documento *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-profile-identificationType">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="identificationNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Número de Identificación (DNI/CURP/ID) *</FormLabel>
+                      <FormLabel>Número de Identificación *</FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-profile-identification" />
                       </FormControl>
@@ -1252,6 +1275,7 @@ function ProfileRequiredDialog({
     resolver: zodResolver(insertRefereeProfileSchema),
     defaultValues: {
       fullName: userName,
+      identificationType: "DNI" as const,
       identificationNumber: "",
       phone: "",
       email: userEmail,
@@ -1303,19 +1327,43 @@ function ProfileRequiredDialog({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="identificationNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Número de Identificación (DNI/CURP/ID) *</FormLabel>
-                  <FormControl>
-                    <Input {...field} data-testid="input-required-identification" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="identificationType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Documento *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-required-identificationType">
+                          <SelectValue placeholder="Seleccionar tipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                          <SelectItem key={value} value={value}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="identificationNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de Identificación *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-required-identification" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}

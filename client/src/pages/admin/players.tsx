@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPlayerSchema, type InsertPlayer, type Player, type Team } from "@shared/schema";
+import { insertPlayerSchema, identificationTypeLabels, type InsertPlayer, type Player, type Team } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,6 +131,7 @@ export default function PlayersManagement() {
       lastName: player.lastName,
       jerseyNumber: player.jerseyNumber,
       position: player.position || "",
+      identificationType: (player.identificationType as "DNI" | "NIE" | "PASAPORTE") || "DNI",
       identificationId: player.identificationId || "",
       photoUrls: player.photoUrls || [],
       isFederated: player.isFederated || false,
@@ -298,22 +299,46 @@ export default function PlayersManagement() {
                   )}
                 />
               </div>
-              <FormField
-                control={form.control}
-                name="identificationId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-2">
-                      <IdCard className="h-4 w-4" />
-                      Número de Identificación (DNI/INE)
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="identificationType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <IdCard className="h-4 w-4" />
+                        Tipo de Documento
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-player-identificationType">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="identificationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de Identificación</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ej: 12345678" data-testid="input-player-identification" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, User, Phone, Mail, Building, Clock, FileText, AlertCircle } from "lucide-react";
-import type { RefereeProfile } from "@shared/schema";
+import { identificationTypeLabels, type RefereeProfile } from "@shared/schema";
 
 interface RefereeWithProfile {
   userId: string;
@@ -26,6 +26,7 @@ interface RefereeWithProfile {
 
 const editRefereeSchema = z.object({
   fullName: z.string().min(1, "Nombre requerido"),
+  identificationType: z.enum(["DNI", "NIE", "PASAPORTE"]).default("DNI"),
   identificationNumber: z.string().min(1, "Número de identificación requerido"),
   phone: z.string().min(1, "Teléfono requerido"),
   email: z.string().email("Email inválido"),
@@ -55,6 +56,7 @@ export default function RefereesManagement() {
     resolver: zodResolver(editRefereeSchema),
     defaultValues: {
       fullName: "",
+      identificationType: "DNI" as const,
       identificationNumber: "",
       phone: "",
       email: "",
@@ -98,6 +100,7 @@ export default function RefereesManagement() {
     setEditingProfile(referee);
     form.reset({
       fullName: referee.profile.fullName,
+      identificationType: (referee.profile.identificationType as "DNI" | "NIE" | "PASAPORTE") || "DNI",
       identificationNumber: referee.profile.identificationNumber,
       phone: referee.profile.phone,
       email: referee.profile.email,
@@ -209,7 +212,7 @@ export default function RefereesManagement() {
                       <div className="grid gap-2 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <FileText className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">ID: {referee.profile?.identificationNumber}</span>
+                          <span className="truncate">{identificationTypeLabels[(referee.profile?.identificationType || "DNI") as keyof typeof identificationTypeLabels]}: {referee.profile?.identificationNumber}</span>
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Phone className="h-4 w-4 flex-shrink-0" />
@@ -284,19 +287,43 @@ export default function RefereesManagement() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="identificationNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Número de identificación *</FormLabel>
-                    <FormControl>
-                      <Input {...field} data-testid="input-referee-identificationNumber" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="identificationType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de documento *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || "DNI"}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-referee-identificationType">
+                            <SelectValue placeholder="Seleccionar tipo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.entries(identificationTypeLabels).map(([value, label]) => (
+                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="identificationNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Número de identificación *</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-referee-identificationNumber" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}

@@ -375,20 +375,20 @@ export class DatabaseStorage implements IStorage {
   async getPlayers(teamId?: string): Promise<Player[]> {
     if (teamId) {
       const result = await this.pool.query(
-        `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players WHERE team_id = $1`,
+        `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_type AS "identificationType", identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players WHERE team_id = $1`,
         [teamId]
       );
       return result.rows;
     }
     const result = await this.pool.query(
-      `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players`
+      `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_type AS "identificationType", identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players`
     );
     return result.rows;
   }
 
   async getPlayer(id: string): Promise<Player | undefined> {
     const result = await this.pool.query(
-      `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players WHERE id = $1`,
+      `SELECT id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_type AS "identificationType", identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active FROM players WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -396,15 +396,16 @@ export class DatabaseStorage implements IStorage {
 
   async createPlayer(insertPlayer: InsertPlayer): Promise<Player> {
     const result = await this.pool.query(
-      `INSERT INTO players (id, team_id, first_name, last_name, jersey_number, position, identification_id, photo_urls, is_federated, federation_id, active)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active`,
+      `INSERT INTO players (id, team_id, first_name, last_name, jersey_number, position, identification_type, identification_id, photo_urls, is_federated, federation_id, active)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       RETURNING id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_type AS "identificationType", identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active`,
       [
         insertPlayer.teamId,
         insertPlayer.firstName,
         insertPlayer.lastName,
         insertPlayer.jerseyNumber,
         insertPlayer.position || null,
+        insertPlayer.identificationType || "DNI",
         insertPlayer.identificationId || null,
         insertPlayer.photoUrls || null,
         insertPlayer.isFederated ?? null,
@@ -425,6 +426,7 @@ export class DatabaseStorage implements IStorage {
     if (data.lastName !== undefined) { setClauses.push(`last_name = $${paramIndex++}`); values.push(data.lastName); }
     if (data.jerseyNumber !== undefined) { setClauses.push(`jersey_number = $${paramIndex++}`); values.push(data.jerseyNumber); }
     if (data.position !== undefined) { setClauses.push(`position = $${paramIndex++}`); values.push(data.position); }
+    if (data.identificationType !== undefined) { setClauses.push(`identification_type = $${paramIndex++}`); values.push(data.identificationType); }
     if (data.identificationId !== undefined) { setClauses.push(`identification_id = $${paramIndex++}`); values.push(data.identificationId); }
     if (data.photoUrls !== undefined) { setClauses.push(`photo_urls = $${paramIndex++}`); values.push(data.photoUrls); }
     if (data.isFederated !== undefined) { setClauses.push(`is_federated = $${paramIndex++}`); values.push(data.isFederated); }
@@ -436,7 +438,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE players SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active`,
+       RETURNING id, team_id AS "teamId", first_name AS "firstName", last_name AS "lastName", jersey_number AS "jerseyNumber", position, identification_type AS "identificationType", identification_id AS "identificationId", photo_urls AS "photoUrls", is_federated AS "isFederated", federation_id AS "federationId", active`,
       values
     );
     return result.rows[0] || undefined;
@@ -834,14 +836,14 @@ export class DatabaseStorage implements IStorage {
 
   async getRefereeProfiles(): Promise<RefereeProfile[]> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles`
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles`
     );
     return result.rows;
   }
 
   async getRefereeProfile(userId: string): Promise<RefereeProfile | undefined> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles WHERE user_id = $1`,
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles WHERE user_id = $1`,
       [userId]
     );
     return result.rows[0] || undefined;
@@ -849,7 +851,7 @@ export class DatabaseStorage implements IStorage {
 
   async getRefereeProfileById(id: string): Promise<RefereeProfile | undefined> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles WHERE id = $1`,
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM referee_profiles WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -857,10 +859,10 @@ export class DatabaseStorage implements IStorage {
 
   async createRefereeProfile(userId: string, profile: InsertRefereeProfile): Promise<RefereeProfile> {
     const result = await this.pool.query(
-      `INSERT INTO referee_profiles (id, user_id, full_name, identification_number, phone, email, association, years_of_experience, observations, status, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
-      [userId, profile.fullName, profile.identificationNumber, profile.phone, profile.email, profile.association || null, profile.yearsOfExperience ?? null, profile.observations || null, profile.status || "ACTIVO"]
+      `INSERT INTO referee_profiles (id, user_id, full_name, identification_type, identification_number, phone, email, association, years_of_experience, observations, status, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [userId, profile.fullName, profile.identificationType || "DNI", profile.identificationNumber, profile.phone, profile.email, profile.association || null, profile.yearsOfExperience ?? null, profile.observations || null, profile.status || "ACTIVO"]
     );
     return result.rows[0];
   }
@@ -871,6 +873,7 @@ export class DatabaseStorage implements IStorage {
     let paramIndex = 1;
 
     if (data.fullName !== undefined) { setClauses.push(`full_name = $${paramIndex++}`); values.push(data.fullName); }
+    if (data.identificationType !== undefined) { setClauses.push(`identification_type = $${paramIndex++}`); values.push(data.identificationType); }
     if (data.identificationNumber !== undefined) { setClauses.push(`identification_number = $${paramIndex++}`); values.push(data.identificationNumber); }
     if (data.phone !== undefined) { setClauses.push(`phone = $${paramIndex++}`); values.push(data.phone); }
     if (data.email !== undefined) { setClauses.push(`email = $${paramIndex++}`); values.push(data.email); }
@@ -886,7 +889,7 @@ export class DatabaseStorage implements IStorage {
     values.push(userId);
     const result = await this.pool.query(
       `UPDATE referee_profiles SET ${setClauses.join(', ')} WHERE user_id = $${paramIndex}
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
       values
     );
     return result.rows[0] || undefined;
@@ -898,6 +901,7 @@ export class DatabaseStorage implements IStorage {
     let paramIndex = 1;
 
     if (data.fullName !== undefined) { setClauses.push(`full_name = $${paramIndex++}`); values.push(data.fullName); }
+    if (data.identificationType !== undefined) { setClauses.push(`identification_type = $${paramIndex++}`); values.push(data.identificationType); }
     if (data.identificationNumber !== undefined) { setClauses.push(`identification_number = $${paramIndex++}`); values.push(data.identificationNumber); }
     if (data.phone !== undefined) { setClauses.push(`phone = $${paramIndex++}`); values.push(data.phone); }
     if (data.email !== undefined) { setClauses.push(`email = $${paramIndex++}`); values.push(data.email); }
@@ -913,7 +917,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE referee_profiles SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, association, years_of_experience AS "yearsOfExperience", observations, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
       values
     );
     return result.rows[0] || undefined;
@@ -925,14 +929,14 @@ export class DatabaseStorage implements IStorage {
 
   async getCaptainProfiles(): Promise<CaptainProfile[]> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles`
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles`
     );
     return result.rows;
   }
 
   async getCaptainProfile(userId: string): Promise<CaptainProfile | undefined> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles WHERE user_id = $1`,
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles WHERE user_id = $1`,
       [userId]
     );
     return result.rows[0] || undefined;
@@ -940,7 +944,7 @@ export class DatabaseStorage implements IStorage {
 
   async getCaptainProfileById(id: string): Promise<CaptainProfile | undefined> {
     const result = await this.pool.query(
-      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles WHERE id = $1`,
+      `SELECT id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt" FROM captain_profiles WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -948,10 +952,10 @@ export class DatabaseStorage implements IStorage {
 
   async createCaptainProfile(userId: string, profile: InsertCaptainProfile): Promise<CaptainProfile> {
     const result = await this.pool.query(
-      `INSERT INTO captain_profiles (id, user_id, full_name, identification_number, phone, email, address, emergency_contact, emergency_phone, observations, created_at, updated_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
-      [userId, profile.fullName, profile.identificationNumber, profile.phone, profile.email, profile.address || null, profile.emergencyContact || null, profile.emergencyPhone || null, profile.observations || null]
+      `INSERT INTO captain_profiles (id, user_id, full_name, identification_type, identification_number, phone, email, address, emergency_contact, emergency_phone, observations, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [userId, profile.fullName, profile.identificationType || "DNI", profile.identificationNumber, profile.phone, profile.email, profile.address || null, profile.emergencyContact || null, profile.emergencyPhone || null, profile.observations || null]
     );
     return result.rows[0];
   }
@@ -962,6 +966,7 @@ export class DatabaseStorage implements IStorage {
     let paramIndex = 1;
 
     if (data.fullName !== undefined) { setClauses.push(`full_name = $${paramIndex++}`); values.push(data.fullName); }
+    if (data.identificationType !== undefined) { setClauses.push(`identification_type = $${paramIndex++}`); values.push(data.identificationType); }
     if (data.identificationNumber !== undefined) { setClauses.push(`identification_number = $${paramIndex++}`); values.push(data.identificationNumber); }
     if (data.phone !== undefined) { setClauses.push(`phone = $${paramIndex++}`); values.push(data.phone); }
     if (data.email !== undefined) { setClauses.push(`email = $${paramIndex++}`); values.push(data.email); }
@@ -977,7 +982,7 @@ export class DatabaseStorage implements IStorage {
     values.push(userId);
     const result = await this.pool.query(
       `UPDATE captain_profiles SET ${setClauses.join(', ')} WHERE user_id = $${paramIndex}
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
       values
     );
     return result.rows[0] || undefined;
@@ -989,6 +994,7 @@ export class DatabaseStorage implements IStorage {
     let paramIndex = 1;
 
     if (data.fullName !== undefined) { setClauses.push(`full_name = $${paramIndex++}`); values.push(data.fullName); }
+    if (data.identificationType !== undefined) { setClauses.push(`identification_type = $${paramIndex++}`); values.push(data.identificationType); }
     if (data.identificationNumber !== undefined) { setClauses.push(`identification_number = $${paramIndex++}`); values.push(data.identificationNumber); }
     if (data.phone !== undefined) { setClauses.push(`phone = $${paramIndex++}`); values.push(data.phone); }
     if (data.email !== undefined) { setClauses.push(`email = $${paramIndex++}`); values.push(data.email); }
@@ -1004,7 +1010,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE captain_profiles SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
+       RETURNING id, user_id AS "userId", full_name AS "fullName", identification_type AS "identificationType", identification_number AS "identificationNumber", phone, email, address, emergency_contact AS "emergencyContact", emergency_phone AS "emergencyPhone", observations, created_at AS "createdAt", updated_at AS "updatedAt"`,
       values
     );
     return result.rows[0] || undefined;

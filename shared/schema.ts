@@ -238,6 +238,7 @@ export interface Player {
   lastName: string;
   jerseyNumber: number;
   position?: string;
+  identificationType?: string;
   identificationId?: string;
   photoUrls?: string[];
   isFederated?: boolean;
@@ -251,6 +252,7 @@ export const insertPlayerSchema = z.object({
   lastName: z.string().min(2, "El apellido debe tener al menos 2 caracteres"),
   jerseyNumber: z.number().min(1).max(99, "Número de camiseta entre 1 y 99"),
   position: z.string().optional(),
+  identificationType: z.enum(["DNI", "NIE", "PASAPORTE"]).default("DNI"),
   identificationId: z.string().optional(),
   photoUrls: z.array(z.string()).optional(),
   isFederated: z.boolean().optional(),
@@ -463,10 +465,23 @@ export const RefereeStatus = {
 } as const;
 export type RefereeStatus = (typeof RefereeStatus)[keyof typeof RefereeStatus];
 
+export const IdentificationTypes = {
+  DNI: "DNI",
+  NIE: "NIE",
+  PASAPORTE: "PASAPORTE",
+} as const;
+export type IdentificationType = (typeof IdentificationTypes)[keyof typeof IdentificationTypes];
+export const identificationTypeLabels: Record<IdentificationType, string> = {
+  DNI: "DNI",
+  NIE: "NIE",
+  PASAPORTE: "Pasaporte",
+};
+
 export interface RefereeProfile {
   id: string;
   userId: string;
   fullName: string;
+  identificationType?: string;
   identificationNumber: string;
   phone: string;
   email: string;
@@ -480,6 +495,7 @@ export interface RefereeProfile {
 
 export const insertRefereeProfileSchema = z.object({
   fullName: z.string().min(3, "El nombre completo debe tener al menos 3 caracteres"),
+  identificationType: z.enum(["DNI", "NIE", "PASAPORTE"]).default("DNI"),
   identificationNumber: z.string().min(5, "El número de identificación es requerido"),
   phone: z.string().min(8, "El teléfono debe tener al menos 8 caracteres"),
   email: z.string().email("Email inválido"),
@@ -495,6 +511,7 @@ export interface CaptainProfile {
   id: string;
   userId: string;
   fullName: string;
+  identificationType?: string;
   identificationNumber: string;
   phone: string;
   email: string;
@@ -508,6 +525,7 @@ export interface CaptainProfile {
 
 export const insertCaptainProfileSchema = z.object({
   fullName: z.string().min(3, "El nombre completo debe tener al menos 3 caracteres"),
+  identificationType: z.enum(["DNI", "NIE", "PASAPORTE"]).default("DNI"),
   identificationNumber: z.string().min(5, "El número de identificación es requerido"),
   phone: z.string().min(8, "El teléfono debe tener al menos 8 caracteres"),
   email: z.string().email("Email inválido"),
