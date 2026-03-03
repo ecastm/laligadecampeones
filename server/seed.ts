@@ -270,10 +270,10 @@ async function restoreOrphanedGalleryPhotos() {
     const existingMediaUrls = new Set(existingMediaRes.rows.map((r: any) => r.url));
 
     let restored = 0;
-    const baseParts = parts.length;
     for (const file of files) {
-      const fileParts = file.name.split("/");
-      const entityId = fileParts.slice(baseParts).join("/");
+      const prefixIdx = file.name.indexOf("/uploads/");
+      if (prefixIdx === -1) continue;
+      const entityId = file.name.slice(prefixIdx + 1);
       const objectPath = `/objects/${entityId}`;
 
       if (knownUrls.has(objectPath)) continue;
