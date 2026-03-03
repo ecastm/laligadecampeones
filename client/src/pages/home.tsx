@@ -310,73 +310,71 @@ export default function Home() {
       </nav>
 
       {/* Hero Section with Football Image */}
-      <section className="relative min-h-[600px] overflow-hidden">
+      <section className="relative min-h-[420px] sm:min-h-[480px] overflow-hidden">
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroFootball})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0D0D0D]/95 via-[#0D0D0D]/85 to-[#0D0D0D]/95" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/85 via-[#0D0D0D]/50 to-[#0D0D0D]/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D]/60 via-transparent to-[#0D0D0D]/20" />
 
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-sport-green via-primary to-sport-green" />
 
-        <div className="container relative mx-auto px-4 py-24 sm:py-32">
-          <div className="max-w-2xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 backdrop-blur-sm" data-testid="badge-hero">
-              <Zap className="h-3.5 w-3.5 text-primary" />
-              <span className="text-sm font-semibold text-primary tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
+        <div className="container relative mx-auto px-4 py-12 sm:py-16">
+          <div className="max-w-lg">
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-sport-green/50 bg-sport-green/20 px-3 py-1 backdrop-blur-sm" data-testid="badge-hero">
+              <Zap className="h-3 w-3 text-sport-green" />
+              <span className="text-xs font-semibold text-sport-green tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
             </div>
             <h1
-              className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+              className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
               data-testid="text-hero-title"
             >
               <span className="text-white drop-shadow-lg">Bienvenidos a</span>
-              <span className="block text-primary drop-shadow-[0_2px_10px_rgba(198,160,82,0.3)] mt-1">LA LIGA DE CAMPEONES</span>
+              <span className="block text-primary drop-shadow-[0_2px_8px_rgba(198,160,82,0.25)] mt-0.5">LA LIGA DE CAMPEONES</span>
             </h1>
-            <p className="mb-8 max-w-xl text-lg text-white/80 sm:text-xl leading-relaxed">
+            <p className="mb-5 max-w-md text-sm text-white/75 sm:text-base leading-relaxed">
               Inscribe a tu equipo y demuestra de qué están hechos. Competencia
-              real, organización profesional, y la oportunidad de consagrarse
-              campeones.
+              real, organización profesional.
             </p>
 
-            <div className="mb-10 grid gap-3 sm:grid-cols-2 max-w-lg">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-white/90 text-sm font-medium">Gran ubicación con fácil acceso</span>
+            <div className="mb-6 grid gap-2 sm:grid-cols-2 max-w-md">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <span className="text-white/85 text-xs font-medium">Gran ubicación con fácil acceso</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-white/90 text-sm font-medium">Árbitros certificados</span>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <span className="text-white/85 text-xs font-medium">Árbitros certificados</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-white/90 text-sm font-medium">Premios para los mejores</span>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <span className="text-white/85 text-xs font-medium">Premios para los mejores</span>
               </div>
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
-                <span className="text-white/90 text-sm font-medium">Estadísticas en tiempo real</span>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <span className="text-white/85 text-xs font-medium">Estadísticas en tiempo real</span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button
-                size="lg"
-                className="gap-2 text-base font-bold shadow-lg shadow-primary/20"
+                size="default"
+                className="gap-2 text-sm font-bold shadow-lg shadow-primary/20"
                 data-testid="button-register-team"
                 onClick={() => setShowContactForm(true)}
               >
-                <UserPlus className="h-5 w-5" />
+                <UserPlus className="h-4 w-4" />
                 Inscribir Mi Equipo
               </Button>
               <Button
-                size="lg"
+                size="default"
                 variant="outline"
-                className="gap-2 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary backdrop-blur-sm font-semibold"
+                className="gap-2 border-primary/40 text-primary hover:bg-primary/10 backdrop-blur-sm font-semibold text-sm"
                 data-testid="button-request-info"
                 onClick={() => setShowContactForm(true)}
               >
-                <Info className="h-5 w-5" />
+                <Info className="h-4 w-4" />
                 Más Información
               </Button>
             </div>
@@ -385,92 +383,86 @@ export default function Home() {
       </section>
 
       {/* Why Join Section */}
-      <section className="py-16 bg-card">
+      <section className="py-10 bg-card">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-6">
             <h2
-              className="text-3xl font-bold mb-4"
+              className="text-2xl font-bold mb-2"
               data-testid="text-why-join-title"
             >
               ¿Por Qué Inscribir a Tu Equipo?
             </h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-sm max-w-xl mx-auto">
               No es solo un torneo, es una experiencia competitiva de primer
               nivel para equipos que buscan superarse
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8 max-w-5xl mx-auto">
-            {/* Benefit 1 */}
+          <div className="flex flex-wrap justify-center gap-4 max-w-4xl mx-auto">
             <a
               href="https://maps.google.com/?q=Portada+Alta+C.F.,+C.+James+Joyce,+47,+Teatinos-Universidad,+29010+Málaga"
               target="_blank"
               rel="noopener noreferrer"
-              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]"
               data-testid="link-instalaciones"
             >
               <img
                 src={stadiumImage}
                 alt="Instalaciones"
-                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+                className="h-40 w-full object-cover transition-transform group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-              <div className="absolute bottom-0 p-6 text-white">
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-                  <MapPin className="h-5 w-5" />
+              <div className="absolute bottom-0 p-4 text-white">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-sport-green">
+                  <MapPin className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-bold">Instalaciones de Primera</h3>
-                <p className="text-sm text-white/70">
-                  Canchas en óptimas condiciones, iluminación profesional y
-                  vestuarios equipados
+                <h3 className="text-sm font-bold">Instalaciones de Primera</h3>
+                <p className="text-xs text-white/70">
+                  Canchas en óptimas condiciones con iluminación profesional
                 </p>
               </div>
             </a>
 
-            {/* Benefit 2 */}
             <div
-              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]"
               onClick={() => setShowPrizes(true)}
               data-testid="link-premios"
             >
               <img
                 src={trophyImage}
                 alt="Premios"
-                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+                className="h-40 w-full object-cover transition-transform group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-              <div className="absolute bottom-0 p-6 text-white">
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-                  <Trophy className="h-5 w-5" />
+              <div className="absolute bottom-0 p-4 text-white">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                  <Trophy className="h-4 w-4 text-primary-foreground" />
                 </div>
-                <h3 className="text-lg font-bold">Premios y Reconocimientos</h3>
-                <p className="text-sm text-white/70">
-                  Trofeos, medallas, premios en efectivo y reconocimiento a los
-                  mejores jugadores
+                <h3 className="text-sm font-bold">Premios y Reconocimientos</h3>
+                <p className="text-xs text-white/70">
+                  Trofeos, medallas y premios en efectivo
                 </p>
               </div>
             </div>
 
-            {/* Benefit 3 */}
             <div
-              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1.5rem)]"
+              className="group relative overflow-hidden rounded-md cursor-pointer w-full md:w-[calc(50%-0.5rem)] lg:w-[calc(33.333%-0.75rem)]"
               onClick={() => setShowCompetencia(true)}
               data-testid="link-competencia"
             >
               <img
                 src={teamHuddle}
                 alt="Competencia"
-                className="h-48 w-full object-cover transition-transform group-hover:scale-105"
+                className="h-40 w-full object-cover transition-transform group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-              <div className="absolute bottom-0 p-6 text-white">
-                <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary">
-                  <Users className="h-5 w-5" />
+              <div className="absolute bottom-0 p-4 text-white">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-sport-green">
+                  <Users className="h-4 w-4 text-white" />
                 </div>
-                <h3 className="text-lg font-bold">Competencia Real</h3>
-                <p className="text-sm text-white/70">
-                  Enfrenta a los mejores equipos de la zona en partidos
-                  emocionantes cada semana
+                <h3 className="text-sm font-bold">Competencia Real</h3>
+                <p className="text-xs text-white/70">
+                  Enfrenta a los mejores equipos cada semana
                 </p>
               </div>
             </div>
@@ -479,28 +471,28 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-y bg-background py-12">
+      <section className="border-y border-sport-green/20 bg-background py-8">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="text-center" data-testid="stat-teams">
-              <p className="text-4xl font-bold text-primary">50+</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-3xl font-bold text-primary">50+</p>
+              <p className="text-xs text-muted-foreground">
                 Equipos Compitiendo
               </p>
             </div>
             <div className="text-center" data-testid="stat-players">
-              <p className="text-4xl font-bold text-primary">800+</p>
-              <p className="text-sm text-muted-foreground">Jugadores Activos</p>
+              <p className="text-3xl font-bold text-sport-green">800+</p>
+              <p className="text-xs text-muted-foreground">Jugadores Activos</p>
             </div>
             <div className="text-center" data-testid="stat-matches">
-              <p className="text-4xl font-bold text-primary">200+</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-3xl font-bold text-primary">200+</p>
+              <p className="text-xs text-muted-foreground">
                 Partidos por Temporada
               </p>
             </div>
             <div className="text-center" data-testid="stat-seasons">
-              <p className="text-4xl font-bold text-primary">10</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-3xl font-bold text-sport-green">10</p>
+              <p className="text-xs text-muted-foreground">
                 Años de Experiencia
               </p>
             </div>
@@ -515,11 +507,11 @@ export default function Home() {
       <PhotoGallerySection />
 
       {/* Divisions Section - Tournament Viewer */}
-      <section className="py-12 sm:py-16" id="torneos">
+      <section className="py-8 sm:py-10" id="torneos">
         <div className="container mx-auto px-4">
-          <div className="mb-8 text-center">
+          <div className="mb-6 text-center">
             <h2
-              className="mb-2 text-3xl font-bold"
+              className="mb-1 text-2xl font-bold"
               data-testid="text-divisions-title"
             >
               Ver Torneos en Curso
@@ -527,37 +519,37 @@ export default function Home() {
           </div>
 
           {/* Division Selector */}
-          <div className="mb-8 flex flex-wrap justify-center gap-4">
+          <div className="mb-6 flex flex-wrap justify-center gap-3">
             {loadingDivisions ? (
-              <div className="flex gap-4">
-                <Skeleton className="h-24 w-48" />
-                <Skeleton className="h-24 w-48" />
+              <div className="flex gap-3">
+                <Skeleton className="h-16 w-40" />
+                <Skeleton className="h-16 w-40" />
               </div>
             ) : (
               divisions.map((division) => (
                 <button
                   key={division.id}
                   onClick={() => handleDivisionSelect(division.id)}
-                  className={`group relative overflow-hidden rounded-md border-2 p-6 text-left transition-all hover-elevate ${
+                  className={`group relative overflow-hidden rounded-md border-2 p-4 text-left transition-all hover-elevate ${
                     selectedDivision === division.id
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
+                      ? "border-sport-green bg-sport-green/10"
+                      : "border-border hover:border-sport-green/50"
                   }`}
                   data-testid={`button-division-${division.id}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full p-2 bg-primary/20">
-                      <Trophy className="h-6 w-6 text-primary" />
+                  <div className="flex items-center gap-2">
+                    <div className="rounded-full p-1.5 bg-sport-green/20">
+                      <Trophy className="h-5 w-5 text-sport-green" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">{division.name}</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="text-sm font-semibold">{division.name}</h3>
+                      <p className="text-xs text-muted-foreground">
                         {division.description}
                       </p>
                     </div>
                   </div>
                   {selectedDivision === division.id && (
-                    <ChevronRight className="absolute right-2 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
+                    <ChevronRight className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-sport-green" />
                   )}
                 </button>
               ))
@@ -1186,13 +1178,13 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="border-t bg-card py-12 sm:py-16">
+      <section className="border-t border-sport-green/20 bg-card py-8 sm:py-10">
         <div className="container mx-auto px-4">
-          <div className="mb-8 text-center">
-            <h2 className="mb-2 text-3xl font-bold">
+          <div className="mb-5 text-center">
+            <h2 className="mb-1 text-2xl font-bold">
               Lo Que Tu Equipo Obtiene
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Beneficios exclusivos para todos los equipos inscritos
             </p>
           </div>
@@ -1278,49 +1270,48 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-12 sm:py-16">
+      <section className="py-8 sm:py-10">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">¿Listo Para Competir?</h2>
-            <p className="text-muted-foreground">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-1">¿Listo Para Competir?</h2>
+            <p className="text-muted-foreground text-sm">
               Inscribe a tu equipo ahora y sé parte de la mejor liga amateur
             </p>
           </div>
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             <Card
-              className="overflow-hidden border-primary/50"
+              className="overflow-hidden border-sport-green/40"
               data-testid="cta-register"
             >
-              <CardContent className="p-6 sm:p-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <UserPlus className="h-6 w-6" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sport-green text-white">
+                    <UserPlus className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xl font-bold">
+                    <h3 className="mb-1 text-lg font-bold">
                       Inscribe Tu Equipo Ahora
                     </h3>
-                    <p className="mb-4 text-muted-foreground">
-                      La temporada está por comenzar. No te quedes fuera de la
-                      competencia más emocionante de la región.
+                    <p className="mb-3 text-muted-foreground text-sm">
+                      La temporada está por comenzar. No te quedes fuera.
                     </p>
-                    <ul className="mb-6 space-y-2 text-sm">
+                    <ul className="mb-4 space-y-1.5 text-sm">
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
                         Mínimo 11 jugadores por equipo
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
                         Cuota de inscripción accesible
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-primary" />
+                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
                         Uniformes no incluidos
                       </li>
                     </ul>
                     <Button
-                      size="lg"
-                      className="gap-2"
+                      size="default"
+                      className="gap-2 text-sm"
                       data-testid="button-cta-register"
                       onClick={() => setShowContactForm(true)}
                     >
@@ -1333,22 +1324,21 @@ export default function Home() {
             </Card>
 
             <Card className="overflow-hidden" data-testid="cta-info">
-              <CardContent className="p-6 sm:p-8">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Clock className="h-6 w-6" />
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Clock className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="mb-2 text-xl font-bold">¿Tienes Dudas?</h3>
-                    <p className="mb-4 text-muted-foreground">
-                      Consulta sobre cuotas, horarios, requisitos o cualquier
-                      duda. Te respondemos en menos de 24 horas.
+                    <h3 className="mb-1 text-lg font-bold">¿Tienes Dudas?</h3>
+                    <p className="mb-3 text-muted-foreground text-sm">
+                      Consulta sobre cuotas, horarios o requisitos. Te respondemos en menos de 24 horas.
                     </p>
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <Button
-                        size="lg"
+                        size="default"
                         variant="outline"
-                        className="gap-2"
+                        className="gap-2 text-sm"
                         data-testid="button-cta-info"
                         onClick={() => setShowContactForm(true)}
                       >
@@ -1361,7 +1351,7 @@ export default function Home() {
                         rel="noopener noreferrer"
                         data-testid="link-instagram-cta"
                       >
-                        <Button size="lg" variant="outline" className="gap-2">
+                        <Button size="default" variant="outline" className="gap-2 text-sm">
                           <SiInstagram className="h-4 w-4" />
                           Instagram
                         </Button>
@@ -1605,11 +1595,11 @@ function UpcomingMatchesSection() {
 
   if (isLoading) {
     return (
-      <section className="py-12 sm:py-16 bg-card">
+      <section className="py-8 sm:py-10 bg-card">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <Skeleton className="h-8 w-64 mx-auto mb-2" />
-            <Skeleton className="h-4 w-48 mx-auto" />
+          <div className="text-center mb-5">
+            <Skeleton className="h-6 w-48 mx-auto mb-1" />
+            <Skeleton className="h-3 w-36 mx-auto" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map(i => <Skeleton key={i} className="aspect-square rounded-md" />)}
@@ -1622,71 +1612,71 @@ function UpcomingMatchesSection() {
   if (upcomingMatches.length === 0) return null;
 
   return (
-    <section className="py-12 sm:py-16 bg-card" data-testid="section-upcoming-matches">
+    <section className="py-8 sm:py-10 bg-card" data-testid="section-upcoming-matches">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold mb-2" data-testid="text-upcoming-title">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold mb-1" data-testid="text-upcoming-title">
             Próximos Partidos
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No te pierdas la acción en la cancha
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {upcomingMatches.map((match) => (
             <div key={match.id} className="group cursor-pointer" data-testid={`card-upcoming-match-${match.id}`}>
-              <div className="overflow-hidden rounded-lg border shadow-md transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#0D0D0D] to-[#1a1a1a]">
-                <div className="p-4 flex flex-col items-center gap-3">
-                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-primary/40 text-primary bg-primary/10">
+              <div className="overflow-hidden rounded-md border border-sport-green/20 shadow-sm transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#0D0D0D] to-[#161616]">
+                <div className="p-3 flex flex-col items-center gap-2">
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/30 text-primary bg-primary/10">
                     {match.stage && match.stage !== "JORNADA"
                       ? MatchStageLabels[match.stage as MatchStage]
                       : `Jornada ${match.roundNumber}`}
                   </Badge>
 
-                  <div className="flex items-center justify-center gap-4 w-full">
+                  <div className="flex items-center justify-center gap-2 w-full">
                     <div className="text-center flex-1">
                       {match.homeTeam?.logoUrl ? (
-                        <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-primary mx-auto shadow-lg" />
+                        <img src={match.homeTeam.logoUrl} alt={match.homeTeam.name} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-primary/60 mx-auto" />
                       ) : (
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-bold text-lg mx-auto">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm mx-auto">
                           {match.homeTeam ? match.homeTeam.name.charAt(0) : "?"}
                         </div>
                       )}
-                      <p className="text-white font-bold text-xs mt-2 leading-tight truncate max-w-[100px] mx-auto">
+                      <p className="text-white font-semibold text-[10px] mt-1 leading-tight truncate max-w-[80px] mx-auto">
                         {match.homeTeam?.name || "Por definir"}
                       </p>
                     </div>
 
-                    <p className="text-primary font-black text-2xl shrink-0">VS</p>
+                    <p className="text-primary font-black text-lg shrink-0">VS</p>
 
                     <div className="text-center flex-1">
                       {match.awayTeam?.logoUrl ? (
-                        <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-14 w-14 sm:h-16 sm:w-16 rounded-full object-cover border-2 border-primary mx-auto shadow-lg" />
+                        <img src={match.awayTeam.logoUrl} alt={match.awayTeam.name} className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover border-2 border-primary/60 mx-auto" />
                       ) : (
-                        <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-bold text-lg mx-auto">
+                        <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-bold text-sm mx-auto">
                           {match.awayTeam ? match.awayTeam.name.charAt(0) : "?"}
                         </div>
                       )}
-                      <p className="text-white font-bold text-xs mt-2 leading-tight truncate max-w-[100px] mx-auto">
+                      <p className="text-white font-semibold text-[10px] mt-1 leading-tight truncate max-w-[80px] mx-auto">
                         {match.awayTeam?.name || "Por definir"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="w-full border-t border-white/10 pt-2 text-center space-y-0.5">
-                    <p className="text-primary font-semibold text-xs">
+                  <div className="w-full border-t border-silver/10 pt-1.5 text-center space-y-0.5">
+                    <p className="text-sport-green font-semibold text-[10px]">
                       {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                        ? format(new Date(match.dateTime), "EEEE d 'de' MMMM", { locale: es })
+                        ? format(new Date(match.dateTime), "EEE d MMM", { locale: es })
                         : "Fecha por confirmar"}
                     </p>
-                    <p className="text-white font-bold text-sm">
+                    <p className="text-white font-bold text-xs">
                       {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
-                        ? format(new Date(match.dateTime), "HH:mm", { locale: es }) + " hrs"
+                        ? format(new Date(match.dateTime), "HH:mm", { locale: es }) + "h"
                         : ""}
                     </p>
                     {match.field && match.field !== "Por asignar" && (
-                      <p className="text-silver text-[10px]">
+                      <p className="text-silver-muted text-[9px]">
                         {match.field}
                       </p>
                     )}
@@ -1697,10 +1687,10 @@ function UpcomingMatchesSection() {
           ))}
         </div>
 
-        <div className="mt-10 text-center">
+        <div className="mt-6 text-center">
           <a href="/calendario" data-testid="link-full-calendar">
-            <Button variant="outline" size="lg" className="gap-2">
-              <Calendar className="h-5 w-5" />
+            <Button variant="outline" size="default" className="gap-2 text-sm">
+              <Calendar className="h-4 w-4" />
               Ver Calendario Completo
             </Button>
           </a>
@@ -1744,10 +1734,10 @@ function PhotoGallerySection() {
 
   if (isLoading) {
     return (
-      <section className="bg-muted/30 py-12 sm:py-16" data-testid="section-gallery">
+      <section className="bg-muted/30 py-8 sm:py-10" data-testid="section-gallery">
         <div className="container mx-auto px-4">
-          <div className="mb-8 text-center">
-            <h2 className="mb-2 text-3xl font-bold">Galería de Fotos</h2>
+          <div className="mb-5 text-center">
+            <h2 className="mb-1 text-2xl font-bold">Galería de Fotos</h2>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
@@ -1804,17 +1794,17 @@ function PhotoGallerySection() {
 
   return (
     <>
-      <section className="bg-muted/30 py-12 sm:py-16" data-testid="section-gallery" id="galeria">
+      <section className="bg-muted/30 py-8 sm:py-10" data-testid="section-gallery" id="galeria">
         <div className="container mx-auto px-4">
-          <div className="mb-8 text-center">
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-              <Camera className="h-4 w-4" />
+          <div className="mb-5 text-center">
+            <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-sport-green/10 px-3 py-1 text-xs font-medium text-sport-green">
+              <Camera className="h-3.5 w-3.5" />
               Momentos de la Liga
             </div>
-            <h2 className="mb-2 text-3xl font-bold" data-testid="text-gallery-title">
+            <h2 className="mb-1 text-2xl font-bold" data-testid="text-gallery-title">
               Galería de Fotos
             </h2>
-            <p className="mx-auto max-w-2xl text-muted-foreground">
+            <p className="mx-auto max-w-xl text-muted-foreground text-sm">
               Revive los mejores momentos de nuestros torneos
             </p>
           </div>
