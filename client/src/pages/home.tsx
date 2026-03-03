@@ -311,59 +311,58 @@ export default function Home() {
 
       {/* Hero Section with Football Image */}
       <section className="relative min-h-[600px] overflow-hidden">
-        {/* Background Image with Overlay */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105"
           style={{ backgroundImage: `url(${heroFootball})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/92 via-[#0D0D0D]/80 to-[#111111]/60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0D0D0D]/95 via-[#0D0D0D]/85 to-[#0D0D0D]/95" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/60 to-transparent" />
 
-        <div className="container relative mx-auto px-4 py-20 sm:py-28">
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+
+        <div className="container relative mx-auto px-4 py-24 sm:py-32">
           <div className="max-w-2xl">
-            <Badge
-              className="mb-6 bg-primary/90 text-primary-foreground"
-              data-testid="badge-hero"
-            >
-              <Zap className="mr-1 h-3 w-3" />
-              Inscripciones Abiertas - Temporada 2026
-            </Badge>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 backdrop-blur-sm" data-testid="badge-hero">
+              <Zap className="h-3.5 w-3.5 text-primary" />
+              <span className="text-sm font-semibold text-primary tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
+            </div>
             <h1
-              className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl"
+              className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
               data-testid="text-hero-title"
             >
-              Bienvenidos a
-              <span className="block text-primary">LA LIGA DE CAMPEONES</span>
+              <span className="text-white drop-shadow-lg">Bienvenidos a</span>
+              <span className="block text-primary drop-shadow-[0_2px_10px_rgba(198,160,82,0.3)] mt-1">LA LIGA DE CAMPEONES</span>
             </h1>
-            <p className="mb-8 text-lg text-gray-200 sm:text-xl">
+            <p className="mb-8 max-w-xl text-lg text-white/80 sm:text-xl leading-relaxed">
               Inscribe a tu equipo y demuestra de qué están hechos. Competencia
               real, organización profesional, y la oportunidad de consagrarse
               campeones.
             </p>
 
-            {/* Key Benefits */}
-            <div className="mb-8 grid gap-3 sm:grid-cols-2">
-              <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                <span>Gran ubicación con facil acceso</span>
+            <div className="mb-10 grid gap-3 sm:grid-cols-2 max-w-lg">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                <span className="text-white/90 text-sm font-medium">Gran ubicación con fácil acceso</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                <span>Árbitros certificados</span>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                <span className="text-white/90 text-sm font-medium">Árbitros certificados</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                <span>Premios para los mejores</span>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                <span className="text-white/90 text-sm font-medium">Premios para los mejores</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-200">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                <span>Estadísticas en tiempo real</span>
+              <div className="flex items-center gap-2.5">
+                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                <span className="text-white/90 text-sm font-medium">Estadísticas en tiempo real</span>
               </div>
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row">
               <Button
                 size="lg"
-                className="gap-2 text-base"
+                className="gap-2 text-base font-bold shadow-lg shadow-primary/20"
                 data-testid="button-register-team"
                 onClick={() => setShowContactForm(true)}
               >
@@ -373,7 +372,7 @@ export default function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="gap-2 border-white/30 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                className="gap-2 border-primary/40 text-primary hover:bg-primary/10 hover:text-primary backdrop-blur-sm font-semibold"
                 data-testid="button-request-info"
                 onClick={() => setShowContactForm(true)}
               >
@@ -421,7 +420,7 @@ export default function Home() {
                   <MapPin className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Instalaciones de Primera</h3>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-white/70">
                   Canchas en óptimas condiciones, iluminación profesional y
                   vestuarios equipados
                 </p>
@@ -445,7 +444,7 @@ export default function Home() {
                   <Trophy className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Premios y Reconocimientos</h3>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-white/70">
                   Trofeos, medallas, premios en efectivo y reconocimiento a los
                   mejores jugadores
                 </p>
@@ -469,7 +468,7 @@ export default function Home() {
                   <Users className="h-5 w-5" />
                 </div>
                 <h3 className="text-lg font-bold">Competencia Real</h3>
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-white/70">
                   Enfrenta a los mejores equipos de la zona en partidos
                   emocionantes cada semana
                 </p>
