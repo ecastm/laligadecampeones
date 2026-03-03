@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import defaultLogo from "@assets/image_1771352006885.png";
+import defaultLogo from "@assets/WhatsApp_Image_2026-03-03_at_13.37.51_1772541588097.jpeg";
 
 interface SiteSettings {
   leagueName: string;
