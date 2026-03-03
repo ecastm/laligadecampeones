@@ -64,18 +64,19 @@ export default function AdminDashboard() {
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <Sidebar>
-          <SidebarHeader className="p-4 border-b">
+          <SidebarHeader className="p-4 border-b border-primary/30">
             <div className="flex items-center gap-3">
               <img src={logoUrl} alt="La Liga de Campeones" className="h-16 w-16 object-contain drop-shadow-[0_2px_8px_rgba(198,160,82,0.3)]" />
               <div className="flex-1 overflow-hidden">
-                <p className="font-semibold truncate">Panel Admin</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.name}</p>
+                <p className="font-semibold truncate text-primary">Panel Admin</p>
+                <p className="text-xs text-[#C0C0C0] truncate">{user?.name}</p>
               </div>
             </div>
+            <div className="mt-3 h-[2px] rounded-full bg-gradient-to-r from-emerald-400 via-primary to-emerald-400" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel>Gestión</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-[#C0C0C0] uppercase tracking-wider text-[10px] font-semibold">Gestión</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {menuItems.map((item) => (
@@ -85,7 +86,7 @@ export default function AdminDashboard() {
                         isActive={activeSection === item.id}
                         data-testid={`nav-${item.id}`}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -94,7 +95,7 @@ export default function AdminDashboard() {
               </SidebarGroupContent>
             </SidebarGroup>
             <SidebarGroup>
-              <SidebarGroupLabel>
+              <SidebarGroupLabel className="text-[#C0C0C0] uppercase tracking-wider text-[10px] font-semibold">
                 <Settings className="h-3.5 w-3.5 mr-1 inline" />
                 Configuración
               </SidebarGroupLabel>
@@ -107,7 +108,7 @@ export default function AdminDashboard() {
                         isActive={activeSection === item.id}
                         data-testid={`nav-${item.id}`}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -116,10 +117,10 @@ export default function AdminDashboard() {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <div className="mt-auto border-t p-4">
+          <div className="mt-auto border-t border-primary/20 p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-2 text-muted-foreground"
+              className="w-full justify-start gap-2 text-[#C0C0C0] hover:text-white"
               onClick={handleLogout}
               data-testid="button-logout"
             >
@@ -130,7 +131,8 @@ export default function AdminDashboard() {
         </Sidebar>
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-14 items-center justify-between gap-4 border-b bg-card px-4">
+          <header className="relative flex h-14 items-center justify-between gap-4 border-b border-primary/20 bg-card px-4">
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400/50 via-primary/50 to-emerald-400/50" />
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">
@@ -184,22 +186,25 @@ function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => 
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold">Bienvenido al Panel de Administración</h2>
-        <p className="text-muted-foreground">
+        <p className="text-[#C0C0C0]">
           Gestiona todos los aspectos del torneo desde este panel.
         </p>
+        <div className="mt-3 h-[2px] w-24 rounded-full bg-gradient-to-r from-emerald-400 to-primary" />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {overviewCards.map((card) => (
           <div
             key={card.title}
-            className="rounded-md border bg-card p-6 hover-elevate cursor-pointer"
+            className="group rounded-lg border border-[#C0C0C0]/20 bg-card p-6 hover-elevate cursor-pointer transition-all hover:border-primary/50"
             onClick={() => onNavigate(card.section)}
             data-testid={`card-${card.section}`}
           >
-            <card.icon className="h-8 w-8 text-primary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/10 transition-colors group-hover:bg-emerald-400/20">
+              <card.icon className="h-5 w-5 text-emerald-400" />
+            </div>
             <h3 className="mt-4 font-semibold">{card.title}</h3>
-            <p className="mt-1 text-sm text-muted-foreground">{card.description}</p>
+            <p className="mt-1 text-sm text-[#C0C0C0]">{card.description}</p>
           </div>
         ))}
       </div>

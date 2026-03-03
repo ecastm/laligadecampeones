@@ -69,18 +69,19 @@ export default function CaptainDashboard() {
     <SidebarProvider style={style as React.CSSProperties}>
       <div className="flex h-screen w-full">
         <Sidebar>
-          <SidebarHeader className="p-4 border-b">
+          <SidebarHeader className="p-4 border-b border-primary/30">
             <div className="flex items-center gap-3">
               <img src={logoUrl} alt="La Liga de Campeones" className="h-16 w-16 object-contain drop-shadow-[0_2px_8px_rgba(198,160,82,0.3)]" />
               <div className="flex-1 overflow-hidden">
-                <p className="font-semibold truncate">Panel Capitán</p>
-                <p className="text-xs text-muted-foreground truncate">{user?.name}</p>
+                <p className="font-semibold truncate text-primary">Panel Capitán</p>
+                <p className="text-xs text-[#C0C0C0] truncate">{user?.name}</p>
               </div>
             </div>
+            <div className="mt-3 h-[2px] rounded-full bg-gradient-to-r from-emerald-400 via-primary to-emerald-400" />
           </SidebarHeader>
           <SidebarContent>
             <SidebarGroup>
-              <SidebarGroupLabel>Mi Equipo</SidebarGroupLabel>
+              <SidebarGroupLabel className="text-[#C0C0C0] uppercase tracking-wider text-[10px] font-semibold">Mi Equipo</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {menuItems.map((item) => (
@@ -90,7 +91,7 @@ export default function CaptainDashboard() {
                         isActive={effectiveSection === item.id}
                         data-testid={`nav-${item.id}`}
                       >
-                        <item.icon className="h-4 w-4" />
+                        <item.icon className={`h-4 w-4 ${effectiveSection === item.id ? "text-emerald-400" : ""}`} />
                         <span>{item.title}</span>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -99,10 +100,10 @@ export default function CaptainDashboard() {
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
-          <div className="mt-auto border-t p-4">
+          <div className="mt-auto border-t border-primary/20 p-4">
             <Button
               variant="ghost"
-              className="w-full justify-start gap-2 text-muted-foreground"
+              className="w-full justify-start gap-2 text-[#C0C0C0] hover:text-white"
               onClick={handleLogout}
               data-testid="button-logout"
             >
@@ -113,7 +114,8 @@ export default function CaptainDashboard() {
         </Sidebar>
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-14 items-center justify-between gap-4 border-b bg-card px-4">
+          <header className="relative flex h-14 items-center justify-between gap-4 border-b border-primary/20 bg-card px-4">
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-emerald-400/50 via-primary/50 to-emerald-400/50" />
             <div className="flex items-center gap-2">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <h1 className="text-lg font-semibold">
