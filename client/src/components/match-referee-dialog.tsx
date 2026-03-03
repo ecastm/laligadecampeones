@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, MatchStageLabels, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type MatchStage } from "@shared/schema";
+import { matchResultSchema, MatchStageLabels, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type MatchStage, type MatchAttendance } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Eye, CircleAlert, Goal, Flag, Camera, X, Loader2, FileText } from "lucide-react";
+import { Plus, Trash2, Eye, CircleAlert, Goal, Flag, Camera, X, Loader2, FileText, UserCheck, UserX, ClipboardList } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
 import { format } from "date-fns";
@@ -595,11 +595,92 @@ export function SharedMatchDetailsDialog({
               </Card>
             )}
 
+            <SharedAttendanceView matchId={match.id} match={match} open={open} />
+
             <SharedEvidenceGallery matchId={match.id} open={open} />
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function SharedAttendanceView({ matchId, match, open }: { matchId: string; match: MatchWithTeams; open: boolean }) {
+  const { data: attendance = [] } = useQuery<MatchAttendance[]>({
+    queryKey: ["/api/admin/matches", matchId, "attendance"],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/matches/${matchId}/attendance`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  const { data: homePlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", match.homeTeamId, "players"],
+    queryFn: async () => {
+      const response = await fetch(`/api/teams/${match.homeTeamId}/players`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open && attendance.length > 0,
+  });
+
+  const { data: awayPlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", match.awayTeamId, "players"],
+    queryFn: async () => {
+      const response = await fetch(`/api/teams/${match.awayTeamId}/players`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open && attendance.length > 0,
+  });
+
+  if (attendance.length === 0) return null;
+
+  const homeAttendance = attendance.filter(a => a.teamId === match.homeTeamId);
+  const awayAttendance = attendance.filter(a => a.teamId === match.awayTeamId);
+  const allPlayers = [...homePlayers, ...awayPlayers];
+  const getPlayerName = (playerId: string) => {
+    const p = allPlayers.find(pl => pl.id === playerId);
+    return p ? `${p.firstName} ${p.lastName}` : "Desconocido";
+  };
+  const getPlayerNumber = (playerId: string) => {
+    const p = allPlayers.find(pl => pl.id === playerId);
+    return p ? `#${p.jerseyNumber}` : "";
+  };
+
+  const renderTeamAttendance = (teamAttendance: MatchAttendance[], teamName: string) => (
+    <div className="space-y-1">
+      <p className="text-xs font-semibold text-muted-foreground mb-2">{teamName}</p>
+      {teamAttendance.map(a => (
+        <div key={a.id} className={`flex items-center gap-2 text-sm px-2 py-1 rounded ${a.present ? "bg-emerald-500/10" : "bg-destructive/10"}`} data-testid={`attendance-view-${a.playerId}`}>
+          {a.present ? <UserCheck className="h-3.5 w-3.5 text-emerald-500" /> : <UserX className="h-3.5 w-3.5 text-destructive" />}
+          <span className="text-xs text-muted-foreground w-6">{getPlayerNumber(a.playerId)}</span>
+          <span>{getPlayerName(a.playerId)}</span>
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground mt-1">
+        Presentes: {teamAttendance.filter(a => a.present).length}/{teamAttendance.length}
+      </p>
+    </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <ClipboardList className="h-4 w-4" />
+          Asistencia
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {homeAttendance.length > 0 && renderTeamAttendance(homeAttendance, match.homeTeam?.name || "Local")}
+          {awayAttendance.length > 0 && renderTeamAttendance(awayAttendance, match.awayTeam?.name || "Visitante")}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

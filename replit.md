@@ -31,9 +31,9 @@ Canvas image generators (for match graphics, social media posts) use this black/
 - **User Roles**: ADMIN, CAPITAN, ARBITRO, MARKETING, each with specific permissions and dedicated dashboards.
 - **Tournament Management**: Create, edit, finalize, and archive tournaments. Supports various tournament types (League, Knockout, Groups + Playoffs) and divisions (e.g., Primera División, Segunda División). Dynamic tournament stages (phases) can be defined per tournament via the `tournament_stages` table, replacing the old hardcoded enum. Matches reference stages via `stage_id`.
 - **Automated Scheduling**: Implements a round-robin schedule generator using the circle method, handling odd numbers of teams and providing a preview before generation.
-- **Match Management**: Tracking of match status (PROGRAMADO, EN_CURSO, JUGADO), result submission by referees, and event logging (goals, cards).
+- **Match Management**: Tracking of match status (PROGRAMADO, EN_CURSO, JUGADO), result submission by referees, event logging (goals, cards), and player attendance tracking (pase de lista) by referees.
 - **Player & Team Management**: CRUD operations for teams and players, with captains managing their own team's roster. Identification documents support multiple types: DNI, NIE, and Pasaporte (stored as `identification_type` in captain_profiles, referee_profiles, and players tables).
-- **Financial Management**: Tracking of team payments (registration, fees), fine payments, and tournament expenses (referee fees, venue costs).
+- **Financial Management**: Tracking of team payments (registration, fees), fine payments, tournament expenses, and automated fines for no-show teams (€15). Fines support types: YELLOW, RED, RED_DIRECT, NO_PRESENTADO. Currency displayed in euros (€).
 - **News & Content**: Management of news articles and a public photo gallery.
 - **Social Media Content Generation**: An AI-powered wizard (utilizing GPT-4o with vision) for generating social media posts (copy, hashtags, branded images) from match photos.
 

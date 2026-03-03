@@ -8,9 +8,12 @@ import {
   insertTeamPaymentSchema, 
   insertFinePaymentSchema, 
   insertExpenseSchema,
+  FineTypeLabels,
+  type FineType,
   type Tournament, 
   type Team, 
   type Fine,
+  type Player,
   type TeamPayment,
   type FinePayment,
   type Expense,
@@ -64,6 +67,21 @@ export default function FinancesManagement() {
     },
     enabled: !!effectiveTournamentId,
   });
+
+  const { data: allPlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/admin/players"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/players", { headers: getAuthHeader() });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
+  const getPlayerName = (playerId?: string | null) => {
+    if (!playerId) return "—";
+    const player = allPlayers.find(p => p.id === playerId);
+    return player ? `${player.firstName} ${player.lastName}` : "Desconocido";
+  };
 
   const { data: fines = [], isLoading: loadingFines } = useQuery<Fine[]>({
     queryKey: ["/api/admin/fines", effectiveTournamentId],
@@ -271,19 +289,19 @@ export default function FinancesManagement() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Multas Pendientes</p>
-              <p className="text-2xl font-bold text-destructive">${(totalFines - totalFinesPaid).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-destructive">{(totalFines - totalFinesPaid).toLocaleString()}€</p>
             </div>
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Multas Pagadas</p>
-              <p className="text-2xl font-bold text-primary">${totalFinesPaid.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary">{totalFinesPaid.toLocaleString()}€</p>
             </div>
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Pagos Recibidos</p>
-              <p className="text-2xl font-bold text-primary">${totalPayments.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-primary">{totalPayments.toLocaleString()}€</p>
             </div>
             <div className="rounded-md border p-4">
               <p className="text-sm text-muted-foreground">Gastos Totales</p>
-              <p className="text-2xl font-bold">${totalExpenses.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{totalExpenses.toLocaleString()}€</p>
             </div>
           </div>
 
@@ -309,6 +327,7 @@ export default function FinancesManagement() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Equipo</TableHead>
+                        <TableHead>Jugador</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Monto</TableHead>
                         <TableHead>Estado</TableHead>
@@ -317,16 +336,17 @@ export default function FinancesManagement() {
                     </TableHeader>
                     <TableBody>
                       {fines.map((fine) => (
-                        <TableRow key={fine.id}>
-                          <TableCell>{getTeamName(fine.teamId)}</TableCell>
+                        <TableRow key={fine.id} data-testid={`row-fine-${fine.id}`}>
+                          <TableCell className="font-medium">{getTeamName(fine.teamId)}</TableCell>
+                          <TableCell>{getPlayerName(fine.playerId)}</TableCell>
                           <TableCell>
-                            <Badge variant={fine.cardType === "YELLOW" ? "outline" : "destructive"}>
-                              {fine.cardType === "YELLOW" ? "Amarilla" : fine.cardType === "RED" ? "Roja" : "Roja Directa"}
+                            <Badge variant={fine.cardType === "NO_PRESENTADO" ? "destructive" : fine.cardType === "YELLOW" ? "outline" : "destructive"} className={fine.cardType === "NO_PRESENTADO" ? "bg-orange-600" : ""}>
+                              {FineTypeLabels[fine.cardType as FineType] || fine.cardType}
                             </Badge>
                           </TableCell>
-                          <TableCell>${fine.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium">{fine.amount.toLocaleString()}€</TableCell>
                           <TableCell>
-                            <Badge variant={fine.status === "PAGADA" ? "default" : "secondary"}>
+                            <Badge variant={fine.status === "PAGADA" ? "default" : "secondary"} className={fine.status === "PENDIENTE" ? "bg-destructive/20 text-destructive" : "bg-emerald-500/20 text-emerald-500"}>
                               {fine.status}
                             </Badge>
                           </TableCell>
@@ -336,8 +356,20 @@ export default function FinancesManagement() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => updateFineMutation.mutate({ id: fine.id, status: "PAGADA" })}
+                                data-testid={`button-pay-fine-${fine.id}`}
                               >
+                                <CheckCircle className="mr-1 h-3 w-3" />
                                 Marcar Pagada
+                              </Button>
+                            )}
+                            {fine.status === "PAGADA" && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => updateFineMutation.mutate({ id: fine.id, status: "PENDIENTE" })}
+                                data-testid={`button-unpay-fine-${fine.id}`}
+                              >
+                                Revertir
                               </Button>
                             )}
                           </TableCell>
@@ -379,7 +411,7 @@ export default function FinancesManagement() {
                       {payments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>{getTeamName(payment.teamId)}</TableCell>
-                          <TableCell className="font-medium text-primary">${payment.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium text-primary">{payment.amount.toLocaleString()}€</TableCell>
                           <TableCell>{payment.method || "-"}</TableCell>
                           <TableCell>{format(new Date(payment.paidAt), "dd/MM/yyyy", { locale: es })}</TableCell>
                           <TableCell className="max-w-xs truncate">{payment.notes || "-"}</TableCell>
@@ -420,7 +452,7 @@ export default function FinancesManagement() {
                       {finePayments.map((payment) => (
                         <TableRow key={payment.id}>
                           <TableCell>{getTeamName(payment.teamId)}</TableCell>
-                          <TableCell className="font-medium text-primary">${payment.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-medium text-primary">{payment.amount.toLocaleString()}€</TableCell>
                           <TableCell>{format(new Date(payment.paidAt), "dd/MM/yyyy", { locale: es })}</TableCell>
                           <TableCell className="max-w-xs truncate">{payment.notes || "-"}</TableCell>
                         </TableRow>
@@ -460,7 +492,7 @@ export default function FinancesManagement() {
                       {expenses.map((expense) => (
                         <TableRow key={expense.id}>
                           <TableCell className="font-medium">{expense.concept}</TableCell>
-                          <TableCell className="text-destructive">${expense.amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-destructive">{expense.amount.toLocaleString()}€</TableCell>
                           <TableCell>{format(new Date(expense.expenseAt), "dd/MM/yyyy", { locale: es })}</TableCell>
                           <TableCell className="max-w-xs truncate">{expense.notes || "-"}</TableCell>
                         </TableRow>

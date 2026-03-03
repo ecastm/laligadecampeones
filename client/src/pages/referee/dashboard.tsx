@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
@@ -324,6 +324,12 @@ function MatchResultDialog({
     setUploadedPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
+  const [homeAttendance, setHomeAttendance] = useState<Record<string, boolean>>({});
+  const [awayAttendance, setAwayAttendance] = useState<Record<string, boolean>>({});
+  const [homeNoShow, setHomeNoShow] = useState(false);
+  const [awayNoShow, setAwayNoShow] = useState(false);
+  const [attendanceInitialized, setAttendanceInitialized] = useState(false);
+
   const { data: homePlayers = [] } = useQuery<Player[]>({
     queryKey: ["/api/teams", match.homeTeamId, "players"],
     queryFn: async () => {
@@ -344,6 +350,48 @@ function MatchResultDialog({
     enabled: open,
   });
 
+  const { data: existingAttendance = [] } = useQuery<MatchAttendance[]>({
+    queryKey: ["/api/referee/matches", match.id, "attendance"],
+    queryFn: async () => {
+      const response = await fetch(`/api/referee/matches/${match.id}/attendance`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  if (!attendanceInitialized && homePlayers.length > 0 && awayPlayers.length > 0) {
+    setAttendanceInitialized(true);
+    if (existingAttendance.length > 0) {
+      const homeAtt: Record<string, boolean> = {};
+      const awayAtt: Record<string, boolean> = {};
+      let homeAllAbsent = true;
+      let awayAllAbsent = true;
+      existingAttendance.forEach(a => {
+        if (a.teamId === match.homeTeamId) {
+          homeAtt[a.playerId] = a.present;
+          if (a.present) homeAllAbsent = false;
+        } else if (a.teamId === match.awayTeamId) {
+          awayAtt[a.playerId] = a.present;
+          if (a.present) awayAllAbsent = false;
+        }
+      });
+      setHomeAttendance(homeAtt);
+      setAwayAttendance(awayAtt);
+      const homeRecords = existingAttendance.filter(a => a.teamId === match.homeTeamId);
+      const awayRecords = existingAttendance.filter(a => a.teamId === match.awayTeamId);
+      if (homeRecords.length > 0 && homeAllAbsent) setHomeNoShow(true);
+      if (awayRecords.length > 0 && awayAllAbsent) setAwayNoShow(true);
+    } else {
+      const homeAtt: Record<string, boolean> = {};
+      homePlayers.forEach(p => { homeAtt[p.id] = true; });
+      setHomeAttendance(homeAtt);
+      const awayAtt: Record<string, boolean> = {};
+      awayPlayers.forEach(p => { awayAtt[p.id] = true; });
+      setAwayAttendance(awayAtt);
+    }
+  }
+
   const form = useForm<MatchResult>({
     resolver: zodResolver(matchResultSchema),
     defaultValues: {
@@ -360,8 +408,32 @@ function MatchResultDialog({
     name: "events",
   });
 
+  const noShowMutation = useMutation({
+    mutationFn: async (teamId: string) => {
+      return apiRequest("POST", `/api/referee/matches/${match.id}/no-show`, { teamId });
+    },
+    onSuccess: () => {
+      toast({ title: "Incomparecencia registrada", description: "Multa de 15€ generada automáticamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const submitMutation = useMutation({
     mutationFn: async (data: MatchResult) => {
+      if (!homeNoShow && homePlayers.length > 0) {
+        await apiRequest("POST", `/api/referee/matches/${match.id}/attendance`, {
+          teamId: match.homeTeamId,
+          attendance: Object.entries(homeAttendance).map(([playerId, present]) => ({ playerId, present })),
+        });
+      }
+      if (!awayNoShow && awayPlayers.length > 0) {
+        await apiRequest("POST", `/api/referee/matches/${match.id}/attendance`, {
+          teamId: match.awayTeamId,
+          attendance: Object.entries(awayAttendance).map(([playerId, present]) => ({ playerId, present })),
+        });
+      }
       return apiRequest("POST", `/api/referee/matches/${match.id}/result`, {
         ...data,
         evidenceUrls: uploadedPhotos,
@@ -394,6 +466,117 @@ function MatchResultDialog({
             {match.homeTeam?.name} vs {match.awayTeam?.name}
           </CardDescription>
         </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <ClipboardList className="h-4 w-4 text-primary" />
+            Pase de Lista
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <h5 className="text-sm font-semibold">{match.homeTeam?.name} (Local)</h5>
+                <Button
+                  type="button"
+                  variant={homeNoShow ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (!homeNoShow && match.homeTeamId) {
+                      noShowMutation.mutate(match.homeTeamId);
+                      setHomeNoShow(true);
+                    }
+                  }}
+                  disabled={noShowMutation.isPending || homeNoShow}
+                  data-testid="button-home-no-show"
+                >
+                  <Ban className="mr-1 h-3 w-3" />
+                  {homeNoShow ? "No Presentado" : "No se presentó"}
+                </Button>
+              </div>
+              {!homeNoShow && homePlayers.filter(p => p.active).length > 0 ? (
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {homePlayers.filter(p => p.active).map((player) => (
+                    <div
+                      key={player.id}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${
+                        homeAttendance[player.id] ? "bg-emerald-500/10 hover:bg-emerald-500/20" : "bg-destructive/10 hover:bg-destructive/20"
+                      }`}
+                      onClick={() => setHomeAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                      data-testid={`attendance-home-${player.id}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
+                        {player.firstName} {player.lastName}
+                      </span>
+                      {homeAttendance[player.id] ? (
+                        <UserCheck className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <UserX className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : homeNoShow ? (
+                <p className="text-xs text-destructive text-center py-2">Equipo marcado como no presentado (Multa 15€)</p>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-2">Sin jugadores registrados</p>
+              )}
+            </div>
+
+            <div className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <h5 className="text-sm font-semibold">{match.awayTeam?.name} (Visitante)</h5>
+                <Button
+                  type="button"
+                  variant={awayNoShow ? "destructive" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    if (!awayNoShow && match.awayTeamId) {
+                      noShowMutation.mutate(match.awayTeamId);
+                      setAwayNoShow(true);
+                    }
+                  }}
+                  disabled={noShowMutation.isPending || awayNoShow}
+                  data-testid="button-away-no-show"
+                >
+                  <Ban className="mr-1 h-3 w-3" />
+                  {awayNoShow ? "No Presentado" : "No se presentó"}
+                </Button>
+              </div>
+              {!awayNoShow && awayPlayers.filter(p => p.active).length > 0 ? (
+                <div className="space-y-1 max-h-40 overflow-y-auto">
+                  {awayPlayers.filter(p => p.active).map((player) => (
+                    <div
+                      key={player.id}
+                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${
+                        awayAttendance[player.id] ? "bg-emerald-500/10 hover:bg-emerald-500/20" : "bg-destructive/10 hover:bg-destructive/20"
+                      }`}
+                      onClick={() => setAwayAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                      data-testid={`attendance-away-${player.id}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
+                        {player.firstName} {player.lastName}
+                      </span>
+                      {awayAttendance[player.id] ? (
+                        <UserCheck className="h-4 w-4 text-emerald-500" />
+                      ) : (
+                        <UserX className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : awayNoShow ? (
+                <p className="text-xs text-destructive text-center py-2">Equipo marcado como no presentado (Multa 15€)</p>
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-2">Sin jugadores registrados</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t pt-4" />
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => submitMutation.mutate(data))} className="space-y-6">

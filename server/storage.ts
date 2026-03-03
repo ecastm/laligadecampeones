@@ -13,6 +13,7 @@ import {
   type TournamentType, type InsertTournamentType,
   type MatchLineup, type InsertMatchLineup,
   type MatchEvidence, type InsertMatchEvidence,
+  type MatchAttendance, type InsertMatchAttendance,
   type Fine, type InsertFine,
   type TeamPayment, type InsertTeamPayment,
   type FinePayment, type InsertFinePayment,
@@ -133,6 +134,11 @@ export interface IStorage {
   getMatchEvidence(matchId: string): Promise<MatchEvidence[]>;
   createMatchEvidence(evidence: InsertMatchEvidence): Promise<MatchEvidence>;
   deleteMatchEvidence(id: string): Promise<void>;
+
+  // Match Attendance
+  getMatchAttendance(matchId: string, teamId?: string): Promise<MatchAttendance[]>;
+  saveMatchAttendance(matchId: string, teamId: string, attendance: { playerId: string; present: boolean }[]): Promise<MatchAttendance[]>;
+  deleteMatchAttendance(matchId: string, teamId: string): Promise<void>;
 
   // Fines
   getFines(tournamentId?: string, teamId?: string): Promise<Fine[]>;
@@ -923,6 +929,46 @@ export class MemStorage implements IStorage {
 
   async deleteMatchEvidence(id: string): Promise<void> {
     this.matchEvidence.delete(id);
+  }
+
+  // Match Attendance
+  async getMatchAttendance(matchId: string, teamId?: string): Promise<MatchAttendance[]> {
+    let records = Array.from(this.matchAttendanceMap?.values() || []).filter(a => a.matchId === matchId);
+    if (teamId) records = records.filter(a => a.teamId === teamId);
+    return records;
+  }
+
+  async saveMatchAttendance(matchId: string, teamId: string, attendance: { playerId: string; present: boolean }[]): Promise<MatchAttendance[]> {
+    if (!this.matchAttendanceMap) this.matchAttendanceMap = new Map();
+    for (const [key, val] of this.matchAttendanceMap) {
+      if (val.matchId === matchId && val.teamId === teamId) {
+        this.matchAttendanceMap.delete(key);
+      }
+    }
+    const results: MatchAttendance[] = [];
+    for (const entry of attendance) {
+      const id = randomUUID();
+      const record: MatchAttendance = {
+        id,
+        matchId,
+        teamId,
+        playerId: entry.playerId,
+        present: entry.present,
+        createdAt: new Date().toISOString(),
+      };
+      this.matchAttendanceMap.set(id, record);
+      results.push(record);
+    }
+    return results;
+  }
+
+  async deleteMatchAttendance(matchId: string, teamId: string): Promise<void> {
+    if (!this.matchAttendanceMap) return;
+    for (const [key, val] of this.matchAttendanceMap) {
+      if (val.matchId === matchId && val.teamId === teamId) {
+        this.matchAttendanceMap.delete(key);
+      }
+    }
   }
 
   // Fines

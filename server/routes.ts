@@ -26,6 +26,7 @@ import {
   insertContactMessageSchema,
   insertSiteSettingsSchema,
   insertTournamentStageSchema,
+  saveAttendanceSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -1350,6 +1351,69 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== MATCH ATTENDANCE (Referee) ====================
+  app.get("/api/referee/matches/:id/attendance", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const attendance = await storage.getMatchAttendance(req.params.id);
+      res.json(attendance);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/referee/matches/:id/attendance", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = saveAttendanceSchema.parse(req.body);
+      const result = await storage.saveMatchAttendance(req.params.id, data.teamId, data.attendance);
+      res.status(201).json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/referee/matches/:id/no-show", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const match = await storage.getMatch(req.params.id);
+      if (!match) {
+        return res.status(404).json({ message: "Partido no encontrado" });
+      }
+      const { teamId } = z.object({ teamId: z.string() }).parse(req.body);
+      const existingFines = await storage.getFines(match.tournamentId);
+      const alreadyFined = existingFines.some(f => f.matchId === req.params.id && f.teamId === teamId && f.cardType === "NO_PRESENTADO");
+      if (alreadyFined) {
+        return res.status(400).json({ message: "Ya se registró la incomparecencia de este equipo" });
+      }
+      const fine = await storage.createFine({
+        tournamentId: match.tournamentId,
+        matchId: req.params.id,
+        teamId,
+        playerId: null,
+        cardType: "NO_PRESENTADO",
+        amount: 15,
+        status: "PENDIENTE",
+      });
+      res.status(201).json(fine);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Admin: view attendance
+  app.get("/api/admin/matches/:id/attendance", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const attendance = await storage.getMatchAttendance(req.params.id);
+      res.json(attendance);
+    } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

@@ -545,7 +545,34 @@ export interface AuthResponse {
   activeDivision?: Division;
 }
 
-// Fines (Multas por tarjetas)
+// Match Attendance (Pase de lista)
+export interface MatchAttendance {
+  id: string;
+  matchId: string;
+  teamId: string;
+  playerId: string;
+  present: boolean;
+  createdAt: string;
+}
+
+export const insertMatchAttendanceSchema = z.object({
+  matchId: z.string(),
+  teamId: z.string(),
+  playerId: z.string(),
+  present: z.boolean(),
+});
+export type InsertMatchAttendance = z.infer<typeof insertMatchAttendanceSchema>;
+
+export const saveAttendanceSchema = z.object({
+  teamId: z.string(),
+  attendance: z.array(z.object({
+    playerId: z.string(),
+    present: z.boolean(),
+  })),
+});
+export type SaveAttendancePayload = z.infer<typeof saveAttendanceSchema>;
+
+// Fines (Multas por tarjetas e incomparecencia)
 export const FineStatus = {
   PENDIENTE: "PENDIENTE",
   PAGADA: "PAGADA",
@@ -553,14 +580,29 @@ export const FineStatus = {
 } as const;
 export type FineStatus = (typeof FineStatus)[keyof typeof FineStatus];
 
+export const FineType = {
+  YELLOW: "YELLOW",
+  RED: "RED",
+  RED_DIRECT: "RED_DIRECT",
+  NO_PRESENTADO: "NO_PRESENTADO",
+} as const;
+export type FineType = (typeof FineType)[keyof typeof FineType];
+
+export const FineTypeLabels: Record<FineType, string> = {
+  YELLOW: "Tarjeta Amarilla",
+  RED: "Tarjeta Roja",
+  RED_DIRECT: "Roja Directa",
+  NO_PRESENTADO: "No Presentado",
+};
+
 export interface Fine {
   id: string;
   tournamentId: string;
   matchId: string;
   matchEventId?: string;
   teamId: string;
-  playerId: string;
-  cardType: "YELLOW" | "RED" | "RED_DIRECT";
+  playerId?: string;
+  cardType: FineType;
   amount: number;
   status: FineStatus;
   paidAmount?: number;
@@ -573,8 +615,8 @@ export const insertFineSchema = z.object({
   matchId: z.string(),
   matchEventId: z.string().optional(),
   teamId: z.string(),
-  playerId: z.string(),
-  cardType: z.enum(["YELLOW", "RED", "RED_DIRECT"]),
+  playerId: z.string().optional().nullable(),
+  cardType: z.enum(["YELLOW", "RED", "RED_DIRECT", "NO_PRESENTADO"]),
   amount: z.number().min(0),
   status: z.enum(["PENDIENTE", "PAGADA", "PARCIAL"]).default("PENDIENTE"),
 });

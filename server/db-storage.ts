@@ -15,6 +15,7 @@ import {
   type TournamentType, type InsertTournamentType,
   type MatchLineup, type InsertMatchLineup,
   type MatchEvidence, type InsertMatchEvidence,
+  type MatchAttendance,
   type Fine, type InsertFine,
   type TeamPayment, type InsertTeamPayment,
   type FinePayment, type InsertFinePayment,
@@ -1140,6 +1141,37 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMatchEvidence(id: string): Promise<void> {
     await this.pool.query(`DELETE FROM match_evidence WHERE id = $1`, [id]);
+  }
+
+  async getMatchAttendance(matchId: string, teamId?: string): Promise<MatchAttendance[]> {
+    let query = `SELECT id, match_id AS "matchId", team_id AS "teamId", player_id AS "playerId", present, created_at AS "createdAt" FROM match_attendance WHERE match_id = $1`;
+    const values: any[] = [matchId];
+    if (teamId) {
+      query += ` AND team_id = $2`;
+      values.push(teamId);
+    }
+    query += ` ORDER BY created_at ASC`;
+    const result = await this.pool.query(query, values);
+    return result.rows;
+  }
+
+  async saveMatchAttendance(matchId: string, teamId: string, attendance: { playerId: string; present: boolean }[]): Promise<MatchAttendance[]> {
+    await this.pool.query(`DELETE FROM match_attendance WHERE match_id = $1 AND team_id = $2`, [matchId, teamId]);
+    const results: MatchAttendance[] = [];
+    for (const entry of attendance) {
+      const result = await this.pool.query(
+        `INSERT INTO match_attendance (id, match_id, team_id, player_id, present, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, NOW())
+         RETURNING id, match_id AS "matchId", team_id AS "teamId", player_id AS "playerId", present, created_at AS "createdAt"`,
+        [matchId, teamId, entry.playerId, entry.present]
+      );
+      results.push(result.rows[0]);
+    }
+    return results;
+  }
+
+  async deleteMatchAttendance(matchId: string, teamId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM match_attendance WHERE match_id = $1 AND team_id = $2`, [matchId, teamId]);
   }
 
   async getFines(tournamentId?: string, teamId?: string): Promise<Fine[]> {

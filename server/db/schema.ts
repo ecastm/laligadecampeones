@@ -178,13 +178,22 @@ export const captainProfiles = pgTable("captain_profiles", {
   updatedAt: text("updated_at").notNull().default(sql`now()`),
 });
 
+export const matchAttendance = pgTable("match_attendance", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  matchId: text("match_id").notNull(),
+  teamId: text("team_id").notNull(),
+  playerId: text("player_id").notNull(),
+  present: boolean("present").notNull().default(false),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+});
+
 export const fines = pgTable("fines", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: text("tournament_id").notNull(),
   matchId: text("match_id").notNull(),
   matchEventId: text("match_event_id"),
   teamId: text("team_id").notNull(),
-  playerId: text("player_id").notNull(),
+  playerId: text("player_id"),
   cardType: text("card_type").notNull(),
   amount: real("amount").notNull(),
   status: text("status").notNull().default("PENDIENTE"),
