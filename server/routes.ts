@@ -1526,6 +1526,17 @@ export async function registerRoutes(
     }
   });
 
+  // ==================== MARKETING MEDIA (Public Gallery) ====================
+  app.get("/api/home/gallery", async (_req, res) => {
+    try {
+      const media = await storage.getMarketingMedia();
+      const photos = media.filter(m => m.type === "PHOTO");
+      res.json(photos);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   // ==================== MARKETING MEDIA (Admin + Marketing) ====================
   app.get("/api/admin/marketing", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {

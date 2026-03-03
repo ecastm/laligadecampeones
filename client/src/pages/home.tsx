@@ -58,6 +58,9 @@ import {
   Shirt,
   Megaphone,
   HeartPulse,
+  ChevronLeft,
+  Camera,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -75,6 +78,7 @@ import type {
   Tournament,
   NewsWithAuthor,
   Division,
+  MarketingMedia,
 } from "@shared/schema";
 import { MatchDetailDialog } from "@/components/match-detail-dialog";
 import heroFootball from "@/assets/images/football-field.jpg";
@@ -506,6 +510,9 @@ export default function Home() {
 
       {/* Próximos Partidos Section - VS Images */}
       <UpcomingMatchesSection />
+
+      {/* Photo Gallery Section */}
+      <PhotoGallerySection />
 
       {/* Divisions Section - Tournament Viewer */}
       <section className="py-12 sm:py-16" id="torneos">
@@ -1700,5 +1707,248 @@ function UpcomingMatchesSection() {
         </div>
       </div>
     </section>
+  );
+}
+
+function getVisibleCount() {
+  if (typeof window === "undefined") return 4;
+  if (window.innerWidth < 640) return 1;
+  if (window.innerWidth < 1024) return 2;
+  return 4;
+}
+
+function PhotoGallerySection() {
+  const { data: photos, isLoading } = useQuery<MarketingMedia[]>({
+    queryKey: ["/api/home/gallery"],
+  });
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(getVisibleCount);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newCount = getVisibleCount();
+      setVisibleCount(newCount);
+      setCurrentIndex((prev) => {
+        const newMax = Math.max(0, (photos || []).length - newCount);
+        return Math.min(prev, newMax);
+      });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [photos]);
+
+  const photoList = photos || [];
+
+  if (isLoading) {
+    return (
+      <section className="bg-muted/30 py-12 sm:py-16" data-testid="section-gallery">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 text-center">
+            <h2 className="mb-2 text-3xl font-bold">Galería de Fotos</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="aspect-square w-full rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (photoList.length === 0) return null;
+
+  const maxIndex = Math.max(0, photoList.length - visibleCount);
+
+  const handlePrev = () => {
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => Math.min(maxIndex, prev + 1));
+  };
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => {
+    setLightboxOpen(false);
+  };
+
+  const lightboxPrev = () => {
+    setLightboxIndex((prev) => (prev > 0 ? prev - 1 : photoList.length - 1));
+  };
+
+  const lightboxNext = () => {
+    setLightboxIndex((prev) => (prev < photoList.length - 1 ? prev + 1 : 0));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    setTouchStart(null);
+  };
+
+  return (
+    <>
+      <section className="bg-muted/30 py-12 sm:py-16" data-testid="section-gallery" id="galeria">
+        <div className="container mx-auto px-4">
+          <div className="mb-8 text-center">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+              <Camera className="h-4 w-4" />
+              Momentos de la Liga
+            </div>
+            <h2 className="mb-2 text-3xl font-bold" data-testid="text-gallery-title">
+              Galería de Fotos
+            </h2>
+            <p className="mx-auto max-w-2xl text-muted-foreground">
+              Revive los mejores momentos de nuestros torneos
+            </p>
+          </div>
+
+          <div className="relative">
+            {photoList.length > visibleCount && (
+              <button
+                onClick={handlePrev}
+                disabled={currentIndex === 0}
+                className="absolute -left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg transition-all hover:bg-background disabled:opacity-30"
+                data-testid="button-gallery-prev"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+            )}
+
+            <div
+              className="overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div
+                className="flex gap-4 transition-transform duration-500 ease-in-out"
+                style={{
+                  transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`,
+                }}
+              >
+                {photoList.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className="flex-shrink-0 cursor-pointer"
+                    style={{ width: `calc(${100 / visibleCount}% - ${((visibleCount - 1) * 16) / visibleCount}px)` }}
+                    onClick={() => openLightbox(index)}
+                    data-testid={`gallery-photo-${photo.id}`}
+                  >
+                    <div className="group relative aspect-square overflow-hidden rounded-lg">
+                      <img
+                        src={photo.url}
+                        alt={photo.title || "Foto de la liga"}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                      {photo.title && (
+                        <div className="absolute bottom-0 left-0 right-0 p-3 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                          <p className="text-sm font-medium line-clamp-2">{photo.title}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {photoList.length > visibleCount && (
+              <button
+                onClick={handleNext}
+                disabled={currentIndex >= maxIndex}
+                className="absolute -right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg transition-all hover:bg-background disabled:opacity-30"
+                data-testid="button-gallery-next"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+
+          {photoList.length > visibleCount && (
+            <div className="mt-6 flex justify-center gap-1.5">
+              {Array.from({ length: Math.min(maxIndex + 1, 10) }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`h-2 rounded-full transition-all ${
+                    i === currentIndex ? "w-6 bg-primary" : "w-2 bg-muted-foreground/30"
+                  }`}
+                  data-testid={`gallery-dot-${i}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {lightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={closeLightbox}
+          data-testid="gallery-lightbox"
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
+            className="absolute right-4 top-4 z-50 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            data-testid="button-lightbox-close"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
+            className="absolute left-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            data-testid="button-lightbox-prev"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+
+          <div
+            className="max-h-[85vh] max-w-[90vw]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={photoList[lightboxIndex]?.url}
+              alt={photoList[lightboxIndex]?.title || "Foto de la liga"}
+              className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
+              data-testid="img-lightbox-photo"
+            />
+            {photoList[lightboxIndex]?.title && (
+              <p className="mt-3 text-center text-white text-lg font-medium">
+                {photoList[lightboxIndex].title}
+              </p>
+            )}
+            <p className="mt-1 text-center text-white/60 text-sm">
+              {lightboxIndex + 1} / {photoList.length}
+            </p>
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
+            className="absolute right-4 top-1/2 z-50 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-colors hover:bg-white/20"
+            data-testid="button-lightbox-next"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+    </>
   );
 }

@@ -95,6 +95,7 @@ La aplicación estará disponible en el puerto 5000.
 - `GET /api/home/teams` - Equipos del torneo
 - `GET /api/home/news` - Noticias del torneo
 - `GET /api/home/news/:id` - Detalle de noticia
+- `GET /api/home/gallery` - Galería de fotos pública (fotos de marketing)
 - `GET /api/matches/:id` - Detalle de partido
 
 ### Autenticación
@@ -156,6 +157,7 @@ La aplicación estará disponible en el puerto 5000.
   - Tabla de posiciones (PJ, PG, PE, PP, GF, GC, DG, PTS)
   - Resultados recientes
   - Equipos participantes
+- **Galería de Fotos**: Carrusel público con todas las fotos de marketing, lightbox para ver en grande, responsive (1/2/4 columnas), swipe en móvil
 - **Secciones CTA**: "Inscribe Tu Equipo" y "Solicita Información" con datos de contacto
 - **Footer**: Enlaces a historial, calendario e inicio de sesión
 
