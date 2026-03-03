@@ -144,9 +144,9 @@ export default function Regulations() {
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="rounded-md border p-3 space-y-3">
-            <p className="font-medium flex items-center gap-2">
+            <div className="font-medium flex items-center gap-2">
               <Badge variant="destructive">Tarjeta Roja Directa</Badge>
-            </p>
+            </div>
             <p className="text-muted-foreground">Por dar golpe intencionado directo al rostro de un adversario.</p>
             <ul className="ml-4 space-y-2 text-muted-foreground">
               <li className="flex gap-2">
