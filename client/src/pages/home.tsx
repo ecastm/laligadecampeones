@@ -322,9 +322,9 @@ export default function Home() {
 
         <div className="container relative mx-auto px-4 py-12 sm:py-16">
           <div className="max-w-lg">
-            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-sport-green/50 bg-sport-green/20 px-3 py-1 backdrop-blur-sm" data-testid="badge-hero">
-              <Zap className="h-3 w-3 text-sport-green" />
-              <span className="text-xs font-semibold text-sport-green tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/60 bg-emerald-500/25 px-3 py-1 backdrop-blur-sm shadow-[0_0_12px_rgba(16,185,129,0.3)]" data-testid="badge-hero">
+              <Zap className="h-3 w-3 text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-400 tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
             </div>
             <h1
               className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
