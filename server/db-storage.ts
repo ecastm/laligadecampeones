@@ -1215,11 +1215,10 @@ export class DatabaseStorage implements IStorage {
 
   async decrementSuspensions(tournamentId: string, teamId: string): Promise<void> {
     await this.pool.query(
-      `UPDATE player_suspensions SET matches_remaining = matches_remaining - 1 WHERE tournament_id = $1 AND team_id = $2 AND status = 'ACTIVO'`,
-      [tournamentId, teamId]
-    );
-    await this.pool.query(
-      `UPDATE player_suspensions SET status = 'CUMPLIDO' WHERE tournament_id = $1 AND team_id = $2 AND matches_remaining <= 0 AND status = 'ACTIVO'`,
+      `UPDATE player_suspensions
+       SET matches_remaining = GREATEST(matches_remaining - 1, 0),
+           status = CASE WHEN matches_remaining - 1 <= 0 THEN 'CUMPLIDO' ELSE status END
+       WHERE tournament_id = $1 AND team_id = $2 AND status = 'ACTIVO'`,
       [tournamentId, teamId]
     );
   }
