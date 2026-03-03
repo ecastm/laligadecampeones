@@ -51,8 +51,13 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4 text-center">
-          <img src={logoUrl} alt="La Liga de Campeones" className="mx-auto h-20 w-20 object-contain" />
+        <CardHeader className="space-y-4 text-center pb-2">
+          <img
+            src={logoUrl}
+            alt="La Liga de Campeones"
+            className="mx-auto h-32 w-32 sm:h-40 sm:w-40 object-contain drop-shadow-[0_4px_24px_rgba(198,160,82,0.4)]"
+            data-testid="img-login-logo"
+          />
           <div>
             <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
             <CardDescription>

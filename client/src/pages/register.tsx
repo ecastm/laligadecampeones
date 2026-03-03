@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, UserPlus, Shield, Users, Flag, Megaphone } from "lucide-react";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export default function Register() {
   const [, setLocation] = useLocation();
   const { register: registerUser } = useAuth();
   const { toast } = useToast();
+  const { logoUrl } = useSiteSettings();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,10 +83,13 @@ export default function Register() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-4 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-            <UserPlus className="h-8 w-8 text-primary-foreground" />
-          </div>
+        <CardHeader className="space-y-4 text-center pb-2">
+          <img
+            src={logoUrl}
+            alt="La Liga de Campeones"
+            className="mx-auto h-32 w-32 sm:h-40 sm:w-40 object-contain drop-shadow-[0_4px_24px_rgba(198,160,82,0.4)]"
+            data-testid="img-register-logo"
+          />
           <div>
             <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
             <CardDescription>

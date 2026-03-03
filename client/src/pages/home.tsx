@@ -273,12 +273,12 @@ export default function Home() {
       {/* Navigation */}
       <nav className="sticky top-0 z-[100] border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
-          <div className="flex h-16 items-center justify-between">
+          <div className="flex h-20 sm:h-24 items-center justify-between">
             <div className="flex items-center gap-2">
               <img
                 src={logoUrl}
                 alt="La Liga de Campeones"
-                className="h-14 w-14 object-contain"
+                className="h-16 w-16 sm:h-20 sm:w-20 object-contain drop-shadow-[0_2px_8px_rgba(198,160,82,0.3)]"
               />
               <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
@@ -322,6 +322,12 @@ export default function Home() {
 
         <div className="container relative mx-auto px-4 py-12 sm:py-16">
           <div className="max-w-lg">
+            <img
+              src={logoUrl}
+              alt="La Liga de Campeones"
+              className="h-28 w-28 sm:h-36 sm:w-36 md:h-44 md:w-44 object-contain mb-4 drop-shadow-[0_4px_24px_rgba(198,160,82,0.4)]"
+              data-testid="img-hero-logo"
+            />
             <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/60 bg-emerald-500/25 px-3 py-1 backdrop-blur-sm shadow-[0_0_12px_rgba(16,185,129,0.3)]" data-testid="badge-hero">
               <Zap className="h-3 w-3 text-emerald-400" />
               <span className="text-xs font-bold text-emerald-400 tracking-wide uppercase">Inscripciones Abiertas — 2026</span>
