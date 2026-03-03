@@ -5,7 +5,7 @@ async function clearAllTables() {
   console.log("FORCE_RESEED: Limpiando todas las tablas...");
   const tables = [
     "match_evidence", "match_lineups", "match_events", "fines", "fine_payments",
-    "team_payments", "expenses", "marketing_media", "contact_messages",
+    "team_payments", "expenses", "contact_messages",
     "news", "matches", "players", "captain_profiles", "referee_profiles",
     "teams", "users", "tournaments", "tournament_types", "divisions"
   ];
