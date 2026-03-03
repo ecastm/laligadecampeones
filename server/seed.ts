@@ -1,5 +1,7 @@
 import { storage } from "./storage";
 import { pool } from "./db-storage";
+import { ObjectStorageService } from "./replit_integrations/object_storage/objectStorage";
+import { Storage } from "@google-cloud/storage";
 
 async function clearAllTables() {
   console.log("FORCE_RESEED: Limpiando todas las tablas...");
@@ -225,7 +227,84 @@ export async function fixDataIntegrity() {
         console.log(`Integridad: ${matchesWithoutStage.length} partidos asignados a fase "Jornada Regular" en torneo "${t.name}"`);
       }
     }
+    await restoreOrphanedGalleryPhotos();
   } catch (err) {
     console.error("Error en corrección de integridad:", err);
+  }
+}
+
+async function restoreOrphanedGalleryPhotos() {
+  try {
+    const privateDir = process.env.PRIVATE_OBJECT_DIR || "";
+    if (!privateDir) return;
+
+    const parts = privateDir.split("/").filter(Boolean);
+    const bucketName = parts[0];
+    const uploadsPrefix = parts.slice(1).join("/") + "/uploads/";
+
+    const gcsClient = new Storage({
+      credentials: {
+        audience: "replit",
+        subject_token_type: "access_token",
+        token_url: "http://127.0.0.1:1106/token",
+        type: "external_account" as any,
+        credential_source: {
+          url: "http://127.0.0.1:1106/credential",
+          format: { type: "json", subject_token_field_name: "access_token" },
+        },
+        universe_domain: "googleapis.com",
+      },
+      projectId: "",
+    });
+
+    const [files] = await gcsClient.bucket(bucketName).getFiles({ prefix: uploadsPrefix });
+    if (files.length === 0) return;
+
+    const teamLogosRes = await pool.query("SELECT logo_url FROM teams WHERE logo_url IS NOT NULL");
+    const knownUrls = new Set(teamLogosRes.rows.map((r: any) => r.logo_url));
+
+    const vsImagesRes = await pool.query("SELECT vs_image_url FROM matches WHERE vs_image_url IS NOT NULL");
+    vsImagesRes.rows.forEach((r: any) => knownUrls.add(r.vs_image_url));
+
+    const existingMediaRes = await pool.query("SELECT url FROM marketing_media");
+    const existingMediaUrls = new Set(existingMediaRes.rows.map((r: any) => r.url));
+
+    let restored = 0;
+    const baseParts = parts.length;
+    for (const file of files) {
+      const fileParts = file.name.split("/");
+      const entityId = fileParts.slice(baseParts).join("/");
+      const objectPath = `/objects/${entityId}`;
+
+      if (knownUrls.has(objectPath)) continue;
+      if (existingMediaUrls.has(objectPath)) continue;
+
+      const contentType = file.metadata.contentType || "";
+      const size = parseInt(file.metadata.size as string) || 0;
+
+      if (!contentType.startsWith("image/") && !contentType.startsWith("video/")) continue;
+      if (size < 10000) continue;
+
+      const isVideo = contentType.startsWith("video/");
+      const mediaType = isVideo ? "VIDEO" : "PHOTO";
+
+      await pool.query(
+        `INSERT INTO marketing_media (id, title, description, type, url, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, now())`,
+        [
+          isVideo ? "Video de la Liga" : "Foto de la Liga",
+          "",
+          mediaType,
+          objectPath,
+        ]
+      );
+      restored++;
+    }
+
+    if (restored > 0) {
+      console.log(`Integridad: ${restored} fotos/videos restaurados en galería desde Object Storage`);
+    }
+  } catch (err) {
+    console.error("Error restaurando galería:", err);
   }
 }
