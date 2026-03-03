@@ -68,7 +68,7 @@ export default function CalendarView() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "JUGADO": return "bg-sport-green/20 text-sport-green border-sport-green/30";
+      case "JUGADO": return "bg-emerald-400/20 text-emerald-400 border-emerald-400/30";
       case "EN_CURSO": return "bg-primary/20 text-primary border-primary/30";
       default: return "bg-primary/10 text-primary border-primary/20";
     }

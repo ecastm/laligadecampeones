@@ -278,7 +278,7 @@ export default function Home() {
               <img
                 src={logoUrl}
                 alt="La Liga de Campeones"
-                className="h-10 w-10 object-contain"
+                className="h-14 w-14 object-contain"
               />
               <span className="text-xl font-bold">La Liga de Campeones</span>
             </div>
@@ -318,7 +318,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#0D0D0D]/85 via-[#0D0D0D]/50 to-[#0D0D0D]/15" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0D0D0D]/60 via-transparent to-[#0D0D0D]/20" />
 
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-sport-green via-primary to-sport-green" />
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-400 via-primary to-emerald-400" />
 
         <div className="container relative mx-auto px-4 py-12 sm:py-16">
           <div className="max-w-lg">
@@ -340,19 +340,19 @@ export default function Home() {
 
             <div className="mb-6 grid gap-2 sm:grid-cols-2 max-w-md">
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span className="text-white/85 text-xs font-medium">Gran ubicación con fácil acceso</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span className="text-white/85 text-xs font-medium">Árbitros certificados</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span className="text-white/85 text-xs font-medium">Premios para los mejores</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-sport-green shrink-0" />
+                <CheckCircle className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span className="text-white/85 text-xs font-medium">Estadísticas en tiempo real</span>
               </div>
             </div>
@@ -413,7 +413,7 @@ export default function Home() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-4 text-white">
-                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-sport-green">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
                   <MapPin className="h-4 w-4 text-white" />
                 </div>
                 <h3 className="text-sm font-bold">Instalaciones de Primera</h3>
@@ -457,7 +457,7 @@ export default function Home() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               <div className="absolute bottom-0 p-4 text-white">
-                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-sport-green">
+                <div className="mb-1.5 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
                   <Users className="h-4 w-4 text-white" />
                 </div>
                 <h3 className="text-sm font-bold">Competencia Real</h3>
@@ -471,7 +471,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="border-y border-sport-green/20 bg-background py-8">
+      <section className="border-y border-emerald-400/20 bg-background py-8">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="text-center" data-testid="stat-teams">
@@ -481,7 +481,7 @@ export default function Home() {
               </p>
             </div>
             <div className="text-center" data-testid="stat-players">
-              <p className="text-3xl font-bold text-sport-green">800+</p>
+              <p className="text-3xl font-bold text-emerald-400">800+</p>
               <p className="text-xs text-muted-foreground">Jugadores Activos</p>
             </div>
             <div className="text-center" data-testid="stat-matches">
@@ -491,7 +491,7 @@ export default function Home() {
               </p>
             </div>
             <div className="text-center" data-testid="stat-seasons">
-              <p className="text-3xl font-bold text-sport-green">10</p>
+              <p className="text-3xl font-bold text-emerald-400">10</p>
               <p className="text-xs text-muted-foreground">
                 Años de Experiencia
               </p>
@@ -532,14 +532,14 @@ export default function Home() {
                   onClick={() => handleDivisionSelect(division.id)}
                   className={`group relative overflow-hidden rounded-md border-2 p-4 text-left transition-all hover-elevate ${
                     selectedDivision === division.id
-                      ? "border-sport-green bg-sport-green/10"
-                      : "border-border hover:border-sport-green/50"
+                      ? "border-emerald-400 bg-emerald-400/10"
+                      : "border-border hover:border-emerald-400/50"
                   }`}
                   data-testid={`button-division-${division.id}`}
                 >
                   <div className="flex items-center gap-2">
-                    <div className="rounded-full p-1.5 bg-sport-green/20">
-                      <Trophy className="h-5 w-5 text-sport-green" />
+                    <div className="rounded-full p-1.5 bg-emerald-400/20">
+                      <Trophy className="h-5 w-5 text-emerald-400" />
                     </div>
                     <div>
                       <h3 className="text-sm font-semibold">{division.name}</h3>
@@ -549,7 +549,7 @@ export default function Home() {
                     </div>
                   </div>
                   {selectedDivision === division.id && (
-                    <ChevronRight className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-sport-green" />
+                    <ChevronRight className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />
                   )}
                 </button>
               ))
@@ -716,7 +716,7 @@ export default function Home() {
                                     variant="outline"
                                     className={`text-xs ${
                                       match.status === "JUGADO"
-                                        ? "bg-sport-green/10 text-sport-green border-sport-green/30"
+                                        ? "bg-emerald-400/10 text-emerald-400 border-emerald-400/30"
                                         : match.status === "EN_CURSO"
                                           ? "bg-primary/10 text-primary border-primary/30"
                                           : ""
@@ -1178,7 +1178,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="border-t border-sport-green/20 bg-card py-8 sm:py-10">
+      <section className="border-t border-emerald-400/20 bg-card py-8 sm:py-10">
         <div className="container mx-auto px-4">
           <div className="mb-5 text-center">
             <h2 className="mb-1 text-2xl font-bold">
@@ -1280,12 +1280,12 @@ export default function Home() {
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <Card
-              className="overflow-hidden border-sport-green/40"
+              className="overflow-hidden border-emerald-400/40"
               data-testid="cta-register"
             >
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sport-green text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
                     <UserPlus className="h-5 w-5" />
                   </div>
                   <div>
@@ -1297,15 +1297,15 @@ export default function Home() {
                     </p>
                     <ul className="mb-4 space-y-1.5 text-sm">
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
                         Mínimo 11 jugadores por equipo
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
                         Cuota de inscripción accesible
                       </li>
                       <li className="flex items-center gap-2">
-                        <CheckCircle className="h-3.5 w-3.5 text-sport-green" />
+                        <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
                         Uniformes no incluidos
                       </li>
                     </ul>
@@ -1626,7 +1626,7 @@ function UpcomingMatchesSection() {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {upcomingMatches.map((match) => (
             <div key={match.id} className="group cursor-pointer" data-testid={`card-upcoming-match-${match.id}`}>
-              <div className="overflow-hidden rounded-md border border-sport-green/20 shadow-sm transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#0D0D0D] to-[#161616]">
+              <div className="overflow-hidden rounded-md border border-emerald-400/20 shadow-sm transition-transform group-hover:scale-[1.02] bg-gradient-to-br from-[#0D0D0D] to-[#161616]">
                 <div className="p-3 flex flex-col items-center gap-2">
                   <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-primary/30 text-primary bg-primary/10">
                     {match.stage && match.stage !== "JORNADA"
@@ -1665,7 +1665,7 @@ function UpcomingMatchesSection() {
                   </div>
 
                   <div className="w-full border-t border-silver/10 pt-1.5 text-center space-y-0.5">
-                    <p className="text-sport-green font-semibold text-[10px]">
+                    <p className="text-emerald-400 font-semibold text-[10px]">
                       {match.dateTime && new Date(match.dateTime).getFullYear() > 2000
                         ? format(new Date(match.dateTime), "EEE d MMM", { locale: es })
                         : "Fecha por confirmar"}
@@ -1797,7 +1797,7 @@ function PhotoGallerySection() {
       <section className="bg-muted/30 py-8 sm:py-10" data-testid="section-gallery" id="galeria">
         <div className="container mx-auto px-4">
           <div className="mb-5 text-center">
-            <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-sport-green/10 px-3 py-1 text-xs font-medium text-sport-green">
+            <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-400">
               <Camera className="h-3.5 w-3.5" />
               Momentos de la Liga
             </div>

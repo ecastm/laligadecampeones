@@ -164,7 +164,7 @@ export default function UsersManagement() {
     if (status === "INACTIVO") {
       return <Badge variant="destructive" className="text-xs">Inactivo</Badge>;
     }
-    return <Badge variant="outline" className="text-xs border-sport-green text-sport-green">Activo</Badge>;
+    return <Badge variant="outline" className="text-xs border-emerald-400 text-emerald-400">Activo</Badge>;
   };
 
   return (
@@ -398,7 +398,7 @@ export default function UsersManagement() {
                     <div className="flex items-center justify-between gap-4 rounded-md border p-3">
                       <div className="flex items-center gap-2">
                         {field.value === "ACTIVO" ? (
-                          <ShieldCheck className="h-4 w-4 text-sport-green" />
+                          <ShieldCheck className="h-4 w-4 text-emerald-400" />
                         ) : (
                           <ShieldAlert className="h-4 w-4 text-destructive" />
                         )}
