@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export default function Login() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
   const { toast } = useToast();
+  const { logoUrl } = useSiteSettings();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -51,7 +52,7 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
-          <img src={ligaLogo} alt="La Liga de Campeones" className="mx-auto h-20 w-20 object-contain" />
+          <img src={logoUrl} alt="La Liga de Campeones" className="mx-auto h-20 w-20 object-contain" />
           <div>
             <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
             <CardDescription>

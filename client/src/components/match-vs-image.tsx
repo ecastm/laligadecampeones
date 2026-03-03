@@ -9,7 +9,7 @@ import type { Match, Team, Tournament, Division } from "@shared/schema";
 import { uploadVsImage } from "@/lib/vs-image-generator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 interface MatchVsImageProps {
   match: Match;
@@ -24,6 +24,7 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { logoUrl } = useSiteSettings();
 
   const { data: tournaments = [] } = useQuery<Tournament[]>({
     queryKey: ["/api/tournaments/active/all"],
@@ -119,7 +120,7 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
     ctx.stroke();
 
     try {
-      const logoImg = await loadImage(ligaLogo);
+      const logoImg = await loadImage(logoUrl);
       ctx.drawImage(logoImg, cx - 45, 18, 90, 90);
     } catch {}
 

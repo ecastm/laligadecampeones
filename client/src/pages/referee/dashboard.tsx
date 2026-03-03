@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
 import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText } from "lucide-react";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
 import { format } from "date-fns";
@@ -56,6 +56,7 @@ export default function RefereeDashboard() {
 
   // Force profile section if no profile exists
   const [activeSection, setActiveSection] = useState<RefereeSection>("pending");
+  const { logoUrl } = useSiteSettings();
   const effectiveSection = (!loadingProfile && !refereeProfile) ? "profile" : activeSection;
 
   const handleLogout = () => {
@@ -76,7 +77,7 @@ export default function RefereeDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Panel Árbitro</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>

@@ -6,7 +6,7 @@ import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { generateVsImageBlob, uploadVsImage } from "@/lib/vs-image-generator";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 export default function MatchesManagement() {
   const { toast } = useToast();
+  const { logoUrl } = useSiteSettings();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [vsImageMatch, setVsImageMatch] = useState<Match | null>(null);
@@ -98,7 +99,7 @@ export default function MatchesManagement() {
         awayTeam,
         tournament: tournamentForImage,
         division: divisionForImage,
-        ligaLogoSrc: ligaLogo,
+        ligaLogoSrc: logoUrl,
       });
 
       const objectPath = await uploadVsImage(blob, matchId);

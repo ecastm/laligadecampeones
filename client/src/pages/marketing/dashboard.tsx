@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Megaphone, Newspaper, Image, LogOut, LayoutDashboard } from "lucide-react";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import NewsManagement from "../admin/news";
 import MarketingManagement from "../admin/marketing";
 
@@ -21,6 +21,7 @@ export default function MarketingDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<MarketingSection>("dashboard");
+  const { logoUrl } = useSiteSettings();
 
   const handleLogout = () => {
     logout();
@@ -38,7 +39,7 @@ export default function MarketingDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Marketing</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>

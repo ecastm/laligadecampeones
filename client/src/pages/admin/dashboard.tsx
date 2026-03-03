@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare } from "lucide-react";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
 import PlayersManagement from "./players";
@@ -48,6 +48,7 @@ export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const { logoUrl } = useSiteSettings();
 
   const handleLogout = () => {
     logout();
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Panel Admin</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>

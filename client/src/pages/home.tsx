@@ -86,10 +86,11 @@ import teamHuddle from "@/assets/images/team-huddle.jpg";
 import trophyImage from "@/assets/images/trophy.jpg";
 import stadiumImage from "@/assets/images/stadium.jpg";
 import waterSplash from "@/assets/images/water-splash.jpg";
-import ligaLogo from "@assets/logo_circular_transparente_1770735565551.webp";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export default function Home() {
   const { toast } = useToast();
+  const { logoUrl } = useSiteSettings();
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
@@ -275,7 +276,7 @@ export default function Home() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-2">
               <img
-                src={ligaLogo}
+                src={logoUrl}
                 alt="La Liga de Campeones"
                 className="h-10 w-10 object-contain"
               />

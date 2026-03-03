@@ -21,7 +21,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, getDay, addMonths,
 import { es } from "date-fns/locale";
 import type { MatchWithTeams, Tournament, Division } from "@shared/schema";
 import { MatchStageLabels, type MatchStage } from "@shared/schema";
-import ligaLogo from "@assets/image_1771352006885.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -34,6 +34,8 @@ export default function CalendarView() {
   const { data: tournaments = [] } = useQuery<Tournament[]>({
     queryKey: ["/api/tournaments/active/all"],
   });
+
+  const { logoUrl } = useSiteSettings();
 
   const { data: divisions = [] } = useQuery<Division[]>({
     queryKey: ["/api/divisions"],
@@ -166,7 +168,7 @@ export default function CalendarView() {
     ctx.stroke();
 
     try {
-      const logoImg = await loadImage(ligaLogo);
+      const logoImg = await loadImage(logoUrl);
       ctx.drawImage(logoImg, cx - 45, 18, 90, 90);
     } catch {}
 
@@ -417,7 +419,7 @@ export default function CalendarView() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <img src={ligaLogo} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
               <span className="text-lg sm:text-xl font-bold">Calendario</span>
             </div>
             <div className="flex items-center gap-2">
