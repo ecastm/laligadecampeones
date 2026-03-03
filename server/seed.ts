@@ -202,6 +202,29 @@ export async function fixDataIntegrity() {
     if (fixedVs > 0) {
       console.log(`Integridad: ${fixedVs} partidos con imagen VS restaurada`);
     }
+
+    const allTournaments = await storage.getTournaments();
+    for (const t of allTournaments) {
+      const tMatches = await storage.getMatches(t.id);
+      const matchesWithoutStage = tMatches.filter(m => !m.stageId);
+      if (matchesWithoutStage.length > 0) {
+        const existingStages = await storage.getStagesByTournament(t.id);
+        let defaultStage = existingStages.find(s => s.name === "Jornada Regular");
+        if (!defaultStage) {
+          defaultStage = await storage.createStage({
+            tournamentId: t.id,
+            name: "Jornada Regular",
+            sortOrder: 1,
+            stageType: "LIGA",
+          });
+          console.log(`Integridad: Creada fase "Jornada Regular" para torneo "${t.name}"`);
+        }
+        for (const m of matchesWithoutStage) {
+          await storage.updateMatch(m.id, { stageId: defaultStage.id });
+        }
+        console.log(`Integridad: ${matchesWithoutStage.length} partidos asignados a fase "Jornada Regular" en torneo "${t.name}"`);
+      }
+    }
   } catch (err) {
     console.error("Error en corrección de integridad:", err);
   }

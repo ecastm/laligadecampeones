@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTournamentSchema, finishTournamentSchema, type InsertTournament, type Tournament, type Team, type Standing, type Division, type TournamentType } from "@shared/schema";
+import { insertTournamentSchema, finishTournamentSchema, type InsertTournament, type Tournament, type Team, type Standing, type Division, type TournamentType, type TournamentStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2, Shield } from "lucide-react";
+import { Trophy, Plus, Edit, Trash2, Flag, MapPin, Calendar, Award, Users, CalendarPlus, Loader2, Shield, Layers, ArrowUp, ArrowDown, GripVertical } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DatePicker } from "@/components/ui/date-picker";
 
@@ -27,6 +27,10 @@ export default function TournamentManagement() {
   const [viewingTournament, setViewingTournament] = useState<Tournament | null>(null);
   const [generatingSchedule, setGeneratingSchedule] = useState<Tournament | null>(null);
   const [doubleRound, setDoubleRound] = useState(false);
+  const [managingStages, setManagingStages] = useState<Tournament | null>(null);
+  const [newStageName, setNewStageName] = useState("");
+  const [editingStage, setEditingStage] = useState<TournamentStage | null>(null);
+  const [editStageName, setEditStageName] = useState("");
 
   const { data: tournaments = [], isLoading } = useQuery<Tournament[]>({
     queryKey: ["/api/admin/tournaments"],
@@ -185,6 +189,83 @@ export default function TournamentManagement() {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
+
+  const { data: stages = [], isLoading: stagesLoading } = useQuery<TournamentStage[]>({
+    queryKey: ["/api/admin/tournaments", managingStages?.id, "stages"],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/tournaments/${managingStages!.id}/stages`, { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar fases");
+      return response.json();
+    },
+    enabled: !!managingStages,
+  });
+
+  const createStageMutation = useMutation({
+    mutationFn: async ({ tournamentId, name, sortOrder }: { tournamentId: string; name: string; sortOrder: number }) => {
+      return apiRequest("POST", `/api/admin/tournaments/${tournamentId}/stages`, { name, sortOrder });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", managingStages?.id, "stages"] });
+      setNewStageName("");
+      toast({ title: "Fase creada correctamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const updateStageMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name?: string; sortOrder?: number } }) => {
+      return apiRequest("PUT", `/api/admin/stages/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", managingStages?.id, "stages"] });
+      setEditingStage(null);
+      toast({ title: "Fase actualizada correctamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteStageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/stages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", managingStages?.id, "stages"] });
+      toast({ title: "Fase eliminada correctamente" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const reorderStagesMutation = useMutation({
+    mutationFn: async ({ tournamentId, stageIds }: { tournamentId: string; stageIds: string[] }) => {
+      return apiRequest("POST", `/api/admin/tournaments/${tournamentId}/stages/reorder`, { stageIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", managingStages?.id, "stages"] });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const moveStage = (stageId: string, direction: "up" | "down") => {
+    const idx = stages.findIndex(s => s.id === stageId);
+    if (idx === -1) return;
+    if (direction === "up" && idx === 0) return;
+    if (direction === "down" && idx === stages.length - 1) return;
+    const newOrder = [...stages];
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    reorderStagesMutation.mutate({
+      tournamentId: managingStages!.id,
+      stageIds: newOrder.map(s => s.id),
+    });
+  };
 
   const openEditDialog = (tournament: Tournament) => {
     setEditingTournament(tournament);
@@ -386,9 +467,13 @@ export default function TournamentManagement() {
                     <Edit className="mr-1 h-3 w-3" />
                     Editar
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => setManagingStages(tournament)} data-testid={`button-manage-stages-${tournament.id}`}>
+                    <Layers className="mr-1 h-3 w-3" />
+                    Fases
+                  </Button>
                   <Button size="sm" variant="secondary" onClick={() => setGeneratingSchedule(tournament)} data-testid={`button-generate-schedule-${tournament.id}`}>
                     <CalendarPlus className="mr-1 h-3 w-3" />
-                    Generar Calendario
+                    Calendario
                   </Button>
                   <Button size="sm" variant="default" onClick={() => setFinishingTournament(tournament)} data-testid={`button-finish-tournament-${tournament.id}`}>
                     <Flag className="mr-1 h-3 w-3" />
@@ -767,6 +852,160 @@ export default function TournamentManagement() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!managingStages} onOpenChange={() => { setManagingStages(null); setNewStageName(""); setEditingStage(null); }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-primary" />
+              Fases del Torneo
+            </DialogTitle>
+            <DialogDescription>
+              {managingStages?.name} - Define las fases o etapas del torneo
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Nombre de la fase (ej: Jornada Regular, Cuartos de Final)"
+                value={newStageName}
+                onChange={(e) => setNewStageName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newStageName.trim()) {
+                    createStageMutation.mutate({
+                      tournamentId: managingStages!.id,
+                      name: newStageName.trim(),
+                      sortOrder: stages.length + 1,
+                    });
+                  }
+                }}
+                data-testid="input-new-stage-name"
+              />
+              <Button
+                onClick={() => {
+                  if (newStageName.trim()) {
+                    createStageMutation.mutate({
+                      tournamentId: managingStages!.id,
+                      name: newStageName.trim(),
+                      sortOrder: stages.length + 1,
+                    });
+                  }
+                }}
+                disabled={!newStageName.trim() || createStageMutation.isPending}
+                data-testid="button-add-stage"
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Agregar
+              </Button>
+            </div>
+
+            {stagesLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12" />
+                <Skeleton className="h-12" />
+              </div>
+            ) : stages.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Layers className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No hay fases definidas</p>
+                <p className="text-xs mt-1">Agrega fases para organizar los partidos del torneo</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {stages.map((stage, index) => (
+                  <div
+                    key={stage.id}
+                    className="flex items-center gap-2 p-3 border rounded-lg bg-card hover:bg-accent/50 transition-colors"
+                    data-testid={`stage-item-${stage.id}`}
+                  >
+                    <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {index + 1}
+                    </Badge>
+                    {editingStage?.id === stage.id ? (
+                      <div className="flex-1 flex gap-2">
+                        <Input
+                          value={editStageName}
+                          onChange={(e) => setEditStageName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && editStageName.trim()) {
+                              updateStageMutation.mutate({ id: stage.id, data: { name: editStageName.trim() } });
+                            }
+                            if (e.key === "Escape") setEditingStage(null);
+                          }}
+                          className="h-8"
+                          autoFocus
+                          data-testid="input-edit-stage-name"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            if (editStageName.trim()) {
+                              updateStageMutation.mutate({ id: stage.id, data: { name: editStageName.trim() } });
+                            }
+                          }}
+                          disabled={!editStageName.trim()}
+                          data-testid="button-save-stage"
+                        >
+                          Guardar
+                        </Button>
+                      </div>
+                    ) : (
+                      <span className="flex-1 font-medium text-sm">{stage.name}</span>
+                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={() => moveStage(stage.id, "up")}
+                        disabled={index === 0 || reorderStagesMutation.isPending}
+                        data-testid={`button-move-up-${stage.id}`}
+                      >
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={() => moveStage(stage.id, "down")}
+                        disabled={index === stages.length - 1 || reorderStagesMutation.isPending}
+                        data-testid={`button-move-down-${stage.id}`}
+                      >
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7"
+                        onClick={() => { setEditingStage(stage); setEditStageName(stage.name); }}
+                        data-testid={`button-edit-stage-${stage.id}`}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        onClick={() => {
+                          if (confirm(`¿Eliminar la fase "${stage.name}"? Solo se puede si no tiene partidos asignados.`)) {
+                            deleteStageMutation.mutate(stage.id);
+                          }
+                        }}
+                        disabled={deleteStageMutation.isPending}
+                        data-testid={`button-delete-stage-${stage.id}`}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

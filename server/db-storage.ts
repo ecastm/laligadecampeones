@@ -22,6 +22,7 @@ import {
   type MarketingMedia, type InsertMarketingMedia,
   type ContactMessage, type InsertContactMessage,
   type SiteSettings, type InsertSiteSettings,
+  type TournamentStage, type InsertTournamentStage,
 } from "@shared/schema";
 import { IStorage } from "./storage";
 
@@ -242,6 +243,64 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Tournament Stages
+  async getStagesByTournament(tournamentId: string): Promise<TournamentStage[]> {
+    const result = await this.pool.query(
+      `SELECT id, tournament_id AS "tournamentId", name, sort_order AS "sortOrder", stage_type AS "stageType"
+       FROM tournament_stages WHERE tournament_id = $1 ORDER BY sort_order ASC`,
+      [tournamentId]
+    );
+    return result.rows;
+  }
+
+  async getStage(id: string): Promise<TournamentStage | undefined> {
+    const result = await this.pool.query(
+      `SELECT id, tournament_id AS "tournamentId", name, sort_order AS "sortOrder", stage_type AS "stageType"
+       FROM tournament_stages WHERE id = $1`,
+      [id]
+    );
+    return result.rows[0] || undefined;
+  }
+
+  async createStage(stage: InsertTournamentStage): Promise<TournamentStage> {
+    const result = await this.pool.query(
+      `INSERT INTO tournament_stages (id, tournament_id, name, sort_order, stage_type)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4)
+       RETURNING id, tournament_id AS "tournamentId", name, sort_order AS "sortOrder", stage_type AS "stageType"`,
+      [stage.tournamentId, stage.name, stage.sortOrder, stage.stageType || null]
+    );
+    return result.rows[0];
+  }
+
+  async updateStage(id: string, data: Partial<InsertTournamentStage>): Promise<TournamentStage | undefined> {
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+    if (data.name !== undefined) { setClauses.push(`name = $${paramIndex++}`); values.push(data.name); }
+    if (data.sortOrder !== undefined) { setClauses.push(`sort_order = $${paramIndex++}`); values.push(data.sortOrder); }
+    if (data.stageType !== undefined) { setClauses.push(`stage_type = $${paramIndex++}`); values.push(data.stageType || null); }
+    if (setClauses.length === 0) return this.getStage(id);
+    values.push(id);
+    const result = await this.pool.query(
+      `UPDATE tournament_stages SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
+       RETURNING id, tournament_id AS "tournamentId", name, sort_order AS "sortOrder", stage_type AS "stageType"`,
+      values
+    );
+    return result.rows[0] || undefined;
+  }
+
+  async deleteStage(id: string): Promise<void> {
+    await this.pool.query(`DELETE FROM tournament_stages WHERE id = $1`, [id]);
+  }
+
+  async getMatchCountByStage(stageId: string): Promise<number> {
+    const result = await this.pool.query(
+      `SELECT COUNT(*)::int AS count FROM matches WHERE stage_id = $1`,
+      [stageId]
+    );
+    return result.rows[0]?.count || 0;
+  }
+
   async getTeams(tournamentId?: string): Promise<Team[]> {
     if (tournamentId) {
       const result = await this.pool.query(
@@ -388,7 +447,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMatches(tournamentId?: string): Promise<Match[]> {
-    const cols = `id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, referee_notes AS "refereeNotes"`;
+    const cols = `id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`;
     if (tournamentId) {
       const result = await this.pool.query(`SELECT ${cols} FROM matches WHERE tournament_id = $1`, [tournamentId]);
       return result.rows;
@@ -399,7 +458,7 @@ export class DatabaseStorage implements IStorage {
 
   async getMatch(id: string): Promise<Match | undefined> {
     const result = await this.pool.query(
-      `SELECT id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, referee_notes AS "refereeNotes" FROM matches WHERE id = $1`,
+      `SELECT id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes" FROM matches WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -453,9 +512,9 @@ export class DatabaseStorage implements IStorage {
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
     const result = await this.pool.query(
-      `INSERT INTO matches (id, tournament_id, round_number, date_time, field, home_team_id, away_team_id, referee_user_id, status, home_score, away_score, vs_image_url, stage, referee_notes)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, referee_notes AS "refereeNotes"`,
+      `INSERT INTO matches (id, tournament_id, round_number, date_time, field, home_team_id, away_team_id, referee_user_id, status, home_score, away_score, vs_image_url, stage, stage_id, referee_notes)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
       [
         insertMatch.tournamentId,
         insertMatch.roundNumber,
@@ -469,6 +528,7 @@ export class DatabaseStorage implements IStorage {
         insertMatch.awayScore ?? null,
         insertMatch.vsImageUrl || null,
         insertMatch.stage || null,
+        insertMatch.stageId || null,
         insertMatch.refereeNotes || null,
       ]
     );
@@ -492,6 +552,7 @@ export class DatabaseStorage implements IStorage {
     if (data.awayScore !== undefined) { setClauses.push(`away_score = $${paramIndex++}`); values.push(data.awayScore); }
     if (data.vsImageUrl !== undefined) { setClauses.push(`vs_image_url = $${paramIndex++}`); values.push(data.vsImageUrl || null); }
     if (data.stage !== undefined) { setClauses.push(`stage = $${paramIndex++}`); values.push(data.stage || null); }
+    if (data.stageId !== undefined) { setClauses.push(`stage_id = $${paramIndex++}`); values.push(data.stageId || null); }
     if (data.refereeNotes !== undefined) { setClauses.push(`referee_notes = $${paramIndex++}`); values.push(data.refereeNotes || null); }
 
     if (setClauses.length === 0) return this.getMatch(id);
@@ -499,7 +560,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE matches SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, referee_notes AS "refereeNotes"`,
+       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
       values
     );
     return result.rows[0] || undefined;

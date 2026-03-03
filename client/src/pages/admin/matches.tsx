@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division, type MatchWithTeams, MatchStage, MatchStageLabels } from "@shared/schema";
+import { insertMatchSchema, type InsertMatch, type Match, type Team, type User, type Tournament, type Division, type MatchWithTeams, type TournamentStage } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { generateVsImageBlob, uploadVsImage } from "@/lib/vs-image-generator";
@@ -32,6 +32,7 @@ export default function MatchesManagement() {
   const [vsImageMatch, setVsImageMatch] = useState<Match | null>(null);
   const [refereeMatch, setRefereeMatch] = useState<MatchWithTeams | null>(null);
   const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
+  const [selectedStageId, setSelectedStageId] = useState<string>("");
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -72,6 +73,24 @@ export default function MatchesManagement() {
       return response.json();
     },
   });
+
+  const { data: tournamentStages = [] } = useQuery<TournamentStage[]>({
+    queryKey: ["/api/admin/tournaments", tournament?.id, "stages"],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/tournaments/${tournament!.id}/stages`, { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar fases");
+      return response.json();
+    },
+    enabled: !!tournament?.id,
+  });
+
+  const getStageName = (match: Match) => {
+    if (match.stageId) {
+      const stage = tournamentStages.find(s => s.id === match.stageId);
+      if (stage) return stage.name;
+    }
+    return `J${match.roundNumber}`;
+  };
 
   const autoGenerateVsImage = async (matchId: string, matchData: Partial<InsertMatch>) => {
     try {
@@ -188,6 +207,7 @@ export default function MatchesManagement() {
 
   const openEditDialog = (match: Match) => {
     setEditingMatch(match);
+    setSelectedStageId(match.stageId || "");
     form.reset({
       roundNumber: match.roundNumber,
       dateTime: match.dateTime.slice(0, 16),
@@ -201,7 +221,7 @@ export default function MatchesManagement() {
   };
 
   const handleSubmit = (data: Omit<InsertMatch, 'tournamentId'>) => {
-    const cleanData = { ...data, stage: data.stage || undefined };
+    const cleanData = { ...data, stage: data.stage || undefined, stageId: selectedStageId || undefined };
     if (editingMatch) {
       updateMutation.mutate({ id: editingMatch.id, data: cleanData });
     } else {
@@ -231,8 +251,10 @@ export default function MatchesManagement() {
           if (!open) {
             setIsDialogOpen(false);
             setEditingMatch(null);
+            setSelectedStageId("");
             form.reset();
           } else {
+            setSelectedStageId("");
             setIsDialogOpen(true);
           }
         }}>
@@ -267,30 +289,26 @@ export default function MatchesManagement() {
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="stage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Etapa del Torneo</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-match-stage">
-                            <SelectValue placeholder="Jornada regular (por defecto)" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Object.entries(MatchStageLabels).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {tournamentStages.length > 0 && (
+                  <FormItem>
+                    <FormLabel>Fase del Torneo</FormLabel>
+                    <Select
+                      onValueChange={setSelectedStageId}
+                      value={selectedStageId}
+                    >
+                      <SelectTrigger data-testid="select-match-stage">
+                        <SelectValue placeholder="Selecciona una fase" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {tournamentStages.map((stage) => (
+                          <SelectItem key={stage.id} value={stage.id}>
+                            {stage.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -439,9 +457,7 @@ export default function MatchesManagement() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3 sm:gap-4">
                       <Badge variant="outline" className="shrink-0 text-xs">
-                        {match.stage && match.stage !== "JORNADA"
-                          ? MatchStageLabels[match.stage as MatchStage]
-                          : `J${match.roundNumber}`}
+                        {getStageName(match)}
                       </Badge>
                       <div className="min-w-0">
                         <p className="font-medium text-sm sm:text-base">

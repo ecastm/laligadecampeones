@@ -29,7 +29,7 @@ Canvas image generators (for match graphics, social media posts) use this black/
 
 ### Feature Specifications
 - **User Roles**: ADMIN, CAPITAN, ARBITRO, MARKETING, each with specific permissions and dedicated dashboards.
-- **Tournament Management**: Create, edit, finalize, and archive tournaments. Supports various tournament types (League, Knockout, Groups + Playoffs) and divisions (e.g., Primera División, Segunda División).
+- **Tournament Management**: Create, edit, finalize, and archive tournaments. Supports various tournament types (League, Knockout, Groups + Playoffs) and divisions (e.g., Primera División, Segunda División). Dynamic tournament stages (phases) can be defined per tournament via the `tournament_stages` table, replacing the old hardcoded enum. Matches reference stages via `stage_id`.
 - **Automated Scheduling**: Implements a round-robin schedule generator using the circle method, handling odd numbers of teams and providing a preview before generation.
 - **Match Management**: Tracking of match status (PROGRAMADO, EN_CURSO, JUGADO), result submission by referees, and event logging (goals, cards).
 - **Player & Team Management**: CRUD operations for teams and players, with captains managing their own team's roster.

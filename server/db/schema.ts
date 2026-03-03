@@ -78,6 +78,14 @@ export const players = pgTable("players", {
   active: boolean("active").notNull().default(true),
 });
 
+export const tournamentStages = pgTable("tournament_stages", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: text("tournament_id").notNull(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(1),
+  stageType: text("stage_type"),
+});
+
 export const matches = pgTable("matches", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   tournamentId: text("tournament_id").notNull(),
@@ -90,7 +98,10 @@ export const matches = pgTable("matches", {
   status: text("status").notNull().default("PROGRAMADO"),
   homeScore: integer("home_score"),
   awayScore: integer("away_score"),
+  vsImageUrl: text("vs_image_url"),
   stage: text("stage"),
+  stageId: text("stage_id"),
+  refereeNotes: text("referee_notes"),
 });
 
 export const matchEvents = pgTable("match_events", {

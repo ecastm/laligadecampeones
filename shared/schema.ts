@@ -260,6 +260,23 @@ export const insertPlayerSchema = z.object({
 export type InsertPlayer = z.infer<typeof insertPlayerSchema>;
 
 // Match
+// Tournament Stage
+export interface TournamentStage {
+  id: string;
+  tournamentId: string;
+  name: string;
+  sortOrder: number;
+  stageType?: string;
+}
+
+export const insertTournamentStageSchema = z.object({
+  tournamentId: z.string(),
+  name: z.string().min(1, "El nombre de la fase es requerido"),
+  sortOrder: z.number().min(1).default(1),
+  stageType: z.string().optional(),
+});
+export type InsertTournamentStage = z.infer<typeof insertTournamentStageSchema>;
+
 export interface Match {
   id: string;
   tournamentId: string;
@@ -274,6 +291,7 @@ export interface Match {
   awayScore?: number;
   vsImageUrl?: string;
   stage?: MatchStage;
+  stageId?: string;
   refereeNotes?: string;
 }
 
@@ -290,6 +308,7 @@ export const insertMatchSchema = z.object({
   awayScore: z.number().optional(),
   vsImageUrl: z.string().optional(),
   stage: z.enum(["JORNADA", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_LUGAR", "FINAL"]).optional(),
+  stageId: z.string().optional(),
   refereeNotes: z.string().optional(),
 });
 export type InsertMatch = z.infer<typeof insertMatchSchema>;

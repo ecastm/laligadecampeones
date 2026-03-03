@@ -20,6 +20,7 @@ import {
   type MarketingMedia, type InsertMarketingMedia,
   type ContactMessage, type InsertContactMessage,
   type SiteSettings, type InsertSiteSettings,
+  type TournamentStage, type InsertTournamentStage,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -42,6 +43,14 @@ export interface IStorage {
   updateTournament(id: string, data: Partial<InsertTournament>): Promise<Tournament | undefined>;
   finishTournament(id: string, championTeamId: string): Promise<Tournament | undefined>;
   deleteTournament(id: string): Promise<void>;
+
+  // Tournament Stages
+  getStagesByTournament(tournamentId: string): Promise<TournamentStage[]>;
+  getStage(id: string): Promise<TournamentStage | undefined>;
+  createStage(stage: InsertTournamentStage): Promise<TournamentStage>;
+  updateStage(id: string, data: Partial<InsertTournamentStage>): Promise<TournamentStage | undefined>;
+  deleteStage(id: string): Promise<void>;
+  getMatchCountByStage(stageId: string): Promise<number>;
 
   // Teams
   getTeams(tournamentId?: string): Promise<Team[]>;

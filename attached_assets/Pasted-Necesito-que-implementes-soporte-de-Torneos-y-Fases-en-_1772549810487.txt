@@ -1,0 +1,83 @@
+Necesito que implementes soporte de Torneos y Fases en el módulo Admin. Hazlo en este orden:
+
+PASO 1 — MODELOS/BD
+A) Crear tabla tournaments:
+- id (PK)
+- name (string, required)
+- season (string, optional)
+- description (text, optional)
+- is_active (boolean, default true)
+- timestamps
+
+B) Crear tabla tournament_stages:
+- id (PK)
+- tournament_id (FK -> tournaments.id)
+- name (string, required)
+- sort_order (int, required)
+- stage_type (string, optional)
+- timestamps
+- índice (tournament_id, sort_order)
+- opcional: unique(tournament_id, name)
+
+C) Modificar tabla matches:
+- agregar tournament_id (FK, NOT NULL)
+- agregar stage_id (FK, NOT NULL)
+Si existe campo "fase" texto, dejarlo pero el sistema usará stage_id.
+
+PASO 2 — MIGRACIÓN DE DATOS EXISTENTES
+- Crear torneo "Legacy" (activo).
+- Crear fase "General" (sort_order=1) dentro de "Legacy".
+- Asignar todos los partidos existentes a tournament_id=Legacy y stage_id=General.
+
+PASO 3 — API / BACKEND
+A) Endpoints Torneos:
+- GET /admin/tournaments
+- POST /admin/tournaments
+- PUT/PATCH /admin/tournaments/:id
+- (preferible) PATCH /admin/tournaments/:id/status para activar/inactivar
+
+B) Endpoints Fases:
+- GET /admin/tournaments/:id/stages
+- POST /admin/tournaments/:id/stages
+- PUT/PATCH /admin/stages/:id
+- POST /admin/tournaments/:id/stages/reorder (o actualiza sort_order)
+Regla: no permitir borrar una fase si tiene partidos asociados.
+
+C) Actualizar endpoints de Partidos:
+- Al crear/editar partido: exigir tournament_id y stage_id.
+- Validación server: stage_id debe pertenecer a tournament_id.
+- Si el torneo está inactivo, bloquear creación de partidos nuevos.
+
+PASO 4 — UI ADMIN
+A) Menú: “Torneos”
+- Vista lista con: nombre, temporada, estado
+- Botón: Crear torneo
+- Acciones: editar, activar/inactivar, ver detalle
+
+B) Pantalla Crear/Editar Torneo:
+- Formulario torneo
+- Sección “Fases del torneo”:
+  - agregar fase
+  - reordenar (arriba/abajo o drag)
+  - editar nombre
+  - eliminar (solo si no tiene partidos)
+
+C) Pantalla Crear/Editar Partido:
+- Campo 1: Torneo (dropdown, obligatorio)
+- Campo 2: Fase (dropdown, obligatorio)
+  - se llena automáticamente según torneo seleccionado (GET stages)
+- Mostrar Torneo y Fase en listado de partidos
+- Filtro por Torneo (y opcional por Fase)
+
+PASO 5 — PRUEBAS
+- Crear torneo con fases.
+- Crear partido con torneo+fase válida.
+- Intentar guardar partido con fase de otro torneo => error.
+- Inactivar torneo y comprobar que no deja crear partidos nuevos.
+- Comprobar que partidos antiguos quedaron en “Legacy / General”.
+
+ENTREGABLE FINAL
+- Migraciones + seed/ajuste de datos existentes.
+- API + validaciones.
+- UI completa para Torneos y captura de Partidos con Torneo/Fase dependiente.
+- Sin hardcodear fases: todo debe venir de BD por torneo.

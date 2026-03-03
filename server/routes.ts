@@ -25,6 +25,7 @@ import {
   insertMarketingMediaSchema,
   insertContactMessageSchema,
   insertSiteSettingsSchema,
+  insertTournamentStageSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -465,6 +466,87 @@ export async function registerRoutes(
     }
   });
 
+  // Tournament Stages
+  app.get("/api/admin/tournaments/:tournamentId/stages", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      res.json(stages);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/tournaments/:tournamentId/stages", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertTournamentStageSchema.parse({
+        ...req.body,
+        tournamentId: req.params.tournamentId,
+      });
+      const stage = await storage.createStage(data);
+      res.status(201).json(stage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/stages/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertTournamentStageSchema.partial().parse(req.body);
+      const stage = await storage.updateStage(req.params.id, data);
+      if (!stage) {
+        return res.status(404).json({ message: "Fase no encontrada" });
+      }
+      res.json(stage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/admin/stages/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const matchCount = await storage.getMatchCountByStage(req.params.id);
+      if (matchCount > 0) {
+        return res.status(400).json({ message: "No se puede eliminar una fase que tiene partidos asignados" });
+      }
+      await storage.deleteStage(req.params.id);
+      res.status(204).send();
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/tournaments/:tournamentId/stages/reorder", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const { stageIds } = req.body as { stageIds: string[] };
+      if (!Array.isArray(stageIds)) {
+        return res.status(400).json({ message: "stageIds debe ser un array" });
+      }
+      for (let i = 0; i < stageIds.length; i++) {
+        await storage.updateStage(stageIds[i], { sortOrder: i + 1 });
+      }
+      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      res.json(stages);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // Public stages endpoint for match forms
+  app.get("/api/tournaments/:tournamentId/stages", authenticate, async (req, res) => {
+    try {
+      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      res.json(stages);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   // Users
   app.get("/api/admin/users", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
@@ -626,6 +708,15 @@ export async function registerRoutes(
   app.post("/api/admin/matches", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertMatchSchema.parse(req.body);
+      if (data.stageId) {
+        const stage = await storage.getStage(data.stageId);
+        if (!stage) {
+          return res.status(400).json({ message: "La fase seleccionada no existe" });
+        }
+        if (stage.tournamentId !== data.tournamentId) {
+          return res.status(400).json({ message: "La fase no pertenece al torneo seleccionado" });
+        }
+      }
       const match = await storage.createMatch(data);
       res.status(201).json(match);
     } catch (error) {
@@ -639,6 +730,17 @@ export async function registerRoutes(
   app.put("/api/admin/matches/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertMatchSchema.partial().parse(req.body);
+      if (data.stageId) {
+        const stage = await storage.getStage(data.stageId);
+        if (!stage) {
+          return res.status(400).json({ message: "La fase seleccionada no existe" });
+        }
+        const existingMatch = await storage.getMatch(req.params.id);
+        const tournamentId = data.tournamentId || existingMatch?.tournamentId;
+        if (stage.tournamentId !== tournamentId) {
+          return res.status(400).json({ message: "La fase no pertenece al torneo del partido" });
+        }
+      }
       const match = await storage.updateMatch(req.params.id, data);
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
