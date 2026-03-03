@@ -71,7 +71,7 @@ export default function CaptainDashboard() {
         <Sidebar>
           <SidebarHeader className="p-4 border-b">
             <div className="flex items-center gap-3">
-              <img src={logoUrl} alt="La Liga de Campeones" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="La Liga de Campeones" className="h-16 w-16 object-contain drop-shadow-[0_2px_8px_rgba(198,160,82,0.3)]" />
               <div className="flex-1 overflow-hidden">
                 <p className="font-semibold truncate">Panel Capitán</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.name}</p>
