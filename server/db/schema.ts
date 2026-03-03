@@ -221,6 +221,19 @@ export const marketingMedia = pgTable("marketing_media", {
   createdAt: text("created_at").notNull().default(sql`now()`),
 });
 
+export const siteSettings = pgTable("site_settings", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  leagueName: text("league_name").notNull().default("La Liga de Campeones"),
+  logoUrl: text("logo_url"),
+  phone: text("phone"),
+  email: text("email"),
+  address: text("address"),
+  instagramUrl: text("instagram_url"),
+  facebookUrl: text("facebook_url"),
+  whatsappNumber: text("whatsapp_number"),
+  updatedAt: text("updated_at").notNull().default(sql`now()`),
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   contactName: text("contact_name").notNull(),

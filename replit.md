@@ -85,6 +85,7 @@ La aplicación estará disponible en el puerto 5000.
 ## API Endpoints
 
 ### Públicos
+- `GET /api/site-settings` - Configuración del sitio (nombre, logo, contacto, redes)
 - `GET /api/tournaments/active` - Torneo activo
 - `GET /api/tournaments/completed` - Torneos finalizados (historial)
 - `GET /api/tournaments/:id` - Detalle de torneo específico
@@ -119,6 +120,7 @@ La aplicación estará disponible en el puerto 5000.
 - `/api/admin/expenses` - Gestión de gastos del torneo
 - `/api/admin/marketing` - CRUD contenido multimedia (fotos y videos)
 - `/api/admin/messages` - Gestión de mensajes de contacto (ver, actualizar estado, eliminar)
+- `PUT /api/admin/site-settings` - Actualizar configuración del sitio (nombre, logo, contacto, redes)
 
 ### Público - Contacto
 - `POST /api/contact` - Enviar mensaje de contacto (sin autenticación)

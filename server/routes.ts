@@ -24,6 +24,7 @@ import {
   insertExpenseSchema,
   insertMarketingMediaSchema,
   insertContactMessageSchema,
+  insertSiteSettingsSchema,
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -35,6 +36,29 @@ export async function registerRoutes(
   // ==================== OBJECT STORAGE ====================
   const { registerObjectStorageRoutes } = await import("./replit_integrations/object_storage");
   registerObjectStorageRoutes(app);
+
+  // ==================== SITE SETTINGS ====================
+  app.get("/api/site-settings", async (_req, res) => {
+    try {
+      const settings = await storage.getSiteSettings();
+      res.json(settings || { leagueName: "La Liga de Campeones", logoUrl: null, phone: null, email: null, address: null, instagramUrl: null, facebookUrl: null, whatsappNumber: null });
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/site-settings", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertSiteSettingsSchema.parse(req.body);
+      const settings = await storage.updateSiteSettings(data);
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
 
   // ==================== AUTH ====================
   app.post("/api/auth/login", async (req, res) => {

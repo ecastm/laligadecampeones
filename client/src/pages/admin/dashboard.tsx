@@ -19,8 +19,9 @@ import StatisticsManagement from "./statistics";
 import MarketingManagement from "./marketing";
 import MessagesManagement from "./messages";
 import Regulations from "@/components/regulations";
+import SiteSettingsManagement from "./settings";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages" | "settings";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -40,6 +41,7 @@ const menuItems = [
 const configItems = [
   { id: "users" as const, title: "Usuarios", icon: UserCog },
   { id: "divisions" as const, title: "Divisiones", icon: Layers },
+  { id: "settings" as const, title: "Sitio Web", icon: Settings },
 ];
 
 export default function AdminDashboard() {
@@ -154,6 +156,7 @@ export default function AdminDashboard() {
             {activeSection === "marketing" && <MarketingManagement />}
             {activeSection === "messages" && <MessagesManagement />}
             {activeSection === "regulations" && <Regulations />}
+            {activeSection === "settings" && <SiteSettingsManagement />}
           </main>
         </div>
       </div>

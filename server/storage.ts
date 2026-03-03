@@ -19,6 +19,7 @@ import {
   type Expense, type InsertExpense,
   type MarketingMedia, type InsertMarketingMedia,
   type ContactMessage, type InsertContactMessage,
+  type SiteSettings, type InsertSiteSettings,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -160,6 +161,10 @@ export interface IStorage {
 
   // Schedule Generation
   generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean): Promise<Match[]>;
+
+  // Site Settings
+  getSiteSettings(): Promise<SiteSettings | null>;
+  updateSiteSettings(data: InsertSiteSettings): Promise<SiteSettings>;
 }
 
 export class MemStorage implements IStorage {
@@ -1170,6 +1175,14 @@ export class MemStorage implements IStorage {
 
   async deleteContactMessage(id: string): Promise<void> {
     this.contactMessages.delete(id);
+  }
+
+  async getSiteSettings(): Promise<SiteSettings | null> {
+    return null;
+  }
+
+  async updateSiteSettings(data: InsertSiteSettings): Promise<SiteSettings> {
+    return { id: "1", leagueName: data.leagueName || "La Liga de Campeones", logoUrl: null, phone: null, email: null, address: null, instagramUrl: null, facebookUrl: null, whatsappNumber: null, updatedAt: new Date().toISOString() };
   }
 }
 

@@ -679,6 +679,31 @@ export interface ContactMessage {
   createdAt: string;
 }
 
+export interface SiteSettings {
+  id: string;
+  leagueName: string;
+  logoUrl: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  instagramUrl: string | null;
+  facebookUrl: string | null;
+  whatsappNumber: string | null;
+  updatedAt: string;
+}
+
+export const insertSiteSettingsSchema = z.object({
+  leagueName: z.string().min(1, "El nombre es obligatorio").optional(),
+  logoUrl: z.string().nullable().optional(),
+  phone: z.string().nullable().optional(),
+  email: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
+  instagramUrl: z.string().nullable().optional(),
+  facebookUrl: z.string().nullable().optional(),
+  whatsappNumber: z.string().nullable().optional(),
+});
+export type InsertSiteSettings = z.infer<typeof insertSiteSettingsSchema>;
+
 export const insertContactMessageSchema = z.object({
   contactName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   phone: z.string().min(7, "El teléfono debe tener al menos 7 caracteres"),

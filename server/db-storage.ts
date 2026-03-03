@@ -21,6 +21,7 @@ import {
   type Expense, type InsertExpense,
   type MarketingMedia, type InsertMarketingMedia,
   type ContactMessage, type InsertContactMessage,
+  type SiteSettings, type InsertSiteSettings,
 } from "@shared/schema";
 import { IStorage } from "./storage";
 
@@ -1406,5 +1407,56 @@ export class DatabaseStorage implements IStorage {
     await this.updateTournament(tournamentId, { scheduleGenerated: true } as any);
 
     return generatedMatches;
+  }
+
+  async getSiteSettings(): Promise<SiteSettings | null> {
+    const result = await this.pool.query(
+      `SELECT id, league_name AS "leagueName", logo_url AS "logoUrl", phone, email, address, instagram_url AS "instagramUrl", facebook_url AS "facebookUrl", whatsapp_number AS "whatsappNumber", updated_at AS "updatedAt"
+       FROM site_settings LIMIT 1`
+    );
+    return result.rows[0] || null;
+  }
+
+  async updateSiteSettings(data: InsertSiteSettings): Promise<SiteSettings> {
+    const existing = await this.getSiteSettings();
+    if (existing) {
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let i = 1;
+      if (data.leagueName !== undefined) { setClauses.push(`league_name = $${i++}`); values.push(data.leagueName); }
+      if (data.logoUrl !== undefined) { setClauses.push(`logo_url = $${i++}`); values.push(data.logoUrl); }
+      if (data.phone !== undefined) { setClauses.push(`phone = $${i++}`); values.push(data.phone); }
+      if (data.email !== undefined) { setClauses.push(`email = $${i++}`); values.push(data.email); }
+      if (data.address !== undefined) { setClauses.push(`address = $${i++}`); values.push(data.address); }
+      if (data.instagramUrl !== undefined) { setClauses.push(`instagram_url = $${i++}`); values.push(data.instagramUrl); }
+      if (data.facebookUrl !== undefined) { setClauses.push(`facebook_url = $${i++}`); values.push(data.facebookUrl); }
+      if (data.whatsappNumber !== undefined) { setClauses.push(`whatsapp_number = $${i++}`); values.push(data.whatsappNumber); }
+      setClauses.push(`updated_at = $${i++}`); values.push(new Date().toISOString());
+      values.push(existing.id);
+      const result = await this.pool.query(
+        `UPDATE site_settings SET ${setClauses.join(', ')} WHERE id = $${i}
+         RETURNING id, league_name AS "leagueName", logo_url AS "logoUrl", phone, email, address, instagram_url AS "instagramUrl", facebook_url AS "facebookUrl", whatsapp_number AS "whatsappNumber", updated_at AS "updatedAt"`,
+        values
+      );
+      return result.rows[0];
+    } else {
+      const result = await this.pool.query(
+        `INSERT INTO site_settings (id, league_name, logo_url, phone, email, address, instagram_url, facebook_url, whatsapp_number, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING id, league_name AS "leagueName", logo_url AS "logoUrl", phone, email, address, instagram_url AS "instagramUrl", facebook_url AS "facebookUrl", whatsapp_number AS "whatsappNumber", updated_at AS "updatedAt"`,
+        [
+          data.leagueName || "La Liga de Campeones",
+          data.logoUrl || null,
+          data.phone || null,
+          data.email || null,
+          data.address || null,
+          data.instagramUrl || null,
+          data.facebookUrl || null,
+          data.whatsappNumber || null,
+          new Date().toISOString(),
+        ]
+      );
+      return result.rows[0];
+    }
   }
 }
