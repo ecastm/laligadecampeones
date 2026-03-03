@@ -310,11 +310,20 @@ function TeamInfo() {
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xl sm:text-2xl shrink-0">
-              {team.name.substring(0, 2).toUpperCase()}
-            </div>
+            {team.logoUrl ? (
+              <img
+                src={team.logoUrl}
+                alt={team.name}
+                className="h-14 w-14 sm:h-20 sm:w-20 rounded-lg object-cover border border-primary/20 shadow-md shrink-0"
+                data-testid="img-team-logo"
+              />
+            ) : (
+              <div className="flex h-14 w-14 sm:h-20 sm:w-20 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xl sm:text-2xl shrink-0">
+                {team.name.substring(0, 2).toUpperCase()}
+              </div>
+            )}
             <div className="min-w-0">
-              <CardTitle data-testid="text-team-name" className="text-base sm:text-lg truncate">{team.name}</CardTitle>
+              <CardTitle data-testid="text-team-name" className="text-lg sm:text-xl font-bold truncate">{team.name}</CardTitle>
               <CardDescription className="text-xs sm:text-sm truncate">{team.colors}</CardDescription>
             </div>
           </div>
