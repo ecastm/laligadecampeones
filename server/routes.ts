@@ -1468,6 +1468,10 @@ export async function registerRoutes(
         }
       }
       
+      // Decrement active suspensions for both teams (they played this match)
+      await storage.decrementSuspensions(match.tournamentId, match.homeTeamId);
+      await storage.decrementSuspensions(match.tournamentId, match.awayTeamId);
+
       // Generate fines for card events (only if not already generated)
       const existingFines = await storage.getFines(match.tournamentId);
       const matchFines = existingFines.filter(f => f.matchId === req.params.id);
@@ -1504,6 +1508,24 @@ export async function registerRoutes(
                 status: "PENDIENTE",
               });
             }
+
+            if ((event.type === "RED" || event.type === "RED_DIRECT") && event.playerId) {
+              const existingSuspensions = await storage.getPlayerSuspensions(match.tournamentId, event.teamId, "ACTIVO");
+              const alreadySuspended = existingSuspensions.some(s => s.matchId === req.params.id && s.playerId === event.playerId);
+              if (!alreadySuspended) {
+                const reason = event.type === "RED_DIRECT" ? "Tarjeta roja directa" : "Doble tarjeta amarilla (roja)";
+                await storage.createPlayerSuspension({
+                  tournamentId: match.tournamentId,
+                  playerId: event.playerId,
+                  teamId: event.teamId,
+                  matchId: req.params.id,
+                  matchEventId: event.id,
+                  reason,
+                  matchesRemaining: 1,
+                  status: "ACTIVO",
+                });
+              }
+            }
           }
         }
       }
@@ -1536,6 +1558,29 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== PLAYER SUSPENSIONS ====================
+  app.get("/api/admin/suspensions", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const { tournamentId, teamId, status } = req.query;
+      if (!tournamentId) return res.status(400).json({ message: "tournamentId requerido" });
+      const suspensions = await storage.getPlayerSuspensions(tournamentId as string, teamId as string, status as string);
+      res.json(suspensions);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/suspensions/active", authenticate, async (req: AuthRequest, res) => {
+    try {
+      const { tournamentId, teamId } = req.query;
+      if (!tournamentId) return res.status(400).json({ message: "tournamentId requerido" });
+      const suspensions = await storage.getPlayerSuspensions(tournamentId as string, teamId as string, "ACTIVO");
+      res.json(suspensions);
+    } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

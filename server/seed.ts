@@ -4,6 +4,7 @@ import { pool } from "./db-storage";
 async function clearAllTables() {
   console.log("FORCE_RESEED: Limpiando todas las tablas...");
   const tables = [
+    "player_suspensions", "match_attendance",
     "match_evidence", "match_lineups", "match_events", "fines", "fine_payments",
     "team_payments", "expenses", "contact_messages",
     "news", "matches", "players", "captain_profiles", "referee_profiles",

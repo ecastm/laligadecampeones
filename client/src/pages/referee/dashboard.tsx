@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance, type PlayerSuspension } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX, ShieldAlert } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
@@ -360,6 +360,20 @@ function MatchResultDialog({
     enabled: open,
   });
 
+  const { data: activeSuspensions = [] } = useQuery<PlayerSuspension[]>({
+    queryKey: ["/api/suspensions/active", match.tournamentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/suspensions/active?tournamentId=${match.tournamentId}`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open,
+  });
+
+  const isPlayerSuspended = (playerId: string) => {
+    return activeSuspensions.some(s => s.playerId === playerId);
+  };
+
   if (!attendanceInitialized && homePlayers.length > 0 && awayPlayers.length > 0) {
     setAttendanceInitialized(true);
     if (existingAttendance.length > 0) {
@@ -384,10 +398,10 @@ function MatchResultDialog({
       if (awayRecords.length > 0 && awayAllAbsent) setAwayNoShow(true);
     } else {
       const homeAtt: Record<string, boolean> = {};
-      homePlayers.forEach(p => { homeAtt[p.id] = true; });
+      homePlayers.forEach(p => { homeAtt[p.id] = isPlayerSuspended(p.id) ? false : true; });
       setHomeAttendance(homeAtt);
       const awayAtt: Record<string, boolean> = {};
-      awayPlayers.forEach(p => { awayAtt[p.id] = true; });
+      awayPlayers.forEach(p => { awayAtt[p.id] = isPlayerSuspended(p.id) ? false : true; });
       setAwayAttendance(awayAtt);
     }
   }
@@ -496,26 +510,40 @@ function MatchResultDialog({
               </div>
               {!homeNoShow && homePlayers.filter(p => p.active).length > 0 ? (
                 <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {homePlayers.filter(p => p.active).map((player) => (
-                    <div
-                      key={player.id}
-                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${
-                        homeAttendance[player.id] ? "bg-emerald-500/10 hover:bg-emerald-500/20" : "bg-destructive/10 hover:bg-destructive/20"
-                      }`}
-                      onClick={() => setHomeAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
-                      data-testid={`attendance-home-${player.id}`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
-                        {player.firstName} {player.lastName}
-                      </span>
-                      {homeAttendance[player.id] ? (
-                        <UserCheck className="h-4 w-4 text-emerald-500" />
-                      ) : (
-                        <UserX className="h-4 w-4 text-destructive" />
-                      )}
-                    </div>
-                  ))}
+                  {homePlayers.filter(p => p.active).map((player) => {
+                    const suspended = isPlayerSuspended(player.id);
+                    return (
+                      <div
+                        key={player.id}
+                        className={`flex items-center justify-between px-2 py-1.5 rounded transition-colors text-sm ${
+                          suspended
+                            ? "bg-amber-500/15 cursor-not-allowed opacity-70"
+                            : homeAttendance[player.id]
+                              ? "bg-emerald-500/10 hover:bg-emerald-500/20 cursor-pointer"
+                              : "bg-destructive/10 hover:bg-destructive/20 cursor-pointer"
+                        }`}
+                        onClick={() => !suspended && setHomeAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                        data-testid={`attendance-home-${player.id}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
+                          {player.firstName} {player.lastName}
+                          {suspended && (
+                            <span className="text-[10px] font-bold bg-amber-500 text-black px-1.5 py-0.5 rounded" data-testid={`badge-suspended-${player.id}`}>
+                              SANCIONADO
+                            </span>
+                          )}
+                        </span>
+                        {suspended ? (
+                          <ShieldAlert className="h-4 w-4 text-amber-500" />
+                        ) : homeAttendance[player.id] ? (
+                          <UserCheck className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <UserX className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : homeNoShow ? (
                 <p className="text-xs text-destructive text-center py-2">Equipo marcado como no presentado (Multa 15€)</p>
@@ -546,26 +574,40 @@ function MatchResultDialog({
               </div>
               {!awayNoShow && awayPlayers.filter(p => p.active).length > 0 ? (
                 <div className="space-y-1 max-h-40 overflow-y-auto">
-                  {awayPlayers.filter(p => p.active).map((player) => (
-                    <div
-                      key={player.id}
-                      className={`flex items-center justify-between px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${
-                        awayAttendance[player.id] ? "bg-emerald-500/10 hover:bg-emerald-500/20" : "bg-destructive/10 hover:bg-destructive/20"
-                      }`}
-                      onClick={() => setAwayAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
-                      data-testid={`attendance-away-${player.id}`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
-                        {player.firstName} {player.lastName}
-                      </span>
-                      {awayAttendance[player.id] ? (
-                        <UserCheck className="h-4 w-4 text-emerald-500" />
-                      ) : (
-                        <UserX className="h-4 w-4 text-destructive" />
-                      )}
-                    </div>
-                  ))}
+                  {awayPlayers.filter(p => p.active).map((player) => {
+                    const suspended = isPlayerSuspended(player.id);
+                    return (
+                      <div
+                        key={player.id}
+                        className={`flex items-center justify-between px-2 py-1.5 rounded transition-colors text-sm ${
+                          suspended
+                            ? "bg-amber-500/15 cursor-not-allowed opacity-70"
+                            : awayAttendance[player.id]
+                              ? "bg-emerald-500/10 hover:bg-emerald-500/20 cursor-pointer"
+                              : "bg-destructive/10 hover:bg-destructive/20 cursor-pointer"
+                        }`}
+                        onClick={() => !suspended && setAwayAttendance(prev => ({ ...prev, [player.id]: !prev[player.id] }))}
+                        data-testid={`attendance-away-${player.id}`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground w-5 text-right">#{player.jerseyNumber}</span>
+                          {player.firstName} {player.lastName}
+                          {suspended && (
+                            <span className="text-[10px] font-bold bg-amber-500 text-black px-1.5 py-0.5 rounded" data-testid={`badge-suspended-${player.id}`}>
+                              SANCIONADO
+                            </span>
+                          )}
+                        </span>
+                        {suspended ? (
+                          <ShieldAlert className="h-4 w-4 text-amber-500" />
+                        ) : awayAttendance[player.id] ? (
+                          <UserCheck className="h-4 w-4 text-emerald-500" />
+                        ) : (
+                          <UserX className="h-4 w-4 text-destructive" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : awayNoShow ? (
                 <p className="text-xs text-destructive text-center py-2">Equipo marcado como no presentado (Multa 15€)</p>

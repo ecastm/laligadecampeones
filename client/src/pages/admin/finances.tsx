@@ -14,6 +14,7 @@ import {
   type Team, 
   type Fine,
   type Player,
+  type PlayerSuspension,
   type TeamPayment,
   type FinePayment,
   type Expense,
@@ -33,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Plus, CreditCard, Receipt, AlertTriangle, CheckCircle } from "lucide-react";
+import { DollarSign, Plus, CreditCard, Receipt, AlertTriangle, CheckCircle, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DatePicker } from "@/components/ui/date-picker";
@@ -92,6 +93,21 @@ export default function FinancesManagement() {
     },
     enabled: !!effectiveTournamentId,
   });
+
+  const { data: suspensions = [], isLoading: loadingSuspensions } = useQuery<PlayerSuspension[]>({
+    queryKey: ["/api/admin/suspensions", effectiveTournamentId],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/suspensions?tournamentId=${effectiveTournamentId}`, { headers: getAuthHeader() });
+      if (!res.ok) throw new Error("Error");
+      return res.json();
+    },
+    enabled: !!effectiveTournamentId,
+  });
+
+  const getSuspensionPlayerName = (playerId: string) => {
+    const player = allPlayers.find(p => p.id === playerId);
+    return player ? `${player.firstName} ${player.lastName}` : "Desconocido";
+  };
 
   const { data: payments = [], isLoading: loadingPayments } = useQuery<TeamPayment[]>({
     queryKey: ["/api/admin/payments", effectiveTournamentId],
@@ -306,8 +322,9 @@ export default function FinancesManagement() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
               <TabsTrigger value="fines" data-testid="tab-fines" className="text-xs sm:text-sm">Multas</TabsTrigger>
+              <TabsTrigger value="suspensions" data-testid="tab-suspensions" className="text-xs sm:text-sm">Sanciones</TabsTrigger>
               <TabsTrigger value="payments" data-testid="tab-payments" className="text-xs sm:text-sm">Pagos Equipos</TabsTrigger>
               <TabsTrigger value="fine-payments" data-testid="tab-fine-payments" className="text-xs sm:text-sm">Pagos Multas</TabsTrigger>
               <TabsTrigger value="expenses" data-testid="tab-expenses" className="text-xs sm:text-sm">Gastos</TabsTrigger>
@@ -377,6 +394,54 @@ export default function FinancesManagement() {
                       ))}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="suspensions" className="mt-4">
+              {loadingSuspensions ? (
+                <Skeleton className="h-48" />
+              ) : suspensions.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  <ShieldAlert className="mx-auto h-12 w-12 opacity-50" />
+                  <p className="mt-4">No hay sanciones registradas</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" data-testid="table-suspensions">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left py-3 px-2 font-medium text-muted-foreground">Equipo</th>
+                        <th className="text-left py-3 px-2 font-medium text-muted-foreground">Jugador</th>
+                        <th className="text-left py-3 px-2 font-medium text-muted-foreground">Motivo</th>
+                        <th className="text-center py-3 px-2 font-medium text-muted-foreground">Partidos Restantes</th>
+                        <th className="text-center py-3 px-2 font-medium text-muted-foreground">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {suspensions.map(suspension => (
+                        <tr key={suspension.id} className="border-b border-border/30" data-testid={`row-suspension-${suspension.id}`}>
+                          <td className="py-3 px-2">{getTeamName(suspension.teamId)}</td>
+                          <td className="py-3 px-2">{getSuspensionPlayerName(suspension.playerId)}</td>
+                          <td className="py-3 px-2">{suspension.reason}</td>
+                          <td className="py-3 px-2 text-center">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              suspension.matchesRemaining > 0 ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"
+                            }`}>
+                              {suspension.matchesRemaining}
+                            </span>
+                          </td>
+                          <td className="py-3 px-2 text-center">
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                              suspension.status === "ACTIVO" ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"
+                            }`}>
+                              {suspension.status === "ACTIVO" ? "Sancionado" : "Cumplido"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </TabsContent>

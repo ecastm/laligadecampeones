@@ -258,6 +258,19 @@ export const siteSettings = pgTable("site_settings", {
   updatedAt: text("updated_at").notNull().default(sql`now()`),
 });
 
+export const playerSuspensions = pgTable("player_suspensions", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  tournamentId: text("tournament_id").notNull(),
+  playerId: text("player_id").notNull(),
+  teamId: text("team_id").notNull(),
+  matchId: text("match_id").notNull(),
+  matchEventId: text("match_event_id"),
+  reason: text("reason").notNull(),
+  matchesRemaining: integer("matches_remaining").notNull().default(1),
+  status: text("status").notNull().default("ACTIVO"),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   contactName: text("contact_name").notNull(),

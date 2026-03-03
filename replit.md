@@ -42,7 +42,8 @@ Canvas image generators (for match graphics, social media posts) use this black/
 - **Database Storage**: Uses a `DatabaseStorage` service (`server/db-storage.ts`) for persistent data management.
 - **API Endpoints**: A well-defined RESTful API with public, authenticated, and role-specific endpoints.
 - **Profile Management**: Mandatory profile completion for captains and referees upon first access ensures necessary contact and identification details are captured.
-- **Penalty System**: Automated fine generation based on red/yellow cards recorded during matches, with configurable amounts per tournament.
+- **Penalty System**: Automated fine generation based on red/yellow cards recorded during matches, with configurable amounts per tournament. Red cards (RED, RED_DIRECT) automatically generate a 1-match suspension (`player_suspensions` table) for the offending player. Suspensions are decremented when the team plays their next match. Suspended players appear marked as "SANCIONADO" in the referee's attendance list and are defaulted to absent.
+- **Suspension Tracking**: Admin can view all suspensions (active and completed) in the Finanzas > Sanciones tab. Shows player name, team, reason, matches remaining, and status.
 - **Tournament Stages**: Matches can be associated with specific stages (e.g., JORNADA, OCTAVOS, CUARTOS, FINAL) for better organization and display.
 
 ## External Dependencies

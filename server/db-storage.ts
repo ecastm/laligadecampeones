@@ -16,6 +16,7 @@ import {
   type MatchLineup, type InsertMatchLineup,
   type MatchEvidence, type InsertMatchEvidence,
   type MatchAttendance,
+  type PlayerSuspension, type InsertPlayerSuspension,
   type Fine, type InsertFine,
   type TeamPayment, type InsertTeamPayment,
   type FinePayment, type InsertFinePayment,
@@ -1172,6 +1173,55 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMatchAttendance(matchId: string, teamId: string): Promise<void> {
     await this.pool.query(`DELETE FROM match_attendance WHERE match_id = $1 AND team_id = $2`, [matchId, teamId]);
+  }
+
+  // Player Suspensions
+  async getPlayerSuspensions(tournamentId: string, teamId?: string, status?: string): Promise<PlayerSuspension[]> {
+    let query = `SELECT id, tournament_id AS "tournamentId", player_id AS "playerId", team_id AS "teamId", match_id AS "matchId", match_event_id AS "matchEventId", reason, matches_remaining AS "matchesRemaining", status, created_at AS "createdAt" FROM player_suspensions WHERE tournament_id = $1`;
+    const values: any[] = [tournamentId];
+    let paramIndex = 2;
+    if (teamId) { query += ` AND team_id = $${paramIndex++}`; values.push(teamId); }
+    if (status) { query += ` AND status = $${paramIndex++}`; values.push(status); }
+    query += ` ORDER BY created_at DESC`;
+    const result = await this.pool.query(query, values);
+    return result.rows;
+  }
+
+  async createPlayerSuspension(suspension: InsertPlayerSuspension): Promise<PlayerSuspension> {
+    const result = await this.pool.query(
+      `INSERT INTO player_suspensions (tournament_id, player_id, team_id, match_id, match_event_id, reason, matches_remaining, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id, tournament_id AS "tournamentId", player_id AS "playerId", team_id AS "teamId", match_id AS "matchId", match_event_id AS "matchEventId", reason, matches_remaining AS "matchesRemaining", status, created_at AS "createdAt"`,
+      [suspension.tournamentId, suspension.playerId, suspension.teamId, suspension.matchId, suspension.matchEventId || null, suspension.reason, suspension.matchesRemaining || 1, suspension.status || "ACTIVO"]
+    );
+    return result.rows[0];
+  }
+
+  async updatePlayerSuspension(id: string, data: Partial<PlayerSuspension>): Promise<PlayerSuspension | undefined> {
+    const setClauses: string[] = [];
+    const values: any[] = [];
+    let paramIndex = 1;
+    if (data.matchesRemaining !== undefined) { setClauses.push(`matches_remaining = $${paramIndex++}`); values.push(data.matchesRemaining); }
+    if (data.status !== undefined) { setClauses.push(`status = $${paramIndex++}`); values.push(data.status); }
+    if (setClauses.length === 0) return undefined;
+    values.push(id);
+    const result = await this.pool.query(
+      `UPDATE player_suspensions SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
+       RETURNING id, tournament_id AS "tournamentId", player_id AS "playerId", team_id AS "teamId", match_id AS "matchId", match_event_id AS "matchEventId", reason, matches_remaining AS "matchesRemaining", status, created_at AS "createdAt"`,
+      values
+    );
+    return result.rows[0] || undefined;
+  }
+
+  async decrementSuspensions(tournamentId: string, teamId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE player_suspensions SET matches_remaining = matches_remaining - 1 WHERE tournament_id = $1 AND team_id = $2 AND status = 'ACTIVO'`,
+      [tournamentId, teamId]
+    );
+    await this.pool.query(
+      `UPDATE player_suspensions SET status = 'CUMPLIDO' WHERE tournament_id = $1 AND team_id = $2 AND matches_remaining <= 0 AND status = 'ACTIVO'`,
+      [tournamentId, teamId]
+    );
   }
 
   async getFines(tournamentId?: string, teamId?: string): Promise<Fine[]> {

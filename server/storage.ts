@@ -13,6 +13,7 @@ import {
   type TournamentType, type InsertTournamentType,
   type MatchLineup, type InsertMatchLineup,
   type MatchEvidence, type InsertMatchEvidence,
+  type PlayerSuspension, type InsertPlayerSuspension,
   type MatchAttendance, type InsertMatchAttendance,
   type Fine, type InsertFine,
   type TeamPayment, type InsertTeamPayment,
@@ -139,6 +140,12 @@ export interface IStorage {
   getMatchAttendance(matchId: string, teamId?: string): Promise<MatchAttendance[]>;
   saveMatchAttendance(matchId: string, teamId: string, attendance: { playerId: string; present: boolean }[]): Promise<MatchAttendance[]>;
   deleteMatchAttendance(matchId: string, teamId: string): Promise<void>;
+
+  // Player Suspensions
+  getPlayerSuspensions(tournamentId: string, teamId?: string, status?: string): Promise<PlayerSuspension[]>;
+  createPlayerSuspension(suspension: InsertPlayerSuspension): Promise<PlayerSuspension>;
+  updatePlayerSuspension(id: string, data: Partial<PlayerSuspension>): Promise<PlayerSuspension | undefined>;
+  decrementSuspensions(tournamentId: string, teamId: string): Promise<void>;
 
   // Fines
   getFines(tournamentId?: string, teamId?: string): Promise<Fine[]>;
@@ -967,6 +974,55 @@ export class MemStorage implements IStorage {
     for (const [key, val] of this.matchAttendanceMap) {
       if (val.matchId === matchId && val.teamId === teamId) {
         this.matchAttendanceMap.delete(key);
+      }
+    }
+  }
+
+  // Player Suspensions
+  private playerSuspensions = new Map<string, PlayerSuspension>();
+
+  async getPlayerSuspensions(tournamentId: string, teamId?: string, status?: string): Promise<PlayerSuspension[]> {
+    let suspensions = Array.from(this.playerSuspensions.values()).filter(s => s.tournamentId === tournamentId);
+    if (teamId) suspensions = suspensions.filter(s => s.teamId === teamId);
+    if (status) suspensions = suspensions.filter(s => s.status === status);
+    return suspensions;
+  }
+
+  async createPlayerSuspension(suspension: InsertPlayerSuspension): Promise<PlayerSuspension> {
+    const id = randomUUID();
+    const record: PlayerSuspension = {
+      id,
+      tournamentId: suspension.tournamentId,
+      playerId: suspension.playerId,
+      teamId: suspension.teamId,
+      matchId: suspension.matchId,
+      matchEventId: suspension.matchEventId || null,
+      reason: suspension.reason,
+      matchesRemaining: suspension.matchesRemaining || 1,
+      status: (suspension.status as any) || "ACTIVO",
+      createdAt: new Date().toISOString(),
+    };
+    this.playerSuspensions.set(id, record);
+    return record;
+  }
+
+  async updatePlayerSuspension(id: string, data: Partial<PlayerSuspension>): Promise<PlayerSuspension | undefined> {
+    const existing = this.playerSuspensions.get(id);
+    if (!existing) return undefined;
+    const updated = { ...existing, ...data };
+    this.playerSuspensions.set(id, updated);
+    return updated;
+  }
+
+  async decrementSuspensions(tournamentId: string, teamId: string): Promise<void> {
+    for (const [key, suspension] of this.playerSuspensions) {
+      if (suspension.tournamentId === tournamentId && suspension.teamId === teamId && suspension.status === "ACTIVO") {
+        suspension.matchesRemaining -= 1;
+        if (suspension.matchesRemaining <= 0) {
+          suspension.status = "CUMPLIDO";
+          suspension.matchesRemaining = 0;
+        }
+        this.playerSuspensions.set(key, suspension);
       }
     }
   }

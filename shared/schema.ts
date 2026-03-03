@@ -572,6 +572,38 @@ export const saveAttendanceSchema = z.object({
 });
 export type SaveAttendancePayload = z.infer<typeof saveAttendanceSchema>;
 
+// Player Suspensions (Sanciones por tarjeta roja)
+export const SuspensionStatus = {
+  ACTIVO: "ACTIVO",
+  CUMPLIDO: "CUMPLIDO",
+} as const;
+export type SuspensionStatus = (typeof SuspensionStatus)[keyof typeof SuspensionStatus];
+
+export interface PlayerSuspension {
+  id: string;
+  tournamentId: string;
+  playerId: string;
+  teamId: string;
+  matchId: string;
+  matchEventId: string | null;
+  reason: string;
+  matchesRemaining: number;
+  status: SuspensionStatus;
+  createdAt: string;
+}
+
+export const insertPlayerSuspensionSchema = z.object({
+  tournamentId: z.string(),
+  playerId: z.string(),
+  teamId: z.string(),
+  matchId: z.string(),
+  matchEventId: z.string().optional(),
+  reason: z.string(),
+  matchesRemaining: z.number().int().min(1).default(1),
+  status: z.string().default("ACTIVO"),
+});
+export type InsertPlayerSuspension = z.infer<typeof insertPlayerSuspensionSchema>;
+
 // Fines (Multas por tarjetas e incomparecencia)
 export const FineStatus = {
   PENDIENTE: "PENDIENTE",
