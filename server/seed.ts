@@ -22,17 +22,15 @@ export async function seedDatabase() {
   console.log("Iniciando seed de datos...");
   console.log("==========================================\n");
 
-  const forceReseed = process.env.FORCE_RESEED === "true";
+  if (process.env.NODE_ENV === "production") {
+    console.log("Entorno de PRODUCCIÓN detectado — seed omitido por seguridad.");
+    return;
+  }
 
-  if (forceReseed) {
-    console.log("FORCE_RESEED activado - limpiando y recreando datos...");
-    await clearAllTables();
-  } else {
-    const existingUsers = await storage.getUsers();
-    if (existingUsers.length > 0) {
-      console.log("La base de datos ya tiene datos, omitiendo seed.");
-      return;
-    }
+  const existingUsers = await storage.getUsers();
+  if (existingUsers.length > 0) {
+    console.log("La base de datos ya tiene datos, omitiendo seed.");
+    return;
   }
 
   const existingDivisions = await storage.getDivisions();
