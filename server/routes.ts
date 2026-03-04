@@ -33,6 +33,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { sendWelcomeCaptainEmail, sendFineNotificationEmail, sendMatchResultEmail } from "./email-service";
+import { recalculateStandings } from "./standings-engine";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -95,6 +96,24 @@ export async function registerRoutes(
         });
       }
     } catch (e) { console.error("[email] Error notificando multa:", e); }
+  }
+
+  async function autoRecalculateStandings(tournamentId: string) {
+    try {
+      const result = await pool.query(
+        `SELECT id, rules_id AS "rulesId", name FROM competition_seasons WHERE tournament_id = $1 AND status = 'active'`,
+        [tournamentId]
+      );
+      for (const season of result.rows) {
+        const rules = await storage.getCompetitionRuleById(season.rulesId);
+        if (rules) {
+          await recalculateStandings(season.id, tournamentId, rules);
+          console.log(`[auto-standings] Clasificación recalculada para temporada "${season.name}"`);
+        }
+      }
+    } catch (err) {
+      console.error("[auto-standings] Error recalculando clasificación:", err);
+    }
   }
 
   // ==================== SITE SETTINGS ====================
@@ -1746,6 +1765,8 @@ export async function registerRoutes(
           notifyFine(fine.teamId, fineLabel, fine.amount, playerName, `${homeTeamName} vs ${awayTeamName}`);
         }
       } catch (emailErr) { console.error("[email] Error en notificaciones finalize:", emailErr); }
+
+      await autoRecalculateStandings(match.tournamentId);
 
       res.json(updated);
     } catch (error) {
