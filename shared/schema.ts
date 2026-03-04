@@ -817,6 +817,177 @@ export const insertSiteSettingsSchema = z.object({
 });
 export type InsertSiteSettings = z.infer<typeof insertSiteSettingsSchema>;
 
+// Competition Rules
+export const CompetitionFormatType = {
+  LEAGUE_DIVISIONS: "LEAGUE_DIVISIONS",
+  TOURNEY_PLUS30: "TOURNEY_PLUS30",
+} as const;
+export type CompetitionFormatType = (typeof CompetitionFormatType)[keyof typeof CompetitionFormatType];
+
+export const CompetitionFormatLabels: Record<CompetitionFormatType, string> = {
+  LEAGUE_DIVISIONS: "Liga con Divisiones (Primera/Segunda)",
+  TOURNEY_PLUS30: "Torneo +30 (Liga + Eliminatorias)",
+};
+
+export interface Plus30Rules {
+  eliminatePosition: number;
+  directToSemisPosition: number;
+  repechagePositions: number[];
+  repechagePairing: "random_seeded" | "bracket";
+  cuartosPairing: "random_seeded" | "bracket";
+  semisPairing: "includes_first_place";
+  tiebreaker: "admin_select_winner" | "penalties" | "extra_time";
+}
+
+export interface CompetitionRule {
+  id: string;
+  categoryId: string;
+  formatType: CompetitionFormatType;
+  pointsWin: number;
+  pointsDraw: number;
+  pointsLoss: number;
+  roundRobin: "single" | "double";
+  teamsPerDivision: number;
+  promotionCount?: number;
+  relegationCount?: number;
+  federatedLimit: number;
+  plus30Rules?: Plus30Rules;
+  rulesVersion: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertCompetitionRuleSchema = z.object({
+  categoryId: z.string(),
+  formatType: z.enum(["LEAGUE_DIVISIONS", "TOURNEY_PLUS30"]),
+  pointsWin: z.number().min(0).default(3),
+  pointsDraw: z.number().min(0).default(1),
+  pointsLoss: z.number().min(0).default(0),
+  roundRobin: z.enum(["single", "double"]).default("double"),
+  teamsPerDivision: z.number().min(2).default(10),
+  promotionCount: z.number().min(0).optional(),
+  relegationCount: z.number().min(0).optional(),
+  federatedLimit: z.number().min(0).default(3),
+  plus30Rules: z.object({
+    eliminatePosition: z.number().default(10),
+    directToSemisPosition: z.number().default(1),
+    repechagePositions: z.array(z.number()).default([2,3,4,5,6,7,8,9]),
+    repechagePairing: z.enum(["random_seeded", "bracket"]).default("random_seeded"),
+    cuartosPairing: z.enum(["random_seeded", "bracket"]).default("random_seeded"),
+    semisPairing: z.literal("includes_first_place").default("includes_first_place"),
+    tiebreaker: z.enum(["admin_select_winner", "penalties", "extra_time"]).default("admin_select_winner"),
+  }).optional(),
+});
+export type InsertCompetitionRule = z.infer<typeof insertCompetitionRuleSchema>;
+
+// Competition Seasons
+export const SeasonStatus = {
+  DRAFT: "draft",
+  ACTIVE: "active",
+  CLOSED: "closed",
+} as const;
+export type SeasonStatus = (typeof SeasonStatus)[keyof typeof SeasonStatus];
+
+export interface CompetitionSeason {
+  id: string;
+  categoryId: string;
+  tournamentId?: string;
+  rulesId: string;
+  rulesVersion: number;
+  name: string;
+  status: SeasonStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const insertCompetitionSeasonSchema = z.object({
+  categoryId: z.string(),
+  tournamentId: z.string().optional(),
+  rulesId: z.string(),
+  name: z.string().min(2),
+});
+export type InsertCompetitionSeason = z.infer<typeof insertCompetitionSeasonSchema>;
+
+// Standings Entries
+export interface StandingsEntry {
+  id: string;
+  seasonId: string;
+  tournamentId: string;
+  teamId: string;
+  division?: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+  position: number;
+  updatedAt: string;
+  teamName?: string;
+}
+
+// Division Movements
+export const MovementType = {
+  PROMOTION: "PROMOTION",
+  RELEGATION: "RELEGATION",
+} as const;
+export type MovementType = (typeof MovementType)[keyof typeof MovementType];
+
+export interface DivisionMovement {
+  id: string;
+  seasonId: string;
+  teamId: string;
+  teamName: string;
+  fromDivision: string;
+  toDivision: string;
+  movementType: MovementType;
+  createdAt: string;
+}
+
+// Bracket Matches (+30)
+export const BracketPhase = {
+  REPECHAJE: "REPECHAJE",
+  CUARTOS: "CUARTOS",
+  SEMIFINAL: "SEMIFINAL",
+  FINAL: "FINAL",
+} as const;
+export type BracketPhase = (typeof BracketPhase)[keyof typeof BracketPhase];
+
+export const BracketPhaseLabels: Record<BracketPhase, string> = {
+  REPECHAJE: "Repechaje",
+  CUARTOS: "Cuartos de Final",
+  SEMIFINAL: "Semifinal",
+  FINAL: "Final",
+};
+
+export const BracketMatchStatus = {
+  PENDIENTE: "PENDIENTE",
+  JUGADO: "JUGADO",
+} as const;
+export type BracketMatchStatus = (typeof BracketMatchStatus)[keyof typeof BracketMatchStatus];
+
+export interface BracketMatch {
+  id: string;
+  seasonId: string;
+  tournamentId: string;
+  phase: BracketPhase;
+  matchOrder: number;
+  homeTeamId?: string;
+  awayTeamId?: string;
+  homeScore?: number;
+  awayScore?: number;
+  winnerId?: string;
+  status: BracketMatchStatus;
+  matchId?: string;
+  seed?: string;
+  createdAt: string;
+  homeTeamName?: string;
+  awayTeamName?: string;
+}
+
 export const insertContactMessageSchema = z.object({
   contactName: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   phone: z.string().min(7, "El teléfono debe tener al menos 7 caracteres"),

@@ -272,6 +272,83 @@ export const playerSuspensions = pgTable("player_suspensions", {
   createdAt: text("created_at").notNull().default(sql`now()`),
 });
 
+export const competitionRules = pgTable("competition_rules", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  categoryId: text("category_id").notNull(),
+  formatType: text("format_type").notNull(),
+  pointsWin: integer("points_win").notNull().default(3),
+  pointsDraw: integer("points_draw").notNull().default(1),
+  pointsLoss: integer("points_loss").notNull().default(0),
+  roundRobin: text("round_robin").notNull().default("double"),
+  teamsPerDivision: integer("teams_per_division").notNull().default(10),
+  promotionCount: integer("promotion_count"),
+  relegationCount: integer("relegation_count"),
+  federatedLimit: integer("federated_limit").notNull().default(3),
+  plus30Rules: jsonb("plus30_rules"),
+  rulesVersion: integer("rules_version").notNull().default(1),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+  updatedAt: text("updated_at").notNull().default(sql`now()`),
+});
+
+export const competitionSeasons = pgTable("competition_seasons", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  categoryId: text("category_id").notNull(),
+  tournamentId: text("tournament_id"),
+  rulesId: text("rules_id").notNull(),
+  rulesVersion: integer("rules_version").notNull(),
+  name: text("name").notNull(),
+  status: text("status").notNull().default("draft"),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+  updatedAt: text("updated_at").notNull().default(sql`now()`),
+});
+
+export const standingsEntries = pgTable("standings_entries", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  seasonId: text("season_id").notNull(),
+  tournamentId: text("tournament_id").notNull(),
+  teamId: text("team_id").notNull(),
+  division: text("division"),
+  played: integer("played").notNull().default(0),
+  won: integer("won").notNull().default(0),
+  drawn: integer("drawn").notNull().default(0),
+  lost: integer("lost").notNull().default(0),
+  goalsFor: integer("goals_for").notNull().default(0),
+  goalsAgainst: integer("goals_against").notNull().default(0),
+  goalDifference: integer("goal_difference").notNull().default(0),
+  points: integer("points").notNull().default(0),
+  position: integer("position").notNull().default(0),
+  updatedAt: text("updated_at").notNull().default(sql`now()`),
+});
+
+export const divisionMovements = pgTable("division_movements", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  seasonId: text("season_id").notNull(),
+  teamId: text("team_id").notNull(),
+  teamName: text("team_name").notNull(),
+  fromDivision: text("from_division").notNull(),
+  toDivision: text("to_division").notNull(),
+  movementType: text("movement_type").notNull(),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+});
+
+export const bracketMatches = pgTable("bracket_matches", {
+  id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
+  seasonId: text("season_id").notNull(),
+  tournamentId: text("tournament_id").notNull(),
+  phase: text("phase").notNull(),
+  matchOrder: integer("match_order").notNull().default(1),
+  homeTeamId: text("home_team_id"),
+  awayTeamId: text("away_team_id"),
+  homeScore: integer("home_score"),
+  awayScore: integer("away_score"),
+  winnerId: text("winner_id"),
+  status: text("status").notNull().default("PENDIENTE"),
+  matchId: text("match_id"),
+  seed: text("seed"),
+  createdAt: text("created_at").notNull().default(sql`now()`),
+});
+
 export const contactMessages = pgTable("contact_messages", {
   id: varchar("id", { length: 255 }).primaryKey().default(sql`gen_random_uuid()`),
   contactName: text("contact_name").notNull(),
