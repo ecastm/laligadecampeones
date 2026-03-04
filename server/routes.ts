@@ -30,6 +30,7 @@ import {
   saveAttendanceSchema,
 } from "@shared/schema";
 import { z } from "zod";
+import { sendWelcomeCaptainEmail } from "./email-service";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -1044,6 +1045,23 @@ export async function registerRoutes(
       }
       const data = insertCaptainProfileSchema.parse(req.body);
       const profile = await storage.createCaptainProfile(req.user!.userId, data);
+
+      try {
+        const user = await storage.getUser(req.user!.userId);
+        let teamName = "Tu equipo";
+        if (user?.teamId) {
+          const team = await storage.getTeam(user.teamId);
+          if (team) teamName = team.name;
+        }
+        sendWelcomeCaptainEmail({
+          captainName: data.fullName,
+          captainEmail: data.email,
+          teamName,
+        });
+      } catch (emailError) {
+        console.error("[email] Error enviando bienvenida:", emailError);
+      }
+
       res.status(201).json(profile);
     } catch (error) {
       if (error instanceof z.ZodError) {

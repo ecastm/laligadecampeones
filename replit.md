@@ -36,6 +36,7 @@ Canvas image generators (for match graphics, social media posts) use this black/
 - **Financial Management**: Tracking of team payments (registration, fees), fine payments, tournament expenses, and automated fines for no-show teams (€15). Fines support types: YELLOW, RED, RED_DIRECT, NO_PRESENTADO. Currency displayed in euros (€).
 - **News & Content**: Management of news articles and a public photo gallery.
 - **Social Media Content Generation**: An AI-powered wizard (utilizing GPT-4o with vision) for generating social media posts (copy, hashtags, branded images) from match photos.
+- **Email Notifications**: SMTP2GO-powered email service (`server/email-service.ts`) sends branded HTML emails. Currently supports: welcome email on captain profile creation, fine notifications, and match result notifications. Emails use the brand palette (black/gold/green). Sender: info@laligadecampeones.es.
 
 ### System Design Choices
 - **Modular Structure**: The project is divided into `client/`, `server/`, and `shared/` directories for clear separation of concerns.
@@ -49,6 +50,7 @@ Canvas image generators (for match graphics, social media posts) use this black/
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database for all application data.
+- **SMTP2GO**: Email delivery service via REST API. API Key stored in `SMTP2GO_API_KEY` env var, sender in `SMTP2GO_SENDER_EMAIL`.
 - **OpenAI (Replit AI Integrations)**: Utilizes GPT-4o with vision for AI-driven content generation (social media posts).
 - **Vite**: Frontend build tool.
 - **React**: Frontend library for building user interfaces.
