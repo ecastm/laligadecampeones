@@ -28,6 +28,8 @@ import {
   insertSiteSettingsSchema,
   insertTournamentStageSchema,
   saveAttendanceSchema,
+  insertCompetitionRuleSchema,
+  insertCompetitionSeasonSchema,
 } from "@shared/schema";
 import { z } from "zod";
 import { sendWelcomeCaptainEmail, sendFineNotificationEmail, sendMatchResultEmail } from "./email-service";
@@ -2139,6 +2141,247 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
     } catch (error: any) {
       console.error("Error generando contenido con IA:", error);
       res.status(500).json({ message: error.message || "Error al generar contenido con IA" });
+    }
+  });
+
+  // ==================== COMPETITION RULES ====================
+
+  app.get("/api/admin/competition-rules", authenticate, authorizeRoles("ADMIN"), async (_req: AuthRequest, res) => {
+    try {
+      const rules = await storage.getAllCompetitionRules();
+      res.json(rules);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/admin/competition-rules/:categoryId", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const rules = await storage.getCompetitionRules(req.params.categoryId);
+      res.json(rules || null);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/competition-rules", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertCompetitionRuleSchema.parse(req.body);
+      const rule = await storage.createCompetitionRule(data);
+      res.json(rule);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/competition-rules/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertCompetitionRuleSchema.partial().parse(req.body);
+      const rule = await storage.updateCompetitionRule(req.params.id, data);
+      if (!rule) return res.status(404).json({ message: "Regla no encontrada" });
+      res.json(rule);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  // ==================== COMPETITION SEASONS ====================
+
+  app.get("/api/admin/seasons", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const categoryId = req.query.categoryId as string | undefined;
+      const seasons = await storage.getCompetitionSeasons(categoryId);
+      res.json(seasons);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/admin/seasons/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const season = await storage.getCompetitionSeason(req.params.id);
+      if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
+      res.json(season);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/seasons", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertCompetitionSeasonSchema.parse(req.body);
+      const season = await storage.createCompetitionSeason(data);
+      res.json(season);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/seasons/:id/activate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const season = await storage.updateCompetitionSeasonStatus(req.params.id, "active");
+      if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
+      res.json(season);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== STANDINGS & RECALCULATION ====================
+
+  app.get("/api/admin/seasons/:id/standings", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const entries = await storage.getStandingsEntries(req.params.id);
+      res.json(entries);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/seasons/:id/recalculate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const { recalculateStandings } = await import("./standings-engine");
+      const season = await storage.getCompetitionSeason(req.params.id);
+      if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
+      if (!season.tournamentId) return res.status(400).json({ message: "La temporada no tiene torneo vinculado" });
+      const rules = await storage.getCompetitionRuleById(season.rulesId);
+      if (!rules) return res.status(400).json({ message: "No hay reglas configuradas para esta categoría" });
+      const entries = await recalculateStandings(season.id, season.tournamentId, rules);
+      res.json(entries);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  // ==================== DIVISION MOVEMENTS ====================
+
+  app.get("/api/admin/seasons/:id/movements", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const movements = await storage.getDivisionMovements(req.params.id);
+      res.json(movements);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/seasons/:id/close", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const season = await storage.getCompetitionSeason(req.params.id);
+      if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
+      if (season.status === "closed") return res.status(400).json({ message: "La temporada ya está cerrada" });
+      const rules = await storage.getCompetitionRuleById(season.rulesId);
+      if (!rules) return res.status(400).json({ message: "No hay reglas configuradas" });
+
+      const standings = await storage.getStandingsEntries(req.params.id);
+      if (standings.length === 0) return res.status(400).json({ message: "Primero recalcula la clasificación" });
+
+      const movements: any[] = [];
+      if (rules.formatType === "LEAGUE_DIVISIONS" && rules.promotionCount && rules.relegationCount) {
+        const sorted = standings.sort((a, b) => a.position - b.position);
+        for (let i = 0; i < rules.promotionCount && i < sorted.length; i++) {
+          movements.push({
+            seasonId: season.id,
+            teamId: sorted[i].teamId,
+            teamName: sorted[i].teamName || "Equipo",
+            fromDivision: "Segunda División",
+            toDivision: "Primera División",
+            movementType: "PROMOTION",
+          });
+        }
+        for (let i = 0; i < rules.relegationCount && i < sorted.length; i++) {
+          const team = sorted[sorted.length - 1 - i];
+          movements.push({
+            seasonId: season.id,
+            teamId: team.teamId,
+            teamName: team.teamName || "Equipo",
+            fromDivision: "Primera División",
+            toDivision: "Segunda División",
+            movementType: "RELEGATION",
+          });
+        }
+      }
+
+      let createdMovements: any[] = [];
+      if (movements.length > 0) {
+        createdMovements = await storage.createDivisionMovements(movements);
+      }
+      await storage.updateCompetitionSeasonStatus(req.params.id, "closed");
+      res.json({ movements: createdMovements, status: "closed" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  // ==================== BRACKET (+30) ====================
+
+  app.get("/api/admin/seasons/:id/bracket", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const matches = await storage.getBracketMatches(req.params.id);
+      res.json(matches);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/admin/seasons/:id/bracket/generate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const { generateBracket } = await import("./bracket-engine");
+      const season = await storage.getCompetitionSeason(req.params.id);
+      if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
+      if (!season.tournamentId) return res.status(400).json({ message: "La temporada no tiene torneo vinculado" });
+      const rules = await storage.getCompetitionRuleById(season.rulesId);
+      if (!rules) return res.status(400).json({ message: "No hay reglas configuradas" });
+      const standings = await storage.getStandingsEntries(req.params.id);
+      if (standings.length === 0) return res.status(400).json({ message: "Primero recalcula la clasificación" });
+      await generateBracket(season.id, season.tournamentId, standings, rules);
+      const bracket = await storage.getBracketMatches(season.id);
+      res.json(bracket);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/admin/bracket-matches/:id/result", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const { advanceBracketWinner } = await import("./bracket-engine");
+      const { homeScore, awayScore, winnerId, seasonId } = req.body;
+      if (homeScore === undefined || awayScore === undefined || !winnerId || !seasonId) {
+        return res.status(400).json({ message: "Se requiere homeScore, awayScore, winnerId y seasonId" });
+      }
+      await advanceBracketWinner(seasonId, req.params.id, homeScore, awayScore, winnerId);
+      const updated = await storage.getBracketMatches(seasonId);
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Error interno del servidor" });
+    }
+  });
+
+  // ==================== PUBLIC COMPETITION ENDPOINTS ====================
+
+  app.get("/api/seasons/:id/standings", async (req, res) => {
+    try {
+      const entries = await storage.getStandingsEntries(req.params.id);
+      res.json(entries);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/seasons/:id/bracket", async (req, res) => {
+    try {
+      const matches = await storage.getBracketMatches(req.params.id);
+      res.json(matches);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
     }
   });
 

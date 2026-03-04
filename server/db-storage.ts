@@ -1711,4 +1711,198 @@ export class DatabaseStorage implements IStorage {
       return result.rows[0];
     }
   }
+
+  async getCompetitionRules(categoryId: string): Promise<any> {
+    const result = await this.pool.query(
+      `SELECT id, category_id AS "categoryId", format_type AS "formatType", points_win AS "pointsWin", points_draw AS "pointsDraw", points_loss AS "pointsLoss", round_robin AS "roundRobin", teams_per_division AS "teamsPerDivision", promotion_count AS "promotionCount", relegation_count AS "relegationCount", federated_limit AS "federatedLimit", plus30_rules AS "plus30Rules", rules_version AS "rulesVersion", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM competition_rules WHERE category_id = $1 AND is_active = true ORDER BY rules_version DESC LIMIT 1`,
+      [categoryId]
+    );
+    return result.rows[0];
+  }
+
+  async getCompetitionRuleById(id: string): Promise<any> {
+    const result = await this.pool.query(
+      `SELECT id, category_id AS "categoryId", format_type AS "formatType", points_win AS "pointsWin", points_draw AS "pointsDraw", points_loss AS "pointsLoss", round_robin AS "roundRobin", teams_per_division AS "teamsPerDivision", promotion_count AS "promotionCount", relegation_count AS "relegationCount", federated_limit AS "federatedLimit", plus30_rules AS "plus30Rules", rules_version AS "rulesVersion", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM competition_rules WHERE id = $1`,
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  async getAllCompetitionRules(): Promise<any[]> {
+    const result = await this.pool.query(
+      `SELECT id, category_id AS "categoryId", format_type AS "formatType", points_win AS "pointsWin", points_draw AS "pointsDraw", points_loss AS "pointsLoss", round_robin AS "roundRobin", teams_per_division AS "teamsPerDivision", promotion_count AS "promotionCount", relegation_count AS "relegationCount", federated_limit AS "federatedLimit", plus30_rules AS "plus30Rules", rules_version AS "rulesVersion", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt" FROM competition_rules WHERE is_active = true ORDER BY category_id, rules_version DESC`
+    );
+    return result.rows;
+  }
+
+  async createCompetitionRule(rule: any): Promise<any> {
+    await this.pool.query(
+      `UPDATE competition_rules SET is_active = false WHERE category_id = $1`,
+      [rule.categoryId]
+    );
+    const result = await this.pool.query(
+      `INSERT INTO competition_rules (id, category_id, format_type, points_win, points_draw, points_loss, round_robin, teams_per_division, promotion_count, relegation_count, federated_limit, plus30_rules, rules_version, is_active, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, COALESCE((SELECT MAX(rules_version) FROM competition_rules WHERE category_id = $1), 0) + 1, true, now(), now())
+       RETURNING id, category_id AS "categoryId", format_type AS "formatType", points_win AS "pointsWin", points_draw AS "pointsDraw", points_loss AS "pointsLoss", round_robin AS "roundRobin", teams_per_division AS "teamsPerDivision", promotion_count AS "promotionCount", relegation_count AS "relegationCount", federated_limit AS "federatedLimit", plus30_rules AS "plus30Rules", rules_version AS "rulesVersion", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [rule.categoryId, rule.formatType, rule.pointsWin ?? 3, rule.pointsDraw ?? 1, rule.pointsLoss ?? 0, rule.roundRobin ?? 'double', rule.teamsPerDivision ?? 10, rule.promotionCount ?? null, rule.relegationCount ?? null, rule.federatedLimit ?? 3, rule.plus30Rules ? JSON.stringify(rule.plus30Rules) : null]
+    );
+    return result.rows[0];
+  }
+
+  async updateCompetitionRule(id: string, data: any): Promise<any> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+    if (data.formatType !== undefined) { fields.push(`format_type = $${idx++}`); values.push(data.formatType); }
+    if (data.pointsWin !== undefined) { fields.push(`points_win = $${idx++}`); values.push(data.pointsWin); }
+    if (data.pointsDraw !== undefined) { fields.push(`points_draw = $${idx++}`); values.push(data.pointsDraw); }
+    if (data.pointsLoss !== undefined) { fields.push(`points_loss = $${idx++}`); values.push(data.pointsLoss); }
+    if (data.roundRobin !== undefined) { fields.push(`round_robin = $${idx++}`); values.push(data.roundRobin); }
+    if (data.teamsPerDivision !== undefined) { fields.push(`teams_per_division = $${idx++}`); values.push(data.teamsPerDivision); }
+    if (data.promotionCount !== undefined) { fields.push(`promotion_count = $${idx++}`); values.push(data.promotionCount); }
+    if (data.relegationCount !== undefined) { fields.push(`relegation_count = $${idx++}`); values.push(data.relegationCount); }
+    if (data.federatedLimit !== undefined) { fields.push(`federated_limit = $${idx++}`); values.push(data.federatedLimit); }
+    if (data.plus30Rules !== undefined) { fields.push(`plus30_rules = $${idx++}`); values.push(JSON.stringify(data.plus30Rules)); }
+    fields.push(`updated_at = $${idx++}`); values.push(new Date().toISOString());
+    values.push(id);
+    const result = await this.pool.query(
+      `UPDATE competition_rules SET ${fields.join(', ')} WHERE id = $${idx}
+       RETURNING id, category_id AS "categoryId", format_type AS "formatType", points_win AS "pointsWin", points_draw AS "pointsDraw", points_loss AS "pointsLoss", round_robin AS "roundRobin", teams_per_division AS "teamsPerDivision", promotion_count AS "promotionCount", relegation_count AS "relegationCount", federated_limit AS "federatedLimit", plus30_rules AS "plus30Rules", rules_version AS "rulesVersion", is_active AS "isActive", created_at AS "createdAt", updated_at AS "updatedAt"`,
+      values
+    );
+    return result.rows[0];
+  }
+
+  async getCompetitionSeasons(categoryId?: string): Promise<any[]> {
+    let query = `SELECT id, category_id AS "categoryId", tournament_id AS "tournamentId", rules_id AS "rulesId", rules_version AS "rulesVersion", name, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM competition_seasons`;
+    const params: any[] = [];
+    if (categoryId) {
+      query += ` WHERE category_id = $1`;
+      params.push(categoryId);
+    }
+    query += ` ORDER BY created_at DESC`;
+    const result = await this.pool.query(query, params);
+    return result.rows;
+  }
+
+  async getCompetitionSeason(id: string): Promise<any> {
+    const result = await this.pool.query(
+      `SELECT id, category_id AS "categoryId", tournament_id AS "tournamentId", rules_id AS "rulesId", rules_version AS "rulesVersion", name, status, created_at AS "createdAt", updated_at AS "updatedAt" FROM competition_seasons WHERE id = $1`,
+      [id]
+    );
+    return result.rows[0];
+  }
+
+  async createCompetitionSeason(season: any): Promise<any> {
+    const rules = await this.getCompetitionRules(season.categoryId);
+    if (!rules) throw new Error("No hay reglas configuradas para esta categoría");
+    const result = await this.pool.query(
+      `INSERT INTO competition_seasons (id, category_id, tournament_id, rules_id, rules_version, name, status, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'draft', now(), now())
+       RETURNING id, category_id AS "categoryId", tournament_id AS "tournamentId", rules_id AS "rulesId", rules_version AS "rulesVersion", name, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [season.categoryId, season.tournamentId || null, rules.id, rules.rulesVersion, season.name]
+    );
+    return result.rows[0];
+  }
+
+  async updateCompetitionSeasonStatus(id: string, status: string): Promise<any> {
+    const result = await this.pool.query(
+      `UPDATE competition_seasons SET status = $1, updated_at = now() WHERE id = $2
+       RETURNING id, category_id AS "categoryId", tournament_id AS "tournamentId", rules_id AS "rulesId", rules_version AS "rulesVersion", name, status, created_at AS "createdAt", updated_at AS "updatedAt"`,
+      [status, id]
+    );
+    return result.rows[0];
+  }
+
+  async getStandingsEntries(seasonId: string): Promise<any[]> {
+    const result = await this.pool.query(
+      `SELECT se.id, se.season_id AS "seasonId", se.tournament_id AS "tournamentId", se.team_id AS "teamId", se.division, se.played, se.won, se.drawn, se.lost, se.goals_for AS "goalsFor", se.goals_against AS "goalsAgainst", se.goal_difference AS "goalDifference", se.points, se.position, se.updated_at AS "updatedAt", t.name AS "teamName"
+       FROM standings_entries se LEFT JOIN teams t ON se.team_id = t.id WHERE se.season_id = $1 ORDER BY se.position ASC`,
+      [seasonId]
+    );
+    return result.rows;
+  }
+
+  async upsertStandingsEntries(entries: any[]): Promise<void> {
+    for (const e of entries) {
+      await this.pool.query(
+        `INSERT INTO standings_entries (id, season_id, tournament_id, team_id, division, played, won, drawn, lost, goals_for, goals_against, goal_difference, points, position, updated_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now())
+         ON CONFLICT (id) DO UPDATE SET played = $5, won = $6, drawn = $7, lost = $8, goals_for = $9, goals_against = $10, goal_difference = $11, points = $12, position = $13, updated_at = now()`,
+        [e.seasonId, e.tournamentId, e.teamId, e.division || null, e.played, e.won, e.drawn, e.lost, e.goalsFor, e.goalsAgainst, e.goalDifference, e.points, e.position]
+      );
+    }
+  }
+
+  async deleteStandingsEntries(seasonId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM standings_entries WHERE season_id = $1`, [seasonId]);
+  }
+
+  async getDivisionMovements(seasonId: string): Promise<any[]> {
+    const result = await this.pool.query(
+      `SELECT id, season_id AS "seasonId", team_id AS "teamId", team_name AS "teamName", from_division AS "fromDivision", to_division AS "toDivision", movement_type AS "movementType", created_at AS "createdAt" FROM division_movements WHERE season_id = $1 ORDER BY movement_type, created_at`,
+      [seasonId]
+    );
+    return result.rows;
+  }
+
+  async createDivisionMovements(movements: any[]): Promise<any[]> {
+    const results: any[] = [];
+    for (const m of movements) {
+      const result = await this.pool.query(
+        `INSERT INTO division_movements (id, season_id, team_id, team_name, from_division, to_division, movement_type, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, now())
+         RETURNING id, season_id AS "seasonId", team_id AS "teamId", team_name AS "teamName", from_division AS "fromDivision", to_division AS "toDivision", movement_type AS "movementType", created_at AS "createdAt"`,
+        [m.seasonId, m.teamId, m.teamName, m.fromDivision, m.toDivision, m.movementType]
+      );
+      results.push(result.rows[0]);
+    }
+    return results;
+  }
+
+  async getBracketMatches(seasonId: string): Promise<any[]> {
+    const result = await this.pool.query(
+      `SELECT bm.id, bm.season_id AS "seasonId", bm.tournament_id AS "tournamentId", bm.phase, bm.match_order AS "matchOrder", bm.home_team_id AS "homeTeamId", bm.away_team_id AS "awayTeamId", bm.home_score AS "homeScore", bm.away_score AS "awayScore", bm.winner_id AS "winnerId", bm.status, bm.match_id AS "matchId", bm.seed, bm.created_at AS "createdAt",
+       ht.name AS "homeTeamName", at2.name AS "awayTeamName"
+       FROM bracket_matches bm LEFT JOIN teams ht ON bm.home_team_id = ht.id LEFT JOIN teams at2 ON bm.away_team_id = at2.id
+       WHERE bm.season_id = $1 ORDER BY CASE bm.phase WHEN 'REPECHAJE' THEN 1 WHEN 'CUARTOS' THEN 2 WHEN 'SEMIFINAL' THEN 3 WHEN 'FINAL' THEN 4 END, bm.match_order`,
+      [seasonId]
+    );
+    return result.rows;
+  }
+
+  async createBracketMatch(match: any): Promise<any> {
+    const result = await this.pool.query(
+      `INSERT INTO bracket_matches (id, season_id, tournament_id, phase, match_order, home_team_id, away_team_id, status, seed, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, now())
+       RETURNING id, season_id AS "seasonId", tournament_id AS "tournamentId", phase, match_order AS "matchOrder", home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", home_score AS "homeScore", away_score AS "awayScore", winner_id AS "winnerId", status, match_id AS "matchId", seed, created_at AS "createdAt"`,
+      [match.seasonId, match.tournamentId, match.phase, match.matchOrder, match.homeTeamId || null, match.awayTeamId || null, match.status || 'PENDIENTE', match.seed || null]
+    );
+    return result.rows[0];
+  }
+
+  async updateBracketMatch(id: string, data: any): Promise<any> {
+    const fields: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+    if (data.homeTeamId !== undefined) { fields.push(`home_team_id = $${idx++}`); values.push(data.homeTeamId); }
+    if (data.awayTeamId !== undefined) { fields.push(`away_team_id = $${idx++}`); values.push(data.awayTeamId); }
+    if (data.homeScore !== undefined) { fields.push(`home_score = $${idx++}`); values.push(data.homeScore); }
+    if (data.awayScore !== undefined) { fields.push(`away_score = $${idx++}`); values.push(data.awayScore); }
+    if (data.winnerId !== undefined) { fields.push(`winner_id = $${idx++}`); values.push(data.winnerId); }
+    if (data.status !== undefined) { fields.push(`status = $${idx++}`); values.push(data.status); }
+    if (data.matchId !== undefined) { fields.push(`match_id = $${idx++}`); values.push(data.matchId); }
+    if (fields.length === 0) return undefined;
+    values.push(id);
+    const result = await this.pool.query(
+      `UPDATE bracket_matches SET ${fields.join(', ')} WHERE id = $${idx}
+       RETURNING id, season_id AS "seasonId", tournament_id AS "tournamentId", phase, match_order AS "matchOrder", home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", home_score AS "homeScore", away_score AS "awayScore", winner_id AS "winnerId", status, match_id AS "matchId", seed, created_at AS "createdAt"`,
+      values
+    );
+    return result.rows[0];
+  }
+
+  async deleteBracketMatches(seasonId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM bracket_matches WHERE season_id = $1`, [seasonId]);
+  }
 }

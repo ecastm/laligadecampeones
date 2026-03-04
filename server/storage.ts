@@ -23,6 +23,11 @@ import {
   type ContactMessage, type InsertContactMessage,
   type SiteSettings, type InsertSiteSettings,
   type TournamentStage, type InsertTournamentStage,
+  type CompetitionRule, type InsertCompetitionRule,
+  type CompetitionSeason, type InsertCompetitionSeason,
+  type StandingsEntry,
+  type DivisionMovement,
+  type BracketMatch,
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import bcrypt from "bcryptjs";
@@ -188,6 +193,34 @@ export interface IStorage {
   // Site Settings
   getSiteSettings(): Promise<SiteSettings | null>;
   updateSiteSettings(data: InsertSiteSettings): Promise<SiteSettings>;
+
+  // Competition Rules
+  getCompetitionRules(categoryId: string): Promise<CompetitionRule | undefined>;
+  getCompetitionRuleById(id: string): Promise<CompetitionRule | undefined>;
+  getAllCompetitionRules(): Promise<CompetitionRule[]>;
+  createCompetitionRule(rule: InsertCompetitionRule): Promise<CompetitionRule>;
+  updateCompetitionRule(id: string, data: Partial<InsertCompetitionRule>): Promise<CompetitionRule | undefined>;
+
+  // Competition Seasons
+  getCompetitionSeasons(categoryId?: string): Promise<CompetitionSeason[]>;
+  getCompetitionSeason(id: string): Promise<CompetitionSeason | undefined>;
+  createCompetitionSeason(season: InsertCompetitionSeason): Promise<CompetitionSeason>;
+  updateCompetitionSeasonStatus(id: string, status: string): Promise<CompetitionSeason | undefined>;
+
+  // Standings Entries
+  getStandingsEntries(seasonId: string): Promise<StandingsEntry[]>;
+  upsertStandingsEntries(entries: Omit<StandingsEntry, 'id' | 'updatedAt'>[]): Promise<void>;
+  deleteStandingsEntries(seasonId: string): Promise<void>;
+
+  // Division Movements
+  getDivisionMovements(seasonId: string): Promise<DivisionMovement[]>;
+  createDivisionMovements(movements: Omit<DivisionMovement, 'id' | 'createdAt'>[]): Promise<DivisionMovement[]>;
+
+  // Bracket Matches
+  getBracketMatches(seasonId: string): Promise<BracketMatch[]>;
+  createBracketMatch(match: Omit<BracketMatch, 'id' | 'createdAt' | 'homeTeamName' | 'awayTeamName'>): Promise<BracketMatch>;
+  updateBracketMatch(id: string, data: Partial<BracketMatch>): Promise<BracketMatch | undefined>;
+  deleteBracketMatches(seasonId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1306,6 +1339,25 @@ export class MemStorage implements IStorage {
   async updateSiteSettings(data: InsertSiteSettings): Promise<SiteSettings> {
     return { id: "1", leagueName: data.leagueName || "La Liga de Campeones", logoUrl: null, phone: null, email: null, address: null, instagramUrl: null, facebookUrl: null, whatsappNumber: null, updatedAt: new Date().toISOString() };
   }
+
+  async getCompetitionRules(_categoryId: string): Promise<CompetitionRule | undefined> { return undefined; }
+  async getCompetitionRuleById(_id: string): Promise<CompetitionRule | undefined> { return undefined; }
+  async getAllCompetitionRules(): Promise<CompetitionRule[]> { return []; }
+  async createCompetitionRule(_rule: InsertCompetitionRule): Promise<CompetitionRule> { throw new Error("Not implemented"); }
+  async updateCompetitionRule(_id: string, _data: Partial<InsertCompetitionRule>): Promise<CompetitionRule | undefined> { return undefined; }
+  async getCompetitionSeasons(_categoryId?: string): Promise<CompetitionSeason[]> { return []; }
+  async getCompetitionSeason(_id: string): Promise<CompetitionSeason | undefined> { return undefined; }
+  async createCompetitionSeason(_season: InsertCompetitionSeason): Promise<CompetitionSeason> { throw new Error("Not implemented"); }
+  async updateCompetitionSeasonStatus(_id: string, _status: string): Promise<CompetitionSeason | undefined> { return undefined; }
+  async getStandingsEntries(_seasonId: string): Promise<StandingsEntry[]> { return []; }
+  async upsertStandingsEntries(_entries: Omit<StandingsEntry, 'id' | 'updatedAt'>[]): Promise<void> {}
+  async deleteStandingsEntries(_seasonId: string): Promise<void> {}
+  async getDivisionMovements(_seasonId: string): Promise<DivisionMovement[]> { return []; }
+  async createDivisionMovements(_movements: Omit<DivisionMovement, 'id' | 'createdAt'>[]): Promise<DivisionMovement[]> { return []; }
+  async getBracketMatches(_seasonId: string): Promise<BracketMatch[]> { return []; }
+  async createBracketMatch(_match: Omit<BracketMatch, 'id' | 'createdAt' | 'homeTeamName' | 'awayTeamName'>): Promise<BracketMatch> { throw new Error("Not implemented"); }
+  async updateBracketMatch(_id: string, _data: Partial<BracketMatch>): Promise<BracketMatch | undefined> { return undefined; }
+  async deleteBracketMatches(_seasonId: string): Promise<void> {}
 }
 
 import { Pool } from "pg";

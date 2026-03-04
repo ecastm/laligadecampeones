@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare } from "lucide-react";
+import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare, Swords } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import UsersManagement from "./users";
 import TeamsManagement from "./teams";
@@ -19,9 +19,10 @@ import StatisticsManagement from "./statistics";
 import MarketingManagement from "./marketing";
 import MessagesManagement from "./messages";
 import Regulations from "@/components/regulations";
+import CompetitionRulesManagement from "./competition-rules";
 import SiteSettingsManagement from "./settings";
 
-type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages" | "settings";
+type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages" | "settings" | "competition";
 
 const menuItems = [
   { id: "dashboard" as const, title: "Panel", icon: LayoutDashboard },
@@ -30,6 +31,7 @@ const menuItems = [
   { id: "referees" as const, title: "Árbitros", icon: ClipboardList },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
   { id: "tournament" as const, title: "Torneo", icon: Trophy },
+  { id: "competition" as const, title: "Competición", icon: Swords },
   { id: "statistics" as const, title: "Estadísticas", icon: BarChart3 },
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
@@ -158,6 +160,7 @@ export default function AdminDashboard() {
             {activeSection === "news" && <NewsManagement />}
             {activeSection === "marketing" && <MarketingManagement />}
             {activeSection === "messages" && <MessagesManagement />}
+            {activeSection === "competition" && <CompetitionRulesManagement />}
             {activeSection === "regulations" && <Regulations />}
             {activeSection === "settings" && <SiteSettingsManagement />}
           </main>
@@ -180,6 +183,7 @@ function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => 
     { title: "Finanzas", icon: DollarSign, description: "Gestiona pagos, multas y gastos", section: "finances" },
     { title: "Estadísticas", icon: BarChart3, description: "Consulta goleadores y estadísticas", section: "statistics" },
     { title: "Torneo", icon: Trophy, description: "Configura y gestiona los torneos", section: "tournament" },
+    { title: "Competición", icon: Swords, description: "Reglas, temporadas y eliminatorias", section: "competition" },
   ];
 
   return (
