@@ -190,12 +190,11 @@ export function sendMatchResultEmail(params: {
   homeScore: number;
   awayScore: number;
   matchDate?: string;
+  isHome: boolean;
 }): void {
-  const resultText = params.homeScore > params.awayScore
-    ? (params.teamName === params.homeTeam ? "VICTORIA" : "DERROTA")
-    : params.homeScore < params.awayScore
-      ? (params.teamName === params.awayTeam ? "VICTORIA" : "DERROTA")
-      : "EMPATE";
+  const myScore = params.isHome ? params.homeScore : params.awayScore;
+  const theirScore = params.isHome ? params.awayScore : params.homeScore;
+  const resultText = myScore > theirScore ? "VICTORIA" : myScore < theirScore ? "DERROTA" : "EMPATE";
 
   const resultColor = resultText === "VICTORIA" ? "#0B6B3A" : resultText === "DERROTA" ? "#e74c3c" : "#C6A052";
 

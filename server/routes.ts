@@ -30,7 +30,7 @@ import {
   saveAttendanceSchema,
 } from "@shared/schema";
 import { z } from "zod";
-import { sendWelcomeCaptainEmail } from "./email-service";
+import { sendWelcomeCaptainEmail, sendFineNotificationEmail, sendMatchResultEmail } from "./email-service";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -40,6 +40,60 @@ export async function registerRoutes(
   // ==================== OBJECT STORAGE ====================
   const { registerObjectStorageRoutes } = await import("./replit_integrations/object_storage");
   registerObjectStorageRoutes(app);
+
+  async function getCaptainEmailInfo(teamId: string): Promise<{ captainName: string; captainEmail: string; teamName: string } | null> {
+    try {
+      const team = await storage.getTeam(teamId);
+      if (!team || !team.captainUserId) return null;
+      const profile = await storage.getCaptainProfile(team.captainUserId);
+      if (!profile) return null;
+      return { captainName: profile.fullName, captainEmail: profile.email, teamName: team.name };
+    } catch { return null; }
+  }
+
+  async function notifyMatchResult(match: { homeTeamId: string; awayTeamId: string; homeScore: number; awayScore: number; dateTime?: string | null }, homeTeamName: string, awayTeamName: string) {
+    try {
+      const homeInfo = await getCaptainEmailInfo(match.homeTeamId);
+      if (homeInfo) {
+        sendMatchResultEmail({
+          ...homeInfo,
+          homeTeam: homeTeamName,
+          awayTeam: awayTeamName,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          matchDate: match.dateTime || undefined,
+          isHome: true,
+        });
+      }
+      const awayInfo = await getCaptainEmailInfo(match.awayTeamId);
+      if (awayInfo) {
+        sendMatchResultEmail({
+          ...awayInfo,
+          homeTeam: homeTeamName,
+          awayTeam: awayTeamName,
+          homeScore: match.homeScore,
+          awayScore: match.awayScore,
+          matchDate: match.dateTime || undefined,
+          isHome: false,
+        });
+      }
+    } catch (e) { console.error("[email] Error notificando resultado:", e); }
+  }
+
+  async function notifyFine(teamId: string, fineType: string, amount: number, playerName?: string, matchDetails?: string) {
+    try {
+      const info = await getCaptainEmailInfo(teamId);
+      if (info) {
+        sendFineNotificationEmail({
+          ...info,
+          fineType,
+          amount,
+          playerName,
+          matchDetails,
+        });
+      }
+    } catch (e) { console.error("[email] Error notificando multa:", e); }
+  }
 
   // ==================== SITE SETTINGS ====================
   app.get("/api/site-settings", async (_req, res) => {
@@ -1220,6 +1274,24 @@ export async function registerRoutes(
       }
 
       const updatedMatch = await storage.getMatchWithTeams(match.id);
+
+      if (updatedMatch) {
+        const homeTeamName = updatedMatch.homeTeam?.name || "Local";
+        const awayTeamName = updatedMatch.awayTeam?.name || "Visitante";
+        notifyMatchResult(
+          { homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, homeScore: data.homeScore, awayScore: data.awayScore, dateTime: match.dateTime },
+          homeTeamName, awayTeamName
+        );
+
+        const finesCreated = await storage.getFines(match.tournamentId);
+        const matchFines = finesCreated.filter(f => f.matchId === match.id && f.cardType !== "NO_PRESENTADO");
+        for (const fine of matchFines) {
+          const playerName = fine.playerId ? await storage.getPlayer(fine.playerId).then(p => p ? `${p.firstName} ${p.lastName}` : undefined) : undefined;
+          const fineLabel = fine.cardType === "YELLOW" ? "Tarjeta Amarilla" : fine.cardType === "RED" ? "Tarjeta Roja" : "Roja Directa";
+          notifyFine(fine.teamId, fineLabel, fine.amount, playerName, `${homeTeamName} vs ${awayTeamName}`);
+        }
+      }
+
       res.json(updatedMatch);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1505,6 +1577,13 @@ export async function registerRoutes(
         amount: 15,
         status: "PENDIENTE",
       });
+
+      try {
+        const homeTeam = await storage.getTeam(match.homeTeamId);
+        const awayTeam = await storage.getTeam(match.awayTeamId);
+        notifyFine(teamId, "No Presentado (Incomparecencia)", 15, undefined, `${homeTeam?.name || "Local"} vs ${awayTeam?.name || "Visitante"}`);
+      } catch (emailErr) { console.error("[email] Error notificando no-show:", emailErr); }
+
       res.status(201).json(fine);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1646,6 +1725,26 @@ export async function registerRoutes(
       }
       
       const updated = await storage.getMatch(req.params.id);
+
+      try {
+        const homeTeam = await storage.getTeam(match.homeTeamId);
+        const awayTeam = await storage.getTeam(match.awayTeamId);
+        const homeTeamName = homeTeam?.name || "Local";
+        const awayTeamName = awayTeam?.name || "Visitante";
+        notifyMatchResult(
+          { homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, homeScore, awayScore, dateTime: match.dateTime },
+          homeTeamName, awayTeamName
+        );
+
+        const finesCreated = await storage.getFines(match.tournamentId);
+        const matchFines = finesCreated.filter(f => f.matchId === req.params.id && f.cardType !== "NO_PRESENTADO");
+        for (const fine of matchFines) {
+          const playerName = fine.playerId ? await storage.getPlayer(fine.playerId).then(p => p ? `${p.firstName} ${p.lastName}` : undefined) : undefined;
+          const fineLabel = fine.cardType === "YELLOW" ? "Tarjeta Amarilla" : fine.cardType === "RED" ? "Tarjeta Roja" : "Roja Directa";
+          notifyFine(fine.teamId, fineLabel, fine.amount, playerName, `${homeTeamName} vs ${awayTeamName}`);
+        }
+      } catch (emailErr) { console.error("[email] Error en notificaciones finalize:", emailErr); }
+
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
