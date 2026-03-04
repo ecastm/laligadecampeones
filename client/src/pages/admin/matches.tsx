@@ -464,7 +464,7 @@ export default function MatchesManagement() {
                           {getTeamName(match.homeTeamId || "")} vs {getTeamName(match.awayTeamId || "")}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
+                          {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es }) : "Fecha por definir"} · {match.field}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Árbitro: {getRefereeName(match.refereeUserId)}

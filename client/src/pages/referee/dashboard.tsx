@@ -249,7 +249,9 @@ function RefereeMatches({
                           {match.homeTeam?.name} vs {match.awayTeam?.name}
                         </p>
                         <p className="text-xs sm:text-sm text-muted-foreground">
-                          {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
+                          {match.dateTime && !isNaN(new Date(match.dateTime).getTime())
+                            ? format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })
+                            : "Fecha por definir"} · {match.field}
                         </p>
                       </div>
                     </div>
@@ -961,7 +963,7 @@ function MatchDetailsDialog({
           <CardDescription>
             {match.stage && match.stage !== "JORNADA"
               ? MatchStageLabels[match.stage as MatchStage]
-              : `Jornada ${match.roundNumber}`} · {format(new Date(match.dateTime), "d MMMM yyyy", { locale: es })}
+              : `Jornada ${match.roundNumber}`} · {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMMM yyyy", { locale: es }) : "Fecha por definir"}
           </CardDescription>
         </DialogHeader>
 
@@ -1248,7 +1250,7 @@ function ResultsSection() {
                           : `J${match.roundNumber}`}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(match.dateTime), "d MMM yyyy", { locale: es })}
+                        {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMM yyyy", { locale: es }) : "Fecha por definir"}
                       </span>
                     </div>
                     <div className="flex items-center justify-center gap-3">

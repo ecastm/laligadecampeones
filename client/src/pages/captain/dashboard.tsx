@@ -751,7 +751,7 @@ function TeamSchedule() {
                         {match.homeTeam?.name} vs {match.awayTeam?.name}
                       </p>
                       <p className="text-xs sm:text-sm text-muted-foreground">
-                        {format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es })} · {match.field}
+                        {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMM yyyy, HH:mm", { locale: es }) : "Fecha por definir"} · {match.field}
                       </p>
                     </div>
                   </div>

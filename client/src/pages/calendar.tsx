@@ -55,6 +55,7 @@ export default function CalendarView() {
   const validMatches = allMatches;
 
   const matchesByDate = validMatches.reduce<Record<string, MatchWithTeams[]>>((acc, match) => {
+    if (!match.dateTime || isNaN(new Date(match.dateTime).getTime())) return acc;
     const dateKey = format(new Date(match.dateTime), "yyyy-MM-dd");
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(match);
@@ -544,7 +545,7 @@ export default function CalendarView() {
                     >
                       <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                         <Clock className="h-3 w-3" />
-                        {format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es })}
+                        {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "EEE d MMM, HH:mm", { locale: es }) : "Fecha por definir"}
                       </div>
                       <div className="flex-1 flex items-center gap-2 text-sm font-medium">
                         {match.homeTeam?.logoUrl ? (

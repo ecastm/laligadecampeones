@@ -53,7 +53,7 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
               <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  {format(new Date(match.dateTime), "d MMMM yyyy, HH:mm", { locale: es })}
+                  {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMMM yyyy, HH:mm", { locale: es }) : "Fecha por definir"}
                 </span>
                 <span className="flex items-center gap-1">
                   <MapPin className="h-4 w-4" />

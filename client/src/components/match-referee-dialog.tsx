@@ -472,7 +472,7 @@ export function SharedMatchDetailsDialog({
           <CardDescription>
             {match.stage && match.stage !== "JORNADA"
               ? MatchStageLabels[match.stage as MatchStage]
-              : `Jornada ${match.roundNumber}`} · {format(new Date(match.dateTime), "d MMMM yyyy", { locale: es })}
+              : `Jornada ${match.roundNumber}`} · {match.dateTime && !isNaN(new Date(match.dateTime).getTime()) ? format(new Date(match.dateTime), "d MMMM yyyy", { locale: es }) : "Fecha por definir"}
           </CardDescription>
         </DialogHeader>
 
