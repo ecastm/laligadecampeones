@@ -45,3 +45,7 @@ integrations = ["javascript_object_storage:2.0.0", "javascript_openai_ai_integra
 [userenv]
 
 [userenv.production]
+
+[userenv.shared]
+SMTP2GO_API_KEY = "api-90DF622C8A9E4FA682E17605CC683ABF"
+SMTP2GO_SENDER_EMAIL = "info@laligadecampeones.es"

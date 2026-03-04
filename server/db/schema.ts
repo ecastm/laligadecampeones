@@ -174,6 +174,7 @@ export const captainProfiles = pgTable("captain_profiles", {
   emergencyContact: text("emergency_contact"),
   emergencyPhone: text("emergency_phone"),
   observations: text("observations"),
+  divisionId: text("division_id"),
   createdAt: text("created_at").notNull().default(sql`now()`),
   updatedAt: text("updated_at").notNull().default(sql`now()`),
 });
