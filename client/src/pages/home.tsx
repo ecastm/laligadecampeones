@@ -1707,10 +1707,10 @@ function UpcomingMatchesSection() {
 }
 
 function getVisibleCount() {
-  if (typeof window === "undefined") return 4;
-  if (window.innerWidth < 640) return 1;
-  if (window.innerWidth < 1024) return 2;
-  return 4;
+  if (typeof window === "undefined") return 5;
+  if (window.innerWidth < 640) return 2;
+  if (window.innerWidth < 1024) return 3;
+  return 5;
 }
 
 function PhotoGallerySection() {
@@ -1745,9 +1745,9 @@ function PhotoGallerySection() {
           <div className="mb-5 text-center">
             <h2 className="mb-1 text-2xl font-bold">Galería de Fotos</h2>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="aspect-square w-full rounded-lg" />
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="aspect-[4/3] w-full rounded-lg" />
             ))}
           </div>
         </div>
@@ -1846,7 +1846,7 @@ function PhotoGallerySection() {
                     onClick={() => openLightbox(index)}
                     data-testid={`gallery-photo-${photo.id}`}
                   >
-                    <div className="group relative aspect-square overflow-hidden rounded-lg">
+                    <div className="group relative aspect-[4/3] overflow-hidden rounded-lg">
                       <img
                         src={photo.url}
                         alt={photo.title || "Foto de la liga"}
