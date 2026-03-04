@@ -144,19 +144,42 @@ export default function CaptainDashboard() {
 function TeamInfo() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const { data: team, isLoading } = useQuery<Team>({
+  const { data: team, isLoading } = useQuery<Team | null>({
     queryKey: ["/api/captain/team"],
     queryFn: async () => {
       const response = await fetch("/api/captain/team", { headers: getAuthHeader() });
+      if (response.status === 404) return null;
       if (!response.ok) throw new Error("Error al cargar equipo");
       return response.json();
     },
   });
 
+  const { data: activeTournaments } = useQuery<any[]>({
+    queryKey: ["/api/tournaments/active/all"],
+  });
+
+  const { data: divisions } = useQuery<any[]>({
+    queryKey: ["/api/divisions"],
+  });
+
   const form = useForm({
     resolver: zodResolver(insertTeamSchema.omit({ tournamentId: true, captainUserId: true })),
     defaultValues: {
+      name: "",
+      colors: "",
+      homeField: "",
+      logoUrl: "",
+      instagramUrl: "",
+    },
+  });
+
+  const createForm = useForm({
+    resolver: zodResolver(insertTeamSchema.omit({ captainUserId: true })),
+    defaultValues: {
+      tournamentId: "",
+      divisionId: "",
       name: "",
       colors: "",
       homeField: "",
@@ -179,18 +202,174 @@ function TeamInfo() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", "/api/captain/team", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/captain/team"] });
+      toast({ title: "Equipo creado correctamente" });
+      setIsCreating(false);
+      createForm.reset();
+    },
+    onError: (error) => {
+      toast({ title: "Error al crear equipo", description: error.message, variant: "destructive" });
+    },
+  });
+
   if (isLoading) {
     return <Skeleton className="h-64" />;
   }
 
   if (!team) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <Shield className="mx-auto h-12 w-12 text-muted-foreground" />
-          <p className="mt-4 text-muted-foreground">No tienes un equipo asignado</p>
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Shield className="mx-auto h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-muted-foreground">No tienes un equipo asignado</p>
+            <Button
+              className="mt-6"
+              onClick={() => setIsCreating(true)}
+              data-testid="button-create-team"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Crear Mi Equipo
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Crear Mi Equipo</DialogTitle>
+              <DialogDescription>Completa los datos de tu equipo para inscribirlo en el torneo</DialogDescription>
+            </DialogHeader>
+            <Form {...createForm}>
+              <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+                <FormField
+                  control={createForm.control}
+                  name="tournamentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Torneo</FormLabel>
+                      <Select onValueChange={(val) => {
+                        field.onChange(val);
+                        const tournament = activeTournaments?.find((t: any) => t.id === val);
+                        if (tournament?.divisionId) {
+                          createForm.setValue("divisionId", tournament.divisionId);
+                        }
+                      }} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-team-tournament">
+                            <SelectValue placeholder="Seleccionar torneo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {activeTournaments?.map((t: any) => (
+                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="divisionId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>División</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-team-division">
+                            <SelectValue placeholder="Seleccionar división" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {divisions?.map((d: any) => (
+                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nombre del Equipo</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-create-team-name" placeholder="Nombre de tu equipo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="colors"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Colores</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-create-team-colors" placeholder="Ej: Rojo y Blanco" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="homeField"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Campo Local</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-create-team-field" placeholder="Nombre del campo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="logoUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Logo del Equipo (opcional)</FormLabel>
+                      <FormControl>
+                        <ImageUpload value={field.value || ""} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={createForm.control}
+                  name="instagramUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Instagram (opcional)</FormLabel>
+                      <FormControl>
+                        <Input data-testid="input-create-team-instagram" placeholder="https://instagram.com/tu_equipo" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-create-team">
+                  {createMutation.isPending ? "Creando..." : "Crear Equipo"}
+                </Button>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
     );
   }
 

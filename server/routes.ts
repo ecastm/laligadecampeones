@@ -949,6 +949,30 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/captain/team", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.userId);
+      if (!user) {
+        return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+      if (user.teamId) {
+        return res.status(400).json({ message: "Ya tienes un equipo asignado" });
+      }
+      const data = insertTeamSchema.parse(req.body);
+      const team = await storage.createTeam({
+        ...data,
+        captainUserId: req.user!.userId,
+      });
+      await storage.updateUser(req.user!.userId, { teamId: team.id });
+      res.status(201).json(team);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/captain/players", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
     try {
       const user = await storage.getUser(req.user!.userId);
