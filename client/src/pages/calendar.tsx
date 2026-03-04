@@ -626,11 +626,11 @@ export default function CalendarView() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <CalendarIcon className="h-4 w-4 text-primary" />
-                  <span>{format(new Date(selectedMatch.dateTime), "EEEE d 'de' MMMM, yyyy", { locale: es })}</span>
+                  <span>{selectedMatch.dateTime && !isNaN(new Date(selectedMatch.dateTime).getTime()) ? format(new Date(selectedMatch.dateTime), "EEEE d 'de' MMMM, yyyy", { locale: es }) : "Fecha por definir"}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="h-4 w-4 text-primary" />
-                  <span>{format(new Date(selectedMatch.dateTime), "HH:mm", { locale: es })} hrs</span>
+                  <span>{selectedMatch.dateTime && !isNaN(new Date(selectedMatch.dateTime).getTime()) ? format(new Date(selectedMatch.dateTime), "HH:mm", { locale: es }) + " hrs" : "--:--"}</span>
                 </div>
                 {selectedMatch.field && (
                   <div className="flex items-center gap-2 text-muted-foreground">

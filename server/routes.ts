@@ -162,13 +162,7 @@ export async function registerRoutes(
         targetTournamentId = tournament.id;
       }
       
-      const matches = await storage.getMatches(targetTournamentId);
-      const result = [];
-      for (const match of matches) {
-        const withTeams = await storage.getMatchWithTeams(match.id);
-        if (withTeams) result.push(withTeams);
-      }
-      result.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+      const result = await storage.getAllMatchesWithTeams(targetTournamentId);
       res.json(result);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -183,14 +177,13 @@ export async function registerRoutes(
       const now = new Date();
       
       for (const tournament of activeTournaments) {
-        const matches = await storage.getMatches(tournament.id);
-        for (const match of matches) {
+        const allWithTeams = await storage.getAllMatchesWithTeams(tournament.id);
+        for (const match of allWithTeams) {
           if (match.status === "PROGRAMADO" || match.status === "EN_CURSO") {
             const matchDate = new Date(match.dateTime);
             if (isNaN(matchDate.getTime())) continue;
             if (matchDate >= now || match.status === "EN_CURSO") {
-              const withTeams = await storage.getMatchWithTeams(match.id);
-              if (withTeams) allUpcoming.push(withTeams);
+              allUpcoming.push(match);
             }
           }
         }
@@ -240,15 +233,12 @@ export async function registerRoutes(
         targetTournamentId = tournament.id;
       }
       
-      const matches = await storage.getMatches(targetTournamentId);
-      const playedMatches = matches.filter(m => m.status === "JUGADO");
-      const result = [];
-      for (const match of playedMatches) {
-        const withTeams = await storage.getMatchWithTeams(match.id);
-        if (withTeams && withTeams.homeTeam && withTeams.awayTeam) result.push(withTeams);
-      }
-      result.sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime());
-      res.json(result.slice(0, 10));
+      const allWithTeams = await storage.getAllMatchesWithTeams(targetTournamentId);
+      const result = allWithTeams
+        .filter(m => m.status === "JUGADO" && m.homeTeam && m.awayTeam)
+        .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
+        .slice(0, 10);
+      res.json(result);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }

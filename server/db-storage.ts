@@ -488,6 +488,105 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getAllMatchesWithTeams(tournamentId: string): Promise<MatchWithTeams[]> {
+    const result = await this.pool.query(`
+      SELECT
+        m.id, m.tournament_id AS "tournamentId", m.round_number AS "roundNumber",
+        m.date_time AS "dateTime", m.field, m.home_team_id AS "homeTeamId",
+        m.away_team_id AS "awayTeamId", m.referee_user_id AS "refereeUserId",
+        m.status, m.home_score AS "homeScore", m.away_score AS "awayScore",
+        m.vs_image_url AS "vsImageUrl", m.stage, m.stage_id AS "stageId",
+        m.referee_notes AS "refereeNotes",
+        json_build_object(
+          'id', ht.id, 'tournamentId', ht.tournament_id, 'divisionId', ht.division_id,
+          'name', ht.name, 'colors', ht.colors, 'homeField', ht.home_field,
+          'logoUrl', ht.logo_url, 'captainUserId', ht.captain_user_id,
+          'coachName', ht.coach_name, 'instagramUrl', ht.instagram_url
+        ) AS "homeTeam",
+        json_build_object(
+          'id', at2.id, 'tournamentId', at2.tournament_id, 'divisionId', at2.division_id,
+          'name', at2.name, 'colors', at2.colors, 'homeField', at2.home_field,
+          'logoUrl', at2.logo_url, 'captainUserId', at2.captain_user_id,
+          'coachName', at2.coach_name, 'instagramUrl', at2.instagram_url
+        ) AS "awayTeam"
+      FROM matches m
+      LEFT JOIN teams ht ON m.home_team_id = ht.id
+      LEFT JOIN teams at2 ON m.away_team_id = at2.id
+      WHERE m.tournament_id = $1
+      ORDER BY m.date_time ASC NULLS LAST
+    `, [tournamentId]);
+
+    const matchIds = result.rows.map(r => r.id);
+    let eventsMap: Record<string, MatchEventWithPlayer[]> = {};
+    if (matchIds.length > 0) {
+      const eventsResult = await this.pool.query(`
+        SELECT
+          me.id, me.match_id AS "matchId", me.type, me.minute,
+          me.team_id AS "teamId", me.player_id AS "playerId",
+          me.related_player_id AS "relatedPlayerId", me.notes,
+          p.id AS "p_id", p.team_id AS "p_teamId", p.first_name AS "p_firstName",
+          p.last_name AS "p_lastName", p.jersey_number AS "p_jerseyNumber",
+          p.position AS "p_position", p.identification_id AS "p_identificationId",
+          p.photo_urls AS "p_photoUrls", p.is_federated AS "p_isFederated",
+          p.federation_id AS "p_federationId", p.active AS "p_active",
+          t.id AS "t_id", t.tournament_id AS "t_tournamentId", t.division_id AS "t_divisionId",
+          t.name AS "t_name", t.colors AS "t_colors", t.home_field AS "t_homeField",
+          t.logo_url AS "t_logoUrl", t.captain_user_id AS "t_captainUserId",
+          t.coach_name AS "t_coachName"
+        FROM match_events me
+        LEFT JOIN players p ON me.player_id = p.id
+        LEFT JOIN teams t ON me.team_id = t.id
+        WHERE me.match_id = ANY($1)
+        ORDER BY me.minute ASC
+      `, [matchIds]);
+      for (const row of eventsResult.rows) {
+        if (!row.p_id || !row.t_id) continue;
+        if (!eventsMap[row.matchId]) eventsMap[row.matchId] = [];
+        eventsMap[row.matchId].push({
+          id: row.id,
+          matchId: row.matchId,
+          type: row.type,
+          minute: row.minute,
+          teamId: row.teamId,
+          playerId: row.playerId,
+          relatedPlayerId: row.relatedPlayerId,
+          notes: row.notes,
+          player: {
+            id: row.p_id,
+            teamId: row.p_teamId,
+            firstName: row.p_firstName,
+            lastName: row.p_lastName,
+            jerseyNumber: row.p_jerseyNumber,
+            position: row.p_position,
+            identificationId: row.p_identificationId,
+            photoUrls: row.p_photoUrls,
+            isFederated: row.p_isFederated,
+            federationId: row.p_federationId,
+            active: row.p_active,
+          } as any,
+          team: {
+            id: row.t_id,
+            tournamentId: row.t_tournamentId,
+            divisionId: row.t_divisionId,
+            name: row.t_name,
+            colors: row.t_colors,
+            homeField: row.t_homeField,
+            logoUrl: row.t_logoUrl,
+            captainUserId: row.t_captainUserId,
+            coachName: row.t_coachName,
+          } as any,
+        });
+      }
+    }
+
+    return result.rows.map(row => ({
+      ...row,
+      homeTeam: row.homeTeam?.id ? row.homeTeam : null,
+      awayTeam: row.awayTeam?.id ? row.awayTeam : null,
+      events: eventsMap[row.id] || [],
+    }));
+  }
+
   async getMatchesByReferee(userId: string): Promise<MatchWithTeams[]> {
     const result = await this.pool.query(
       `SELECT id FROM matches WHERE referee_user_id = $1`,

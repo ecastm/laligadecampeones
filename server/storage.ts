@@ -71,6 +71,7 @@ export interface IStorage {
 
   // Matches
   getMatches(tournamentId?: string): Promise<Match[]>;
+  getAllMatchesWithTeams(tournamentId: string): Promise<MatchWithTeams[]>;
   getMatch(id: string): Promise<Match | undefined>;
   getMatchWithTeams(id: string): Promise<MatchWithTeams | undefined>;
   getMatchesByReferee(userId: string): Promise<MatchWithTeams[]>;
@@ -509,6 +510,16 @@ export class MemStorage implements IStorage {
       refereeProfile,
       events,
     };
+  }
+
+  async getAllMatchesWithTeams(tournamentId: string): Promise<MatchWithTeams[]> {
+    const matches = Array.from(this.matches.values()).filter(m => m.tournamentId === tournamentId);
+    const result: MatchWithTeams[] = [];
+    for (const match of matches) {
+      const withTeams = await this.getMatchWithTeams(match.id);
+      if (withTeams) result.push(withTeams);
+    }
+    return result;
   }
 
   async getMatchesByReferee(userId: string): Promise<MatchWithTeams[]> {
