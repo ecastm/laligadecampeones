@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance, type PlayerSuspension } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
-import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from "@/components/ui/sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,26 @@ const menuItems = [
   { id: "regulations" as const, title: "Reglamento", icon: ScrollText },
   { id: "profile" as const, title: "Mi Perfil", icon: User },
 ];
+
+function RefereeSidebarMenu({ items, activeSection, onSelect }: { items: typeof menuItems; activeSection: string; onSelect: (id: any) => void }) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.id}>
+          <SidebarMenuButton
+            onClick={() => { onSelect(item.id); setOpenMobile(false); }}
+            isActive={activeSection === item.id}
+            data-testid={`nav-${item.id}`}
+          >
+            <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
+            <span>{item.title}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
 
 export default function RefereeDashboard() {
   const { user, logout } = useAuth();
@@ -89,20 +109,7 @@ export default function RefereeDashboard() {
             <SidebarGroup>
               <SidebarGroupLabel className="text-[#C0C0C0] uppercase tracking-wider text-[10px] font-semibold">Mis Partidos</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={effectiveSection === item.id}
-                        data-testid={`nav-${item.id}`}
-                      >
-                        <item.icon className={`h-4 w-4 ${effectiveSection === item.id ? "text-emerald-400" : ""}`} />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <RefereeSidebarMenu items={menuItems} activeSection={effectiveSection} onSelect={setActiveSection} />
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>

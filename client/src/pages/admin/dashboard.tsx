@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, Shield, Calendar, UserCog, LayoutDashboard, LogOut, Newspaper, ClipboardList, Layers, DollarSign, BarChart3, Settings, ScrollText, Megaphone, Image, MessageSquare, Swords } from "lucide-react";
@@ -46,6 +46,26 @@ const configItems = [
   { id: "settings" as const, title: "Sitio Web", icon: Settings },
 ];
 
+function AdminSidebarMenu({ items, activeSection, onSelect }: { items: typeof menuItems | typeof configItems; activeSection: string; onSelect: (id: any) => void }) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.id}>
+          <SidebarMenuButton
+            onClick={() => { onSelect(item.id); setOpenMobile(false); }}
+            isActive={activeSection === item.id}
+            data-testid={`nav-${item.id}`}
+          >
+            <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
+            <span>{item.title}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
@@ -80,20 +100,7 @@ export default function AdminDashboard() {
             <SidebarGroup>
               <SidebarGroupLabel className="text-[#C0C0C0] uppercase tracking-wider text-[10px] font-semibold">Gestión</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
-                        data-testid={`nav-${item.id}`}
-                      >
-                        <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <AdminSidebarMenu items={menuItems} activeSection={activeSection} onSelect={setActiveSection} />
               </SidebarGroupContent>
             </SidebarGroup>
             <SidebarGroup>
@@ -102,20 +109,7 @@ export default function AdminDashboard() {
                 Configuración
               </SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {configItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton
-                        onClick={() => setActiveSection(item.id)}
-                        isActive={activeSection === item.id}
-                        data-testid={`nav-${item.id}`}
-                      >
-                        <item.icon className={`h-4 w-4 ${activeSection === item.id ? "text-emerald-400" : ""}`} />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <AdminSidebarMenu items={configItems} activeSection={activeSection} onSelect={setActiveSection} />
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>
