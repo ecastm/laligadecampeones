@@ -1428,6 +1428,8 @@ function ProfileSection({ profile }: { profile: RefereeProfile | null | undefine
                         <Input
                           type="number"
                           min={0}
+                          step={1}
+                          inputMode="numeric"
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                           data-testid="input-profile-experience"
