@@ -145,8 +145,7 @@ export default function Home() {
   }, [divisions, selectedDivision]);
 
   const currentTournament = selectedDivision
-    ? allTournaments.find((t) => t.divisionId === selectedDivision) ||
-      activeTournament
+    ? allTournaments.find((t) => t.divisionId === selectedDivision) || null
     : activeTournament;
 
   const currentDivision = selectedDivision
@@ -1179,6 +1178,14 @@ export default function Home() {
                 </TabsContent>
               </Tabs>
             </div>
+          ) : selectedDivision ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Calendar className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+                <p className="mt-4 text-muted-foreground font-medium" data-testid="text-no-matches-division">No hay partidos asignados para esta categoría</p>
+                <p className="text-sm text-muted-foreground mt-1">Aún no se ha creado un torneo para esta división</p>
+              </CardContent>
+            </Card>
           ) : null}
         </div>
       </section>
