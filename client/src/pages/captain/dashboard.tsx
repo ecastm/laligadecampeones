@@ -702,11 +702,11 @@ function TeamPlayers() {
 }
 
 function TeamSchedule() {
-  const { data: matches = [], isLoading } = useQuery<MatchWithTeams[]>({
+  const { data: matches = [], isLoading, isError } = useQuery<MatchWithTeams[]>({
     queryKey: ["/api/captain/matches"],
     queryFn: async () => {
       const response = await fetch("/api/captain/matches", { headers: getAuthHeader() });
-      if (!response.ok) throw new Error("Error al cargar partidos");
+      if (!response.ok) return [];
       return response.json();
     },
   });
@@ -730,8 +730,12 @@ function TeamSchedule() {
             <div className="space-y-3">
               {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20" />)}
             </div>
-          ) : matches.length === 0 ? (
-            <p className="py-8 text-center text-muted-foreground">No hay partidos programados</p>
+          ) : isError || matches.length === 0 ? (
+            <div className="py-12 text-center" data-testid="text-no-matches">
+              <Calendar className="h-12 w-12 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">Sin partidos programados</p>
+              <p className="text-xs text-muted-foreground/60 mt-1">Cuando se programen partidos para tu equipo, aparecerán aquí</p>
+            </div>
           ) : (
             <div className="space-y-2">
               {matches.map((match) => (
