@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { pool } from "./db-storage";
 import { authenticate, authorizeRoles, generateToken, verifyPassword, hashPassword, type AuthRequest } from "./auth";
 import {
   loginSchema,
@@ -675,6 +676,22 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
+    try {
+      const data = insertPlayerSchema.partial().parse(req.body);
+      const player = await storage.updatePlayer(req.params.id, data);
+      if (!player) {
+        return res.status(404).json({ message: "Jugador no encontrado" });
+      }
+      res.json(player);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.delete("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       await storage.deletePlayer(req.params.id);
@@ -886,6 +903,28 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/captain/players/:id", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
+    try {
+      const user = await storage.getUser(req.user!.userId);
+      if (!user || !user.teamId) {
+        return res.status(404).json({ message: "No tienes equipo asignado" });
+      }
+      const player = await storage.getPlayer(req.params.id);
+      if (!player || player.teamId !== user.teamId) {
+        return res.status(403).json({ message: "No puedes editar jugadores de otro equipo" });
+      }
+      const data = insertPlayerSchema.partial().parse(req.body);
+      delete (data as any).teamId;
+      const updated = await storage.updatePlayer(req.params.id, data);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.delete("/api/captain/players/:id", authenticate, authorizeRoles("CAPITAN"), async (req: AuthRequest, res) => {
     try {
       const user = await storage.getUser(req.user!.userId);
@@ -1071,36 +1110,95 @@ export async function registerRoutes(
 
       const data = matchResultSchema.parse(req.body);
 
-      // Update match with result and confirm refereeUserId for traceability
-      await storage.updateMatch(match.id, {
-        homeScore: data.homeScore,
-        awayScore: data.awayScore,
-        status: "JUGADO",
-        refereeUserId: req.user!.userId,
-        refereeNotes: data.refereeNotes || undefined,
-      });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
 
-      // Save evidence photos
-      if (data.evidenceUrls && data.evidenceUrls.length > 0) {
-        for (const url of data.evidenceUrls) {
-          await storage.createMatchEvidence({
-            matchId: match.id,
-            type: "PHOTO",
-            url,
-          });
+        const updateResult = await client.query(
+          `UPDATE matches SET home_score = $1, away_score = $2, status = 'JUGADO', referee_user_id = $3, referee_notes = $4 WHERE id = $5 AND status != 'JUGADO' RETURNING id`,
+          [data.homeScore, data.awayScore, req.user!.userId, data.refereeNotes || null, match.id]
+        );
+        if (updateResult.rowCount === 0) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({ message: "El partido ya fue guardado por otro usuario" });
         }
-      }
 
-      // Delete old events and create new ones
-      await storage.deleteMatchEvents(match.id);
-      for (const event of data.events) {
-        await storage.createMatchEvent({
-          matchId: match.id,
-          type: event.type,
-          minute: event.minute,
-          teamId: event.teamId,
-          playerId: event.playerId,
-        });
+        if (data.evidenceUrls && data.evidenceUrls.length > 0) {
+          for (const url of data.evidenceUrls) {
+            await client.query(
+              `INSERT INTO match_evidence (id, match_id, type, url) VALUES (gen_random_uuid(), $1, 'PHOTO', $2)`,
+              [match.id, url]
+            );
+          }
+        }
+
+        await client.query(`DELETE FROM match_events WHERE match_id = $1`, [match.id]);
+        for (const event of data.events) {
+          await client.query(
+            `INSERT INTO match_events (id, match_id, type, minute, team_id, player_id) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5)`,
+            [match.id, event.type, event.minute, event.teamId, event.playerId]
+          );
+        }
+
+        await client.query(
+          `UPDATE player_suspensions SET matches_remaining = matches_remaining - 1 WHERE tournament_id = $1 AND team_id IN ($2, $3) AND status = 'ACTIVO' AND matches_remaining > 0`,
+          [match.tournamentId, match.homeTeamId, match.awayTeamId]
+        );
+        await client.query(
+          `UPDATE player_suspensions SET status = 'CUMPLIDO' WHERE tournament_id = $1 AND team_id IN ($2, $3) AND status = 'ACTIVO' AND matches_remaining <= 0`,
+          [match.tournamentId, match.homeTeamId, match.awayTeamId]
+        );
+
+        const existingFinesCheck = await client.query(
+          `SELECT id FROM fines WHERE match_id = $1`, [match.id]
+        );
+        if (existingFinesCheck.rows.length === 0) {
+          const tournament = await storage.getTournament(match.tournamentId);
+          if (tournament) {
+            const insertedEvents = await client.query(
+              `SELECT id, type, team_id AS "teamId", player_id AS "playerId" FROM match_events WHERE match_id = $1`,
+              [match.id]
+            );
+            for (const ev of insertedEvents.rows) {
+              let amount = 0;
+              let cardType: string | null = null;
+              if (ev.type === "YELLOW" && tournament.fineYellow) {
+                amount = tournament.fineYellow; cardType = "YELLOW";
+              } else if (ev.type === "RED" && tournament.fineRed) {
+                amount = tournament.fineRed; cardType = "RED";
+              } else if (ev.type === "RED_DIRECT" && tournament.fineRedDirect) {
+                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
+              }
+              if (cardType && amount > 0) {
+                await client.query(
+                  `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE')`,
+                  [match.tournamentId, match.id, ev.id, ev.teamId, ev.playerId, cardType, amount]
+                );
+              }
+              if ((ev.type === "RED" || ev.type === "RED_DIRECT") && ev.playerId) {
+                const suspExists = await client.query(
+                  `SELECT id FROM player_suspensions WHERE match_id = $1 AND player_id = $2`,
+                  [match.id, ev.playerId]
+                );
+                if (suspExists.rows.length === 0) {
+                  const reason = ev.type === "RED_DIRECT" ? "Tarjeta roja directa" : "Doble tarjeta amarilla (roja)";
+                  await client.query(
+                    `INSERT INTO player_suspensions (id, tournament_id, player_id, team_id, match_id, match_event_id, reason, matches_remaining, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 1, 'ACTIVO')`,
+                    [match.tournamentId, ev.playerId, ev.teamId, match.id, ev.id, reason]
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        await client.query('COMMIT');
+      } catch (txError) {
+        await client.query('ROLLBACK');
+        throw txError;
+      } finally {
+        client.release();
       }
 
       const updatedMatch = await storage.getMatchWithTeams(match.id);
@@ -1433,93 +1531,103 @@ export async function registerRoutes(
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
-      
-      // Status guard: only allow finalize from EN_CURSO or PROGRAMADO (for admin flexibility)
+      if (req.user!.role === "ARBITRO" && match.refereeUserId !== req.user!.userId) {
+        return res.status(403).json({ message: "No estás asignado a este partido" });
+      }
       if (match.status === "JUGADO") {
         return res.status(400).json({ message: "El partido ya fue finalizado" });
       }
       
       const { homeScore, awayScore, refereeNotes, evidenceUrls } = matchResultSchema.pick({ homeScore: true, awayScore: true, refereeNotes: true, evidenceUrls: true }).parse(req.body);
       
-      const updated = await storage.updateMatch(req.params.id, { 
-        status: "JUGADO",
-        homeScore,
-        awayScore,
-        refereeNotes: refereeNotes || undefined,
-      });
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
 
-      if (evidenceUrls && evidenceUrls.length > 0) {
-        for (const url of evidenceUrls) {
-          await storage.createMatchEvidence({
-            matchId: req.params.id,
-            type: "PHOTO",
-            url,
-          });
+        const lockResult = await client.query(
+          `UPDATE matches SET status = 'JUGADO', home_score = $1, away_score = $2, referee_notes = $3 WHERE id = $4 AND status != 'JUGADO' RETURNING id`,
+          [homeScore, awayScore, refereeNotes || null, req.params.id]
+        );
+        if (lockResult.rowCount === 0) {
+          await client.query('ROLLBACK');
+          client.release();
+          return res.status(400).json({ message: "El partido ya fue finalizado por otro usuario" });
         }
-      }
-      
-      // Decrement active suspensions for both teams (they played this match)
-      await storage.decrementSuspensions(match.tournamentId, match.homeTeamId);
-      await storage.decrementSuspensions(match.tournamentId, match.awayTeamId);
 
-      // Generate fines for card events (only if not already generated)
-      const existingFines = await storage.getFines(match.tournamentId);
-      const matchFines = existingFines.filter(f => f.matchId === req.params.id);
-      
-      // Only generate fines if none exist for this match
-      if (matchFines.length === 0) {
-        const tournament = await storage.getTournament(match.tournamentId);
-        if (tournament) {
-          const events = await storage.getMatchEvents(req.params.id);
-          for (const event of events) {
-            let amount = 0;
-            let cardType: "YELLOW" | "RED" | "RED_DIRECT" | null = null;
-            
-            if (event.type === "YELLOW" && tournament.fineYellow) {
-              amount = tournament.fineYellow;
-              cardType = "YELLOW";
-            } else if (event.type === "RED" && tournament.fineRed) {
-              amount = tournament.fineRed;
-              cardType = "RED";
-            } else if (event.type === "RED_DIRECT" && tournament.fineRedDirect) {
-              amount = tournament.fineRedDirect;
-              cardType = "RED_DIRECT";
-            }
-            
-            if (cardType && amount > 0) {
-              await storage.createFine({
-                tournamentId: match.tournamentId,
-                matchId: req.params.id,
-                matchEventId: event.id,
-                teamId: event.teamId,
-                playerId: event.playerId,
-                cardType,
-                amount,
-                status: "PENDIENTE",
-              });
-            }
+        if (evidenceUrls && evidenceUrls.length > 0) {
+          for (const url of evidenceUrls) {
+            await client.query(
+              `INSERT INTO match_evidence (id, match_id, type, url) VALUES (gen_random_uuid(), $1, 'PHOTO', $2)`,
+              [req.params.id, url]
+            );
+          }
+        }
 
-            if ((event.type === "RED" || event.type === "RED_DIRECT") && event.playerId) {
-              const existingSuspensions = await storage.getPlayerSuspensions(match.tournamentId, event.teamId, "ACTIVO");
-              const alreadySuspended = existingSuspensions.some(s => s.matchId === req.params.id && s.playerId === event.playerId);
-              if (!alreadySuspended) {
-                const reason = event.type === "RED_DIRECT" ? "Tarjeta roja directa" : "Doble tarjeta amarilla (roja)";
-                await storage.createPlayerSuspension({
-                  tournamentId: match.tournamentId,
-                  playerId: event.playerId,
-                  teamId: event.teamId,
-                  matchId: req.params.id,
-                  matchEventId: event.id,
-                  reason,
-                  matchesRemaining: 1,
-                  status: "ACTIVO",
-                });
+        await client.query(
+          `UPDATE player_suspensions SET matches_remaining = matches_remaining - 1 WHERE tournament_id = $1 AND team_id IN ($2, $3) AND status = 'ACTIVO' AND matches_remaining > 0`,
+          [match.tournamentId, match.homeTeamId, match.awayTeamId]
+        );
+        await client.query(
+          `UPDATE player_suspensions SET status = 'CUMPLIDO' WHERE tournament_id = $1 AND team_id IN ($2, $3) AND status = 'ACTIVO' AND matches_remaining <= 0`,
+          [match.tournamentId, match.homeTeamId, match.awayTeamId]
+        );
+
+        const existingFinesResult = await client.query(
+          `SELECT id FROM fines WHERE match_id = $1`, [req.params.id]
+        );
+
+        if (existingFinesResult.rows.length === 0) {
+          const tournament = await storage.getTournament(match.tournamentId);
+          if (tournament) {
+            const eventsResult = await client.query(
+              `SELECT id, type, minute, team_id AS "teamId", player_id AS "playerId" FROM match_events WHERE match_id = $1`,
+              [req.params.id]
+            );
+            for (const event of eventsResult.rows) {
+              let amount = 0;
+              let cardType: string | null = null;
+
+              if (event.type === "YELLOW" && tournament.fineYellow) {
+                amount = tournament.fineYellow; cardType = "YELLOW";
+              } else if (event.type === "RED" && tournament.fineRed) {
+                amount = tournament.fineRed; cardType = "RED";
+              } else if (event.type === "RED_DIRECT" && tournament.fineRedDirect) {
+                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
+              }
+
+              if (cardType && amount > 0) {
+                await client.query(
+                  `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE')`,
+                  [match.tournamentId, req.params.id, event.id, event.teamId, event.playerId, cardType, amount]
+                );
+              }
+
+              if ((event.type === "RED" || event.type === "RED_DIRECT") && event.playerId) {
+                const suspCheck = await client.query(
+                  `SELECT id FROM player_suspensions WHERE match_id = $1 AND player_id = $2 AND status = 'ACTIVO'`,
+                  [req.params.id, event.playerId]
+                );
+                if (suspCheck.rows.length === 0) {
+                  const reason = event.type === "RED_DIRECT" ? "Tarjeta roja directa" : "Doble tarjeta amarilla (roja)";
+                  await client.query(
+                    `INSERT INTO player_suspensions (id, tournament_id, player_id, team_id, match_id, match_event_id, reason, matches_remaining, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 1, 'ACTIVO')`,
+                    [match.tournamentId, event.playerId, event.teamId, req.params.id, event.id, reason]
+                  );
+                }
               }
             }
           }
         }
+
+        await client.query('COMMIT');
+      } catch (txError) {
+        await client.query('ROLLBACK');
+        throw txError;
+      } finally {
+        client.release();
       }
       
+      const updated = await storage.getMatch(req.params.id);
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {

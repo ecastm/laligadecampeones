@@ -35,6 +35,10 @@ export const pool = new Pool({
 export class DatabaseStorage implements IStorage {
   constructor(private pool: Pool) {}
 
+  async getClient() {
+    return this.pool.connect();
+  }
+
   async getUser(id: string): Promise<User | undefined> {
     const result = await this.pool.query(
       `SELECT id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", status, created_at AS "createdAt" FROM users WHERE id = $1`,

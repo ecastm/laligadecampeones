@@ -40,7 +40,8 @@ Canvas image generators (for match graphics, social media posts) use this black/
 ### System Design Choices
 - **Modular Structure**: The project is divided into `client/`, `server/`, and `shared/` directories for clear separation of concerns.
 - **Database Storage**: Uses a `DatabaseStorage` service (`server/db-storage.ts`) for persistent data management.
-- **API Endpoints**: A well-defined RESTful API with public, authenticated, and role-specific endpoints.
+- **API Endpoints**: A well-defined RESTful API with public, authenticated, and role-specific endpoints. Player edit routes: `PUT /api/admin/players/:id` and `PUT /api/captain/players/:id`.
+- **Transactional Integrity**: Match result submission (`/result`) and finalization (`/finalize`) use PostgreSQL transactions (BEGIN/COMMIT/ROLLBACK). Score, events, evidence, fines, and suspensions are saved atomically — if any step fails, everything rolls back. Concurrent submissions are prevented via `WHERE status != 'JUGADO'` guards.
 - **Profile Management**: Mandatory profile completion for captains and referees upon first access ensures necessary contact and identification details are captured.
 - **Penalty System**: Automated fine generation based on red/yellow cards recorded during matches, with configurable amounts per tournament. Red cards (RED, RED_DIRECT) automatically generate a 1-match suspension (`player_suspensions` table) for the offending player. Suspensions are decremented when the team plays their next match. Suspended players appear marked as "SANCIONADO" in the referee's attendance list and are defaulted to absent.
 - **Suspension Tracking**: Admin can view all suspensions (active and completed) in the Finanzas > Sanciones tab. Shows player name, team, reason, matches remaining, and status.
