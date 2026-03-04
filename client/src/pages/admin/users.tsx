@@ -83,7 +83,11 @@ export default function UsersManagement() {
       createForm.reset();
     },
     onError: (error) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const msg = error.message;
+      if (msg.includes("email ya está registrado") || msg.includes("email")) {
+        createForm.setError("email", { message: "Este email ya está registrado. Usa otro email." });
+      }
+      toast({ title: "Error al crear usuario", description: msg, variant: "destructive" });
     },
   });
 
