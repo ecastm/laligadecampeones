@@ -210,7 +210,7 @@ export interface Team {
   divisionId?: string;
   name: string;
   colors: string;
-  homeField: string;
+  homeField?: string;
   logoUrl?: string;
   captainUserId?: string;
   coachName?: string;
@@ -222,7 +222,7 @@ export const insertTeamSchema = z.object({
   divisionId: z.string().optional(),
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   colors: z.string().min(2, "Los colores son requeridos"),
-  homeField: z.string().min(2, "La sede es requerida"),
+  homeField: z.string().optional(),
   logoUrl: z.string().optional(),
   captainUserId: z.string().optional(),
   coachName: z.string().optional(),
