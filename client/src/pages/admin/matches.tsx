@@ -293,13 +293,14 @@ export default function MatchesManagement() {
                   <FormItem>
                     <FormLabel>Fase del Torneo</FormLabel>
                     <Select
-                      onValueChange={setSelectedStageId}
-                      value={selectedStageId}
+                      onValueChange={(val) => setSelectedStageId(val === "none" ? "" : val)}
+                      value={selectedStageId || "none"}
                     >
                       <SelectTrigger data-testid="select-match-stage">
                         <SelectValue placeholder="Selecciona una fase" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">Jornada Regular</SelectItem>
                         {tournamentStages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
                             {stage.name}
