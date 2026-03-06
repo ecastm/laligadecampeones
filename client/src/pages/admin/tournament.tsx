@@ -692,7 +692,7 @@ export default function TournamentManagement() {
       )}
 
       <Dialog open={!!editingTournament} onOpenChange={() => setEditingTournament(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Torneo</DialogTitle>
           </DialogHeader>
@@ -891,6 +891,10 @@ export default function TournamentManagement() {
               </DialogFooter>
             </form>
           </Form>
+
+          {editingTournament && (
+            <EditTournamentStages tournamentId={editingTournament.id} tournamentName={editingTournament.name} />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1231,6 +1235,113 @@ export default function TournamentManagement() {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function EditTournamentStages({ tournamentId, tournamentName }: { tournamentId: string; tournamentName: string }) {
+  const [newStageName, setNewStageName] = useState("");
+  const { toast } = useToast();
+
+  const { data: editStages = [], isLoading } = useQuery<TournamentStage[]>({
+    queryKey: ["/api/admin/tournaments", tournamentId, "stages"],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/tournaments/${tournamentId}/stages`, { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar fases");
+      return response.json();
+    },
+  });
+
+  const createStageMutation = useMutation({
+    mutationFn: async ({ name, sortOrder }: { name: string; sortOrder: number }) => {
+      return apiRequest("POST", `/api/admin/tournaments/${tournamentId}/stages`, { name, sortOrder });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", tournamentId, "stages"] });
+      setNewStageName("");
+      toast({ title: "Fase creada" });
+    },
+  });
+
+  const deleteStageMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/stages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/tournaments", tournamentId, "stages"] });
+      toast({ title: "Fase eliminada" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "No se puede eliminar una fase con partidos asignados", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="border-t pt-4 mt-2">
+      <p className="text-sm font-medium mb-3 flex items-center gap-2">
+        <Layers className="h-4 w-4" />
+        Fases del Torneo
+      </p>
+      {isLoading ? (
+        <Skeleton className="h-16" />
+      ) : (
+        <div className="space-y-2">
+          {editStages.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No hay fases definidas. Agrega fases como Jornada Regular, Cuartos de Final, etc.</p>
+          ) : (
+            <div className="space-y-1">
+              {editStages.map((stage) => (
+                <div key={stage.id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2" data-testid={`edit-stage-${stage.id}`}>
+                  <span className="text-sm font-medium">{stage.name}</span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 text-destructive/70 hover:text-destructive"
+                    onClick={() => {
+                      if (confirm(`¿Eliminar la fase "${stage.name}"?`)) {
+                        deleteStageMutation.mutate(stage.id);
+                      }
+                    }}
+                    data-testid={`edit-delete-stage-${stage.id}`}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2 mt-2">
+            <Input
+              placeholder="Nueva fase (ej: Octavos de Final)"
+              value={newStageName}
+              onChange={(e) => setNewStageName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && newStageName.trim()) {
+                  e.preventDefault();
+                  createStageMutation.mutate({ name: newStageName.trim(), sortOrder: editStages.length + 1 });
+                }
+              }}
+              className="text-sm"
+              data-testid="edit-input-new-stage"
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (newStageName.trim()) {
+                  createStageMutation.mutate({ name: newStageName.trim(), sortOrder: editStages.length + 1 });
+                }
+              }}
+              disabled={!newStageName.trim() || createStageMutation.isPending}
+              data-testid="edit-button-add-stage"
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
