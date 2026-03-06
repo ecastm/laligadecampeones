@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { seedDatabase, fixDataIntegrity } from "./seed";
+import { pool } from "./db-storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -72,7 +73,14 @@ app.use((req, res, next) => {
 (async () => {
   await registerRoutes(httpServer, app);
   
-  // Seed the database with demo data
+  try {
+    await pool.query(`ALTER TABLE matches ALTER COLUMN home_team_id DROP NOT NULL`);
+    await pool.query(`ALTER TABLE matches ALTER COLUMN away_team_id DROP NOT NULL`);
+    console.log("Schema sync: matches columns verified as nullable");
+  } catch (e) {
+    console.log("Schema sync: columns already nullable or skipped");
+  }
+
   await seedDatabase();
   await fixDataIntegrity();
 

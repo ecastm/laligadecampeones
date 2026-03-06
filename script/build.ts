@@ -1,7 +1,6 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
-import { execSync } from "child_process";
 
 const allowlist = [
   "@google/generative-ai",
@@ -33,13 +32,6 @@ const allowlist = [
 
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
-
-  console.log("syncing database schema...");
-  try {
-    execSync("npx drizzle-kit push", { stdio: "inherit" });
-  } catch (e) {
-    console.warn("Warning: db:push failed, continuing build...", e);
-  }
 
   console.log("building client...");
   await viteBuild();
