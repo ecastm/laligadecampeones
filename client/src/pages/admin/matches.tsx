@@ -230,6 +230,8 @@ export default function MatchesManagement() {
     const stageName = selectedStageId ? tournamentStages.find(s => s.id === selectedStageId)?.name : undefined;
     const cleanData = {
       ...data,
+      homeTeamId: data.homeTeamId || null,
+      awayTeamId: data.awayTeamId || null,
       stage: stageName || undefined,
       stageId: selectedStageId || undefined,
       tournamentId: selectedTournamentId || tournament?.id,
@@ -357,13 +359,14 @@ export default function MatchesManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Equipo Local</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select onValueChange={(val) => field.onChange(val === "tbc" ? "" : val)} value={field.value || "tbc"}>
                           <FormControl>
                             <SelectTrigger data-testid="select-home-team">
                               <SelectValue placeholder="Selecciona" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="tbc">Por confirmar</SelectItem>
                             {teams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
@@ -381,13 +384,14 @@ export default function MatchesManagement() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Equipo Visitante</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select onValueChange={(val) => field.onChange(val === "tbc" ? "" : val)} value={field.value || "tbc"}>
                           <FormControl>
                             <SelectTrigger data-testid="select-away-team">
                               <SelectValue placeholder="Selecciona" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
+                            <SelectItem value="tbc">Por confirmar</SelectItem>
                             {teams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
