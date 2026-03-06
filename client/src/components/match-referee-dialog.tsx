@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Eye, CircleAlert, Goal, Flag, Camera, X, Loader2, FileText, UserCheck, UserX, ClipboardList } from "lucide-react";
+import { Plus, Trash2, Eye, CircleAlert, Goal, Flag, Camera, X, Loader2, FileText, UserCheck, UserX, ClipboardList, AlertTriangle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
 import { format } from "date-fns";
@@ -411,6 +411,21 @@ export function SharedMatchResultDialog({
   );
 }
 
+interface MatchFineWithDetails {
+  id: string;
+  matchId: string;
+  matchEventId?: string;
+  teamId: string;
+  playerId?: string;
+  cardType: string;
+  amount: number;
+  status: string;
+  playerFirstName?: string;
+  playerLastName?: string;
+  playerJerseyNumber?: number;
+  teamName?: string;
+}
+
 export function SharedMatchDetailsDialog({
   match,
   open,
@@ -430,10 +445,33 @@ export function SharedMatchDetailsDialog({
     enabled: open,
   });
 
+  const { data: matchFines = [] } = useQuery<MatchFineWithDetails[]>({
+    queryKey: ["/api/matches", match.id, "fines"],
+    queryFn: async () => {
+      const response = await fetch(`/api/matches/${match.id}/fines`);
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open,
+  });
+
   const events: MatchEventWithPlayer[] = matchDetails?.events || [];
   const goals = events.filter((e: MatchEventWithPlayer) => e.type === "GOAL");
   const yellowCards = events.filter((e: MatchEventWithPlayer) => e.type === "YELLOW");
   const redCards = events.filter((e: MatchEventWithPlayer) => e.type === "RED");
+
+  const getFineForEvent = (eventId: string) => {
+    return matchFines.find(f => f.matchEventId === eventId);
+  };
+
+  const cardFineLabel = (type: string) => {
+    switch (type) {
+      case "YELLOW": return "T. Amarilla";
+      case "RED": return "T. Roja";
+      case "RED_DIRECT": return "T. Roja Directa";
+      default: return type;
+    }
+  };
 
   const getEventIcon = (type: string) => {
     switch (type) {
@@ -554,28 +592,89 @@ export function SharedMatchDetailsDialog({
                   <div className="space-y-3">
                     {events
                       .sort((a: MatchEventWithPlayer, b: MatchEventWithPlayer) => a.minute - b.minute)
-                      .map((event: MatchEventWithPlayer, index: number) => (
-                        <div
-                          key={event.id || index}
-                          className="flex items-center gap-3 rounded-md border p-3"
-                          data-testid={`event-${event.type.toLowerCase()}-${index}`}
-                        >
-                          <Badge variant="outline" className="shrink-0">
-                            {event.minute}'
-                          </Badge>
-                          {getEventIcon(event.type)}
-                          <div className="flex-1 min-w-0">
+                      .map((event: MatchEventWithPlayer, index: number) => {
+                        const fine = event.id ? getFineForEvent(event.id) : undefined;
+                        const isCard = event.type === "YELLOW" || event.type === "RED" || event.type === "RED_DIRECT";
+                        const teamName = event.teamId === match.homeTeamId ? match.homeTeam?.name : match.awayTeam?.name;
+                        return (
+                          <div
+                            key={event.id || index}
+                            className="flex items-center gap-3 rounded-md border p-3"
+                            data-testid={`event-${event.type.toLowerCase()}-${index}`}
+                          >
+                            <Badge variant="outline" className="shrink-0">
+                              {event.minute}'
+                            </Badge>
+                            {getEventIcon(event.type)}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">
+                                {event.player
+                                  ? `${event.player.firstName} ${event.player.lastName}`
+                                  : "Jugador desconocido"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {getEventLabel(event.type)} · {teamName}
+                              </p>
+                            </div>
+                            {isCard && fine && (
+                              <Badge
+                                variant={fine.status === "PAGADA" ? "default" : "secondary"}
+                                className={fine.status === "PENDIENTE" ? "bg-destructive/20 text-destructive shrink-0" : "bg-emerald-500/20 text-emerald-500 shrink-0"}
+                                data-testid={`fine-amount-${index}`}
+                              >
+                                {fine.amount}€ · {fine.status === "PAGADA" ? "Pagada" : "Pendiente"}
+                              </Badge>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {matchFines.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-primary" />
+                    Multas del Partido
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {matchFines.map((fine, index) => (
+                      <div
+                        key={fine.id}
+                        className="flex items-center justify-between gap-3 rounded-md border p-3"
+                        data-testid={`match-fine-${index}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {fine.cardType === "YELLOW" && <div className="h-5 w-3.5 rounded-sm bg-primary shrink-0" />}
+                          {(fine.cardType === "RED" || fine.cardType === "RED_DIRECT") && <div className="h-5 w-3.5 rounded-sm bg-destructive shrink-0" />}
+                          {fine.cardType === "NO_PRESENTADO" && <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />}
+                          <div className="min-w-0">
                             <p className="font-medium text-sm truncate">
-                              {event.player
-                                ? `${event.player.firstName} ${event.player.lastName}`
-                                : "Jugador desconocido"}
+                              {fine.playerFirstName && fine.playerLastName
+                                ? `${fine.playerFirstName} ${fine.playerLastName}${fine.playerJerseyNumber ? ` (#${fine.playerJerseyNumber})` : ""}`
+                                : fine.cardType === "NO_PRESENTADO" ? "Equipo no presentado" : "—"}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {getEventLabel(event.type)} · {event.teamId === match.homeTeamId ? match.homeTeam?.name : match.awayTeam?.name}
+                              {cardFineLabel(fine.cardType)} · {fine.teamName || "—"}
                             </p>
                           </div>
                         </div>
-                      ))}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="font-bold text-sm">{fine.amount}€</span>
+                          <Badge
+                            variant={fine.status === "PAGADA" ? "default" : "secondary"}
+                            className={fine.status === "PENDIENTE" ? "bg-destructive/20 text-destructive" : "bg-emerald-500/20 text-emerald-500"}
+                          >
+                            {fine.status === "PAGADA" ? "Pagada" : "Pendiente"}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

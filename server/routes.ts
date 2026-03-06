@@ -405,6 +405,29 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/matches/:id/fines", async (req, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT f.id, f.tournament_id AS "tournamentId", f.match_id AS "matchId",
+                f.match_event_id AS "matchEventId", f.team_id AS "teamId",
+                f.player_id AS "playerId", f.card_type AS "cardType",
+                f.amount, f.status, f.created_at AS "createdAt",
+                p.first_name AS "playerFirstName", p.last_name AS "playerLastName",
+                p.jersey_number AS "playerJerseyNumber",
+                t.name AS "teamName"
+         FROM fines f
+         LEFT JOIN players p ON f.player_id = p.id
+         LEFT JOIN teams t ON f.team_id = t.id
+         WHERE f.match_id = $1
+         ORDER BY f.created_at ASC`,
+        [req.params.id]
+      );
+      res.json(result.rows);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/teams/:id/players", async (req, res) => {
     try {
       const players = await storage.getPlayers(req.params.id);
