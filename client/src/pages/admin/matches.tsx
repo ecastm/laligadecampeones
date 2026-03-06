@@ -227,9 +227,10 @@ export default function MatchesManagement() {
   };
 
   const handleSubmit = (data: Omit<InsertMatch, 'tournamentId'>) => {
+    const stageName = selectedStageId ? tournamentStages.find(s => s.id === selectedStageId)?.name : undefined;
     const cleanData = {
       ...data,
-      stage: data.stage || undefined,
+      stage: stageName || undefined,
       stageId: selectedStageId || undefined,
       tournamentId: selectedTournamentId || tournament?.id,
     };
@@ -339,7 +340,7 @@ export default function MatchesManagement() {
                         <SelectValue placeholder="Selecciona una fase" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">Jornada Regular</SelectItem>
+                        <SelectItem value="none">— Sin fase específica —</SelectItem>
                         {tournamentStages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
                             {stage.name}
