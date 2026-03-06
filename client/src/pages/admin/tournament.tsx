@@ -275,6 +275,7 @@ export default function TournamentManagement() {
       location: tournament.location,
       startDate: tournament.startDate.split("T")[0],
       divisionId: tournament.divisionId || "",
+      tournamentTypeId: tournament.tournamentTypeId || "",
       fineYellow: tournament.fineYellow ?? undefined,
       fineRed: tournament.fineRed ?? undefined,
       fineRedDirect: tournament.fineRedDirect ?? undefined,
@@ -410,6 +411,37 @@ export default function TournamentManagement() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={createForm.control}
+                  name="tournamentTypeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Torneo</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-tournament-type">
+                            <SelectValue placeholder="Selecciona el tipo de torneo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {tournamentTypes.map((tt) => (
+                            <SelectItem key={tt.id} value={tt.id}>
+                              <div className="flex flex-col">
+                                <span>{tt.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {field.value && (
+                        <p className="text-xs text-muted-foreground">
+                          {tournamentTypes.find(tt => tt.id === field.value)?.description}
+                        </p>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="border-t pt-4 mt-2">
                   <p className="text-sm font-medium mb-3">Multas por Tarjetas (€)</p>
                   <div className="grid grid-cols-3 gap-3">
@@ -508,6 +540,15 @@ export default function TournamentManagement() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  {(() => {
+                    const tt = tournamentTypes.find(t => t.id === tournament.tournamentTypeId);
+                    return tt ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Trophy className="h-4 w-4 shrink-0 text-primary" />
+                        <span className="font-medium">{tt.name}</span>
+                      </div>
+                    ) : null;
+                  })()}
                   {(() => {
                     const division = getDivisionById(tournament.divisionId);
                     return division ? (
@@ -740,6 +781,37 @@ export default function TournamentManagement() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="tournamentTypeId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Torneo</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <FormControl>
+                        <SelectTrigger data-testid="edit-select-tournament-type">
+                          <SelectValue placeholder="Selecciona el tipo de torneo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {tournamentTypes.map((tt) => (
+                          <SelectItem key={tt.id} value={tt.id}>
+                            <div className="flex flex-col">
+                              <span>{tt.name}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {field.value && (
+                      <p className="text-xs text-muted-foreground">
+                        {tournamentTypes.find(tt => tt.id === field.value)?.description}
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
