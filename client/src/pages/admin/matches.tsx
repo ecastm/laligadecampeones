@@ -33,6 +33,7 @@ export default function MatchesManagement() {
   const [refereeMatch, setRefereeMatch] = useState<MatchWithTeams | null>(null);
   const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string>("");
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string>("");
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -74,14 +75,16 @@ export default function MatchesManagement() {
     },
   });
 
+  const effectiveTournamentId = selectedTournamentId || editingMatch?.tournamentId || tournament?.id;
+
   const { data: tournamentStages = [] } = useQuery<TournamentStage[]>({
-    queryKey: ["/api/admin/tournaments", tournament?.id, "stages"],
+    queryKey: ["/api/admin/tournaments", effectiveTournamentId, "stages"],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/tournaments/${tournament!.id}/stages`, { headers: getAuthHeader() });
+      const response = await fetch(`/api/admin/tournaments/${effectiveTournamentId}/stages`, { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar fases");
       return response.json();
     },
-    enabled: !!tournament?.id,
+    enabled: !!effectiveTournamentId,
   });
 
   const getStageName = (match: Match) => {
@@ -146,7 +149,7 @@ export default function MatchesManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertMatch, 'tournamentId'>) => {
-      const res = await apiRequest("POST", "/api/admin/matches", { ...data, tournamentId: tournament?.id });
+      const res = await apiRequest("POST", "/api/admin/matches", { ...data, tournamentId: selectedTournamentId || tournament?.id });
       return res.json();
     },
     onSuccess: async (createdMatch: Match) => {
@@ -157,7 +160,8 @@ export default function MatchesManagement() {
       setIsDialogOpen(false);
       const formData = form.getValues();
       form.reset();
-      autoGenerateVsImage(createdMatch.id, { ...formData, tournamentId: tournament?.id });
+      setSelectedTournamentId("");
+      autoGenerateVsImage(createdMatch.id, { ...formData, tournamentId: selectedTournamentId || tournament?.id });
     },
     onError: (error) => {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -178,6 +182,7 @@ export default function MatchesManagement() {
       toast({ title: "Partido actualizado" });
       const needsRegeneration = updatedData.homeTeamId || updatedData.awayTeamId || updatedData.dateTime || updatedData.field || updatedData.roundNumber || updatedData.stage;
       setEditingMatch(null);
+      setSelectedTournamentId("");
       form.reset();
       if (needsRegeneration) {
         autoGenerateVsImage(id, updatedMatch);
@@ -208,6 +213,7 @@ export default function MatchesManagement() {
   const openEditDialog = (match: Match) => {
     setEditingMatch(match);
     setSelectedStageId(match.stageId || "");
+    setSelectedTournamentId(match.tournamentId || "");
     form.reset({
       roundNumber: match.roundNumber,
       dateTime: match.dateTime.slice(0, 16),
@@ -221,7 +227,12 @@ export default function MatchesManagement() {
   };
 
   const handleSubmit = (data: Omit<InsertMatch, 'tournamentId'>) => {
-    const cleanData = { ...data, stage: data.stage || undefined, stageId: selectedStageId || undefined };
+    const cleanData = {
+      ...data,
+      stage: data.stage || undefined,
+      stageId: selectedStageId || undefined,
+      tournamentId: selectedTournamentId || tournament?.id,
+    };
     if (editingMatch) {
       updateMutation.mutate({ id: editingMatch.id, data: cleanData });
     } else {
@@ -252,9 +263,11 @@ export default function MatchesManagement() {
             setIsDialogOpen(false);
             setEditingMatch(null);
             setSelectedStageId("");
+            setSelectedTournamentId("");
             form.reset();
           } else {
             setSelectedStageId("");
+            setSelectedTournamentId(tournament?.id || "");
             setIsDialogOpen(true);
           }
         }}>
@@ -270,6 +283,24 @@ export default function MatchesManagement() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                {allTournaments.length > 1 && (
+                  <FormItem>
+                    <FormLabel>Torneo</FormLabel>
+                    <Select
+                      onValueChange={(val) => { setSelectedTournamentId(val); setSelectedStageId(""); }}
+                      value={selectedTournamentId || tournament?.id || ""}
+                    >
+                      <SelectTrigger data-testid="select-match-tournament">
+                        <SelectValue placeholder="Selecciona un torneo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allTournaments.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
                 <FormField
                   control={form.control}
                   name="roundNumber"
