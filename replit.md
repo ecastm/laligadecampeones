@@ -22,7 +22,7 @@ Canvas image generators (for match graphics, social media posts) use this black/
 - **Frontend**: React, Vite, TypeScript, TailwindCSS, Shadcn UI.
 - **Backend**: Node.js, Express, TypeScript.
 - **Authentication**: JWT for token-based authentication and bcrypt for password hashing. Role-Based Access Control (RBAC) is implemented to manage user permissions (ADMIN, CAPITAN, ARBITRO, MARKETING).
-- **Database Interaction**: Uses raw SQL queries via `pg` pool for PostgreSQL. Public endpoints use `getAllMatchesWithTeams()` with JOINs for optimized batch loading (avoids N+1 queries).
+- **Database Interaction**: Uses raw SQL queries via `pg` pool for PostgreSQL. Public endpoints use `getAllMatchesWithTeams()` with JOINs for optimized batch loading (avoids N+1 queries). Development and production use separate PostgreSQL databases (dev: heliumdb, prod: neondb). Data was synced from production to development on 2026-03-06. The seed (`server/seed.ts`) is permanently disabled — `seedDatabase()` is no longer called at startup. Schema migrations are applied via `ALTER TABLE` statements in `server/index.ts` at server startup to keep both databases in sync.
 - **Validation**: Zod is used for schema validation across the application.
 - **State Management**: QueryClient is used for efficient data fetching and caching on the frontend.
 - **Image Generation**: Uses Canvas API for generating shareable match graphics and social media content with custom branding.

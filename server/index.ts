@@ -2,7 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { seedDatabase, fixDataIntegrity } from "./seed";
 import { pool } from "./db-storage";
 
 const app = express();
@@ -80,9 +79,6 @@ app.use((req, res, next) => {
   } catch (e) {
     console.log("Schema sync: columns already nullable or skipped");
   }
-
-  await seedDatabase();
-  await fixDataIntegrity();
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
