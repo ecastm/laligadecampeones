@@ -830,6 +830,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("Error creating match:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

@@ -627,8 +627,8 @@ export class DatabaseStorage implements IStorage {
         insertMatch.roundNumber,
         insertMatch.dateTime,
         insertMatch.field,
-        insertMatch.homeTeamId,
-        insertMatch.awayTeamId,
+        insertMatch.homeTeamId || null,
+        insertMatch.awayTeamId || null,
         insertMatch.refereeUserId || null,
         insertMatch.status || "PROGRAMADO",
         insertMatch.homeScore ?? null,
@@ -651,8 +651,8 @@ export class DatabaseStorage implements IStorage {
     if (data.roundNumber !== undefined) { setClauses.push(`round_number = $${paramIndex++}`); values.push(data.roundNumber); }
     if (data.dateTime !== undefined) { setClauses.push(`date_time = $${paramIndex++}`); values.push(data.dateTime); }
     if (data.field !== undefined) { setClauses.push(`field = $${paramIndex++}`); values.push(data.field); }
-    if (data.homeTeamId !== undefined) { setClauses.push(`home_team_id = $${paramIndex++}`); values.push(data.homeTeamId); }
-    if (data.awayTeamId !== undefined) { setClauses.push(`away_team_id = $${paramIndex++}`); values.push(data.awayTeamId); }
+    if (data.homeTeamId !== undefined) { setClauses.push(`home_team_id = $${paramIndex++}`); values.push(data.homeTeamId || null); }
+    if (data.awayTeamId !== undefined) { setClauses.push(`away_team_id = $${paramIndex++}`); values.push(data.awayTeamId || null); }
     if (data.refereeUserId !== undefined) { setClauses.push(`referee_user_id = $${paramIndex++}`); values.push(data.refereeUserId || null); }
     if (data.status !== undefined) { setClauses.push(`status = $${paramIndex++}`); values.push(data.status); }
     if (data.homeScore !== undefined) { setClauses.push(`home_score = $${paramIndex++}`); values.push(data.homeScore); }
