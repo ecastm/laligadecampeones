@@ -275,6 +275,9 @@ export default function TournamentManagement() {
       location: tournament.location,
       startDate: tournament.startDate.split("T")[0],
       divisionId: tournament.divisionId || "",
+      fineYellow: tournament.fineYellow ?? undefined,
+      fineRed: tournament.fineRed ?? undefined,
+      fineRedDirect: tournament.fineRedDirect ?? undefined,
     });
   };
 
@@ -407,6 +410,74 @@ export default function TournamentManagement() {
                     </FormItem>
                   )}
                 />
+                <div className="border-t pt-4 mt-2">
+                  <p className="text-sm font-medium mb-3">Multas por Tarjetas (€)</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <FormField
+                      control={createForm.control}
+                      name="fineYellow"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Amarilla</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              data-testid="input-fine-yellow"
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="fineRed"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Roja</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              data-testid="input-fine-red"
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="fineRedDirect"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-xs">Roja Directa</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder="0"
+                              data-testid="input-fine-red-direct"
+                              value={field.value ?? ""}
+                              onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
                 <DialogFooter>
                   <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-tournament">
                     {createMutation.isPending ? "Creando..." : "Crear Torneo"}
@@ -461,6 +532,18 @@ export default function TournamentManagement() {
                     <Calendar className="h-4 w-4 shrink-0" />
                     <span>Inicio: {formatDate(tournament.startDate)}</span>
                   </div>
+                  {(tournament.fineYellow || tournament.fineRed || tournament.fineRedDirect) ? (
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground border-t pt-2 mt-1">
+                      <span className="font-medium">Multas:</span>
+                      {tournament.fineYellow ? <span className="flex items-center gap-1"><span className="inline-block h-3 w-2 rounded-sm bg-primary" />{tournament.fineYellow}€</span> : null}
+                      {tournament.fineRed ? <span className="flex items-center gap-1"><span className="inline-block h-3 w-2 rounded-sm bg-destructive" />{tournament.fineRed}€</span> : null}
+                      {tournament.fineRedDirect ? <span className="flex items-center gap-1"><span className="inline-block h-3 w-2 rounded-sm bg-destructive" />D: {tournament.fineRedDirect}€</span> : null}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-destructive/70 border-t pt-2 mt-1">
+                      Multas no configuradas
+                    </div>
+                  )}
                 </CardContent>
                 <CardFooter className="flex flex-wrap gap-2">
                   <Button size="sm" variant="outline" onClick={() => openEditDialog(tournament)} data-testid={`button-edit-tournament-${tournament.id}`}>
@@ -661,6 +744,74 @@ export default function TournamentManagement() {
                   </FormItem>
                 )}
               />
+              <div className="border-t pt-4 mt-2">
+                <p className="text-sm font-medium mb-3">Multas por Tarjetas (€)</p>
+                <div className="grid grid-cols-3 gap-3">
+                  <FormField
+                    control={editForm.control}
+                    name="fineYellow"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Amarilla</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            data-testid="edit-input-fine-yellow"
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="fineRed"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Roja</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            data-testid="edit-input-fine-red"
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="fineRedDirect"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Roja Directa</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            data-testid="edit-input-fine-red-direct"
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
               <DialogFooter>
                 <Button type="submit" disabled={updateMutation.isPending}>
                   {updateMutation.isPending ? "Guardando..." : "Guardar Cambios"}
