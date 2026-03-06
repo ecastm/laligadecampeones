@@ -283,19 +283,27 @@ export default function MatchesManagement() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-                {allTournaments.length > 1 && (
+                {divisions.length > 0 && (
                   <FormItem>
-                    <FormLabel>Torneo</FormLabel>
+                    <FormLabel>Categoría</FormLabel>
                     <Select
-                      onValueChange={(val) => { setSelectedTournamentId(val); setSelectedStageId(""); }}
-                      value={selectedTournamentId || tournament?.id || ""}
+                      onValueChange={(val) => {
+                        const tournamentForDiv = allTournaments.find(t => t.divisionId === val);
+                        setSelectedTournamentId(tournamentForDiv?.id || "");
+                        setSelectedStageId("");
+                      }}
+                      value={(() => {
+                        const tid = selectedTournamentId || tournament?.id;
+                        const t = allTournaments.find(tr => tr.id === tid);
+                        return t?.divisionId || "";
+                      })()}
                     >
-                      <SelectTrigger data-testid="select-match-tournament">
-                        <SelectValue placeholder="Selecciona un torneo" />
+                      <SelectTrigger data-testid="select-match-category">
+                        <SelectValue placeholder="Selecciona una categoría" />
                       </SelectTrigger>
                       <SelectContent>
-                        {allTournaments.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        {divisions.map((d) => (
+                          <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
