@@ -2426,6 +2426,13 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
       if (homeScore === undefined || awayScore === undefined || !winnerId || !seasonId) {
         return res.status(400).json({ message: "Se requiere homeScore, awayScore, winnerId y seasonId" });
       }
+      const bracketMatches = await storage.getBracketMatches(seasonId);
+      const targetMatch = bracketMatches.find(m => m.id === req.params.id);
+      if (!targetMatch) return res.status(404).json({ message: "Partido de bracket no encontrado" });
+      if (targetMatch.status === "JUGADO") return res.status(400).json({ message: "Este partido ya fue jugado" });
+      if (winnerId !== targetMatch.homeTeamId && winnerId !== targetMatch.awayTeamId) {
+        return res.status(400).json({ message: "El ganador debe ser uno de los dos equipos del partido" });
+      }
       await advanceBracketWinner(seasonId, req.params.id, homeScore, awayScore, winnerId);
       const updated = await storage.getBracketMatches(seasonId);
       res.json(updated);
