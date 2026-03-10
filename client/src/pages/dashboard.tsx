@@ -6,6 +6,7 @@ import CaptainDashboard from "./captain/dashboard";
 import RefereeDashboard from "./referee/dashboard";
 import MarketingDashboard from "./marketing/dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
+import PWAInstallBanner from "@/components/pwa-install-banner";
 
 export default function Dashboard() {
   const { user, isLoading } = useAuth();
@@ -33,20 +34,32 @@ export default function Dashboard() {
     return null;
   }
 
+  let dashboardContent;
   switch (user.role) {
     case "ADMIN":
-      return <AdminDashboard />;
+      dashboardContent = <AdminDashboard />;
+      break;
     case "CAPITAN":
-      return <CaptainDashboard />;
+      dashboardContent = <CaptainDashboard />;
+      break;
     case "ARBITRO":
-      return <RefereeDashboard />;
+      dashboardContent = <RefereeDashboard />;
+      break;
     case "MARKETING":
-      return <MarketingDashboard />;
+      dashboardContent = <MarketingDashboard />;
+      break;
     default:
-      return (
+      dashboardContent = (
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-muted-foreground">Rol no reconocido</p>
         </div>
       );
   }
+
+  return (
+    <>
+      {dashboardContent}
+      <PWAInstallBanner userEmail={user.email} />
+    </>
+  );
 }
