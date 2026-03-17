@@ -17,25 +17,29 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 
   try {
+    const payload = {
+      api_key: SMTP2GO_API_KEY,
+      to: [options.toName ? `${options.toName} <${options.to}>` : options.to],
+      sender: `${SENDER_NAME} <${SENDER_EMAIL}>`,
+      subject: options.subject,
+      html_body: options.html,
+    };
+
+    console.log(`[email] Enviando a ${options.to} desde ${SENDER_EMAIL} - Asunto: ${options.subject}`);
+
     const response = await fetch(SMTP2GO_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        api_key: SMTP2GO_API_KEY,
-        to: [options.toName ? `${options.toName} <${options.to}>` : options.to],
-        sender: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-        subject: options.subject,
-        html_body: options.html,
-      }),
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
 
     if (result.data?.succeeded > 0) {
-      console.log(`[email] Enviado a ${options.to}: ${options.subject}`);
+      console.log(`[email] SMTP2GO aceptó envío a ${options.to} - email_id: ${result.data?.email_id || "N/A"}`);
       return true;
     } else {
-      console.error(`[email] Error al enviar a ${options.to}:`, result);
+      console.error(`[email] SMTP2GO rechazó envío a ${options.to}:`, JSON.stringify(result));
       return false;
     }
   } catch (error) {
@@ -66,11 +70,11 @@ function getBaseStyles(): string {
   `;
 }
 
-export function sendWelcomeCaptainEmail(params: {
+export async function sendWelcomeCaptainEmail(params: {
   captainName: string;
   captainEmail: string;
   teamName: string;
-}): void {
+}): Promise<boolean> {
   const html = `
     <!DOCTYPE html>
     <html>
@@ -113,7 +117,7 @@ export function sendWelcomeCaptainEmail(params: {
     </html>
   `;
 
-  sendEmail({
+  return sendEmail({
     to: params.captainEmail,
     toName: params.captainName,
     subject: `¡Bienvenido a La Liga de Campeones, ${params.captainName}!`,

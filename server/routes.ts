@@ -1176,11 +1176,14 @@ export async function registerRoutes(
           const team = await storage.getTeam(user.teamId);
           if (team) teamName = team.name;
         }
-        sendWelcomeCaptainEmail({
+        const emailSent = await sendWelcomeCaptainEmail({
           captainName: data.fullName,
           captainEmail: data.email,
           teamName,
         });
+        if (!emailSent) {
+          console.error("[email] No se pudo enviar bienvenida a", data.email);
+        }
       } catch (emailError) {
         console.error("[email] Error enviando bienvenida:", emailError);
       }
