@@ -39,7 +39,7 @@ export function ImageUpload({
       setPreview(null);
       toast({
         title: "Error al subir imagen",
-        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
+        description: error.message || "No se pudo subir la imagen. Inténtalo de nuevo.",
         variant: "destructive",
       });
     },

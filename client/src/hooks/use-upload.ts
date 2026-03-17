@@ -35,7 +35,7 @@ export function useUpload(options: UseUploadOptions = {}) {
         const token = localStorage.getItem("auth_token");
 
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", file, file.name || "photo.jpg");
         if (token) {
           formData.append("token", token);
         }
@@ -45,54 +45,91 @@ export function useUpload(options: UseUploadOptions = {}) {
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const xhr = new XMLHttpRequest();
+        let uploadResponse: UploadResponse;
 
-        const uploadResponse = await new Promise<UploadResponse>((resolve, reject) => {
-          xhr.upload.addEventListener("progress", (event) => {
-            if (event.lengthComputable) {
-              const pct = Math.round(10 + (event.loaded / event.total) * 85);
-              setProgress(pct);
-            }
-          });
+        try {
+          uploadResponse = await new Promise<UploadResponse>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
 
-          xhr.addEventListener("load", () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                const data = JSON.parse(xhr.responseText);
-                resolve(data);
-              } catch {
-                reject(new Error("Invalid response from server"));
+            xhr.upload.addEventListener("progress", (event) => {
+              if (event.lengthComputable) {
+                const pct = Math.round(10 + (event.loaded / event.total) * 85);
+                setProgress(pct);
               }
-            } else {
-              try {
-                const errorData = JSON.parse(xhr.responseText);
-                reject(new Error(errorData.error || "Upload failed"));
-              } catch {
-                reject(new Error("Upload failed"));
+            });
+
+            xhr.addEventListener("load", () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const data = JSON.parse(xhr.responseText);
+                  resolve(data);
+                } catch {
+                  reject(new Error("Respuesta inválida del servidor"));
+                }
+              } else {
+                try {
+                  const errorData = JSON.parse(xhr.responseText);
+                  reject(new Error(errorData.error || errorData.message || `Error ${xhr.status}`));
+                } catch {
+                  reject(new Error(`Error del servidor (${xhr.status})`));
+                }
               }
+            });
+
+            xhr.addEventListener("error", () => {
+              reject(new Error("XHR_NETWORK_ERROR"));
+            });
+
+            xhr.addEventListener("abort", () => {
+              reject(new Error("Subida cancelada"));
+            });
+
+            xhr.addEventListener("timeout", () => {
+              reject(new Error("XHR_TIMEOUT"));
+            });
+
+            xhr.timeout = 120000;
+            xhr.open("POST", "/api/uploads/direct");
+            for (const [key, value] of Object.entries(headers)) {
+              xhr.setRequestHeader(key, value);
             }
+            xhr.send(formData);
           });
+        } catch (xhrErr: any) {
+          if (xhrErr?.message === "XHR_NETWORK_ERROR" || xhrErr?.message === "XHR_TIMEOUT") {
+            console.log("XHR failed, trying fetch fallback...");
+            setProgress(20);
 
-          xhr.addEventListener("error", () => {
-            reject(new Error("Network error during upload"));
-          });
+            const fetchFormData = new FormData();
+            fetchFormData.append("file", file, file.name || "photo.jpg");
+            if (token) {
+              fetchFormData.append("token", token);
+            }
 
-          xhr.addEventListener("abort", () => {
-            reject(new Error("Upload cancelled"));
-          });
+            const response = await fetch("/api/uploads/direct", {
+              method: "POST",
+              headers: headers,
+              body: fetchFormData,
+            });
 
-          xhr.open("POST", "/api/uploads/direct");
-          for (const [key, value] of Object.entries(headers)) {
-            xhr.setRequestHeader(key, value);
+            setProgress(90);
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+              throw new Error(errorData.error || errorData.message || `Error ${response.status}`);
+            }
+
+            uploadResponse = await response.json();
+          } else {
+            throw xhrErr;
           }
-          xhr.send(formData);
-        });
+        }
 
         setProgress(100);
         options.onSuccess?.(uploadResponse);
         return uploadResponse;
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Upload failed");
+        const error = err instanceof Error ? err : new Error("Error al subir archivo");
         setError(error);
         options.onError?.(error);
         return null;
