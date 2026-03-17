@@ -552,6 +552,7 @@ function TeamInfo() {
 function TeamPlayers() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
 
   const { data: team } = useQuery<Team>({
     queryKey: ["/api/captain/team"],
@@ -601,6 +602,22 @@ function TeamPlayers() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Omit<InsertPlayer, 'teamId'> }) => {
+      return apiRequest("PUT", `/api/captain/players/${id}`, { ...data, teamId: team?.id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/captain/players"] });
+      toast({ title: "Jugador actualizado" });
+      setIsDialogOpen(false);
+      setEditingPlayer(null);
+      form.reset();
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       return apiRequest("DELETE", `/api/captain/players/${id}`);
@@ -614,6 +631,47 @@ function TeamPlayers() {
     },
   });
 
+  const openEditDialog = (player: Player) => {
+    setEditingPlayer(player);
+    form.reset({
+      firstName: player.firstName,
+      lastName: player.lastName,
+      jerseyNumber: player.jerseyNumber,
+      position: player.position || "",
+      identificationId: player.identificationId || "",
+      identificationType: (player as any).identificationType || "DNI",
+      photoUrls: player.photoUrls || [],
+      isFederated: player.isFederated || false,
+      federationId: player.federationId || "",
+      active: player.active !== false,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const openCreateDialog = () => {
+    setEditingPlayer(null);
+    form.reset({
+      firstName: "",
+      lastName: "",
+      jerseyNumber: 1,
+      position: "",
+      identificationId: "",
+      photoUrls: [],
+      isFederated: false,
+      federationId: "",
+      active: true,
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = (data: Omit<InsertPlayer, 'teamId'>) => {
+    if (editingPlayer) {
+      updateMutation.mutate({ id: editingPlayer.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -621,19 +679,17 @@ function TeamPlayers() {
           <h2 className="text-lg sm:text-xl font-bold">Jugadores del Equipo</h2>
           <p className="text-xs sm:text-sm text-muted-foreground">Gestiona los jugadores de tu equipo</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-add-player" className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Agregar Jugador
-            </Button>
-          </DialogTrigger>
+        <Button data-testid="button-add-player" className="w-full sm:w-auto" onClick={openCreateDialog}>
+          <Plus className="mr-2 h-4 w-4" />
+          Agregar Jugador
+        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingPlayer(null); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Agregar Jugador</DialogTitle>
+              <DialogTitle>{editingPlayer ? "Editar Jugador" : "Agregar Jugador"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <FormField
                     control={form.control}
@@ -789,8 +845,10 @@ function TeamPlayers() {
                     )}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-player">
-                  {createMutation.isPending ? "Agregando..." : "Agregar Jugador"}
+                <Button type="submit" className="w-full" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit-player">
+                  {editingPlayer
+                    ? (updateMutation.isPending ? "Guardando..." : "Guardar Cambios")
+                    : (createMutation.isPending ? "Agregando..." : "Agregar Jugador")}
                 </Button>
               </form>
             </Form>
@@ -852,6 +910,9 @@ function TeamPlayers() {
                     <Badge variant={player.active ? "default" : "secondary"} className="text-xs">
                       {player.active ? "Activo" : "Inactivo"}
                     </Badge>
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(player)} data-testid={`button-edit-player-${player.id}`}>
+                      <Edit className="h-4 w-4 text-primary" />
+                    </Button>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" data-testid={`button-delete-player-${player.id}`}>
