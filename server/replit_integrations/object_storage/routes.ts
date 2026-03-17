@@ -2,7 +2,7 @@ import type { Express } from "express";
 import multer from "multer";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
-import { authenticate } from "../../auth";
+import { verifyToken, type JWTPayload } from "../../auth";
 
 function parseObjectPath(path: string): {
   bucketName: string;
@@ -68,8 +68,20 @@ export function registerObjectStorageRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/uploads/direct", authenticate, upload.single("file"), async (req, res) => {
+  app.post("/api/uploads/direct", upload.single("file"), async (req, res) => {
     try {
+      const authHeader = req.headers.authorization;
+      let token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
+      if (!token && req.body?.token) {
+        token = req.body.token;
+      }
+      if (token) {
+        const payload = verifyToken(token);
+        if (!payload) {
+          return res.status(401).json({ error: "Token inválido" });
+        }
+      }
+
       if (!req.file) {
         return res.status(400).json({ error: "No file provided" });
       }

@@ -32,10 +32,14 @@ export function useUpload(options: UseUploadOptions = {}) {
       try {
         setProgress(10);
 
+        const token = localStorage.getItem("auth_token");
+
         const formData = new FormData();
         formData.append("file", file);
+        if (token) {
+          formData.append("token", token);
+        }
 
-        const token = localStorage.getItem("auth_token");
         const headers: Record<string, string> = {};
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
