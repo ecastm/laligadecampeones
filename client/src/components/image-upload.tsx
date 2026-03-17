@@ -57,31 +57,49 @@ export function ImageUpload({
 
   const shapeClass = shape === "circle" ? "rounded-full" : "rounded-md";
 
+  const readFileAsBlob = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result instanceof ArrayBuffer) {
+          resolve(new Blob([reader.result], { type: file.type || "image/jpeg" }));
+        } else {
+          reject(new Error("No se pudo procesar el archivo"));
+        }
+      };
+      reader.onerror = () => reject(reader.error || new Error("Error de lectura"));
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const originalFile = e.target.files?.[0];
     if (!originalFile) return;
 
-    try {
-      const arrayBuffer = await originalFile.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: originalFile.type || "image/jpeg" });
-      const fileName = originalFile.name || `photo_${Date.now()}.jpg`;
-      const localFile = new File([blob], fileName, {
-        type: originalFile.type || "image/jpeg",
-        lastModified: originalFile.lastModified || Date.now(),
-      });
+    const fileType = originalFile.type || "image/jpeg";
+    const fileName = originalFile.name || `photo_${Date.now()}.jpg`;
 
+    let fileToUpload: File;
+
+    try {
+      const blob = await readFileAsBlob(originalFile);
+      fileToUpload = new File([blob], fileName, {
+        type: fileType,
+        lastModified: Date.now(),
+      });
       const previewUrl = URL.createObjectURL(blob);
       setPreview(previewUrl);
-
-      await uploadFile(localFile);
-    } catch (err) {
-      setPreview(null);
-      toast({
-        title: "Error al leer imagen",
-        description: "No se pudo leer el archivo. Intenta con otra imagen.",
-        variant: "destructive",
-      });
+    } catch {
+      fileToUpload = originalFile;
+      try {
+        const previewUrl = URL.createObjectURL(originalFile);
+        setPreview(previewUrl);
+      } catch {
+        setPreview(null);
+      }
     }
+
+    await uploadFile(fileToUpload);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
