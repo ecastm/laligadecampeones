@@ -8,7 +8,7 @@ interface UploadMetadata {
 }
 
 interface UploadResponse {
-  uploadURL: string;
+  uploadURL?: string;
   objectPath: string;
   metadata: UploadMetadata;
 }
@@ -18,48 +18,87 @@ interface UseUploadOptions {
   onError?: (error: Error) => void;
 }
 
-/**
- * React hook for handling file uploads with presigned URLs.
- *
- * This hook implements the two-step presigned URL upload flow:
- * 1. Request a presigned URL from your backend (sends JSON metadata, NOT the file)
- * 2. Upload the file directly to the presigned URL
- *
- * @example
- * ```tsx
- * function FileUploader() {
- *   const { uploadFile, isUploading, error } = useUpload({
- *     onSuccess: (response) => {
- *       console.log("Uploaded to:", response.objectPath);
- *     },
- *   });
- *
- *   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
- *     const file = e.target.files?.[0];
- *     if (file) {
- *       await uploadFile(file);
- *     }
- *   };
- *
- *   return (
- *     <div>
- *       <input type="file" onChange={handleFileChange} disabled={isUploading} />
- *       {isUploading && <p>Uploading...</p>}
- *       {error && <p>Error: {error.message}</p>}
- *     </div>
- *   );
- * }
- * ```
- */
 export function useUpload(options: UseUploadOptions = {}) {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
 
-  /**
-   * Request a presigned URL from the backend.
-   * IMPORTANT: Send JSON metadata, NOT the file itself.
-   */
+  const uploadFile = useCallback(
+    async (file: File): Promise<UploadResponse | null> => {
+      setIsUploading(true);
+      setError(null);
+      setProgress(0);
+
+      try {
+        setProgress(10);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const token = localStorage.getItem("auth_token");
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        const xhr = new XMLHttpRequest();
+
+        const uploadResponse = await new Promise<UploadResponse>((resolve, reject) => {
+          xhr.upload.addEventListener("progress", (event) => {
+            if (event.lengthComputable) {
+              const pct = Math.round(10 + (event.loaded / event.total) * 85);
+              setProgress(pct);
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const data = JSON.parse(xhr.responseText);
+                resolve(data);
+              } catch {
+                reject(new Error("Invalid response from server"));
+              }
+            } else {
+              try {
+                const errorData = JSON.parse(xhr.responseText);
+                reject(new Error(errorData.error || "Upload failed"));
+              } catch {
+                reject(new Error("Upload failed"));
+              }
+            }
+          });
+
+          xhr.addEventListener("error", () => {
+            reject(new Error("Network error during upload"));
+          });
+
+          xhr.addEventListener("abort", () => {
+            reject(new Error("Upload cancelled"));
+          });
+
+          xhr.open("POST", "/api/uploads/direct");
+          for (const [key, value] of Object.entries(headers)) {
+            xhr.setRequestHeader(key, value);
+          }
+          xhr.send(formData);
+        });
+
+        setProgress(100);
+        options.onSuccess?.(uploadResponse);
+        return uploadResponse;
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error("Upload failed");
+        setError(error);
+        options.onError?.(error);
+        return null;
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [options]
+  );
+
   const requestUploadUrl = useCallback(
     async (file: File): Promise<UploadResponse> => {
       const token = localStorage.getItem("auth_token");
@@ -87,75 +126,6 @@ export function useUpload(options: UseUploadOptions = {}) {
     []
   );
 
-  /**
-   * Upload a file directly to the presigned URL.
-   */
-  const uploadToPresignedUrl = useCallback(
-    async (file: File, uploadURL: string): Promise<void> => {
-      const response = await fetch(uploadURL, {
-        method: "PUT",
-        body: file,
-        headers: {
-          "Content-Type": file.type || "application/octet-stream",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload file to storage");
-      }
-    },
-    []
-  );
-
-  /**
-   * Upload a file using the presigned URL flow.
-   *
-   * @param file - The file to upload
-   * @returns The upload response containing the object path
-   */
-  const uploadFile = useCallback(
-    async (file: File): Promise<UploadResponse | null> => {
-      setIsUploading(true);
-      setError(null);
-      setProgress(0);
-
-      try {
-        // Step 1: Request presigned URL (send metadata as JSON)
-        setProgress(10);
-        const uploadResponse = await requestUploadUrl(file);
-
-        // Step 2: Upload file directly to presigned URL
-        setProgress(30);
-        await uploadToPresignedUrl(file, uploadResponse.uploadURL);
-
-        setProgress(100);
-        options.onSuccess?.(uploadResponse);
-        return uploadResponse;
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error("Upload failed");
-        setError(error);
-        options.onError?.(error);
-        return null;
-      } finally {
-        setIsUploading(false);
-      }
-    },
-    [requestUploadUrl, uploadToPresignedUrl, options]
-  );
-
-  /**
-   * Get upload parameters for Uppy's AWS S3 plugin.
-   *
-   * IMPORTANT: This function receives the UppyFile object from Uppy.
-   * Use file.name, file.size, file.type to request per-file presigned URLs.
-   *
-   * Use this with the ObjectUploader component:
-   * ```tsx
-   * <ObjectUploader onGetUploadParameters={getUploadParameters}>
-   *   Upload
-   * </ObjectUploader>
-   * ```
-   */
   const getUploadParameters = useCallback(
     async (
       file: UppyFile<Record<string, unknown>, Record<string, unknown>>
@@ -201,4 +171,3 @@ export function useUpload(options: UseUploadOptions = {}) {
     progress,
   };
 }
-
