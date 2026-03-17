@@ -15,7 +15,7 @@ export function serveStatic(app: Express) {
       maxAge: "1y",
       immutable: true,
       setHeaders: (res, filePath) => {
-        const noCache = [".html", "sw.js", "manifest.json", "og-image.jpg", "favicon.ico", "favicon.png", "favicon-32.png", "favicon-16.png", "icon-192.png", "icon-512.png"];
+        const noCache = [".html", "sw.js", "manifest.json", "og-image.jpg", "favicon.ico", "favicon.png", "favicon-32.png", "favicon-16.png", "icon-192.png", "icon-512.png", "icon-maskable-192.png", "icon-maskable-512.png"];
         if (noCache.some(ext => filePath.endsWith(ext))) {
           res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
           res.setHeader("Pragma", "no-cache");
