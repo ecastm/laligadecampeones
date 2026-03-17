@@ -58,14 +58,30 @@ export function ImageUpload({
   const shapeClass = shape === "circle" ? "rounded-full" : "rounded-md";
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const originalFile = e.target.files?.[0];
+    if (!originalFile) return;
 
-    const reader = new FileReader();
-    reader.onload = () => setPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    try {
+      const arrayBuffer = await originalFile.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: originalFile.type || "image/jpeg" });
+      const fileName = originalFile.name || `photo_${Date.now()}.jpg`;
+      const localFile = new File([blob], fileName, {
+        type: originalFile.type || "image/jpeg",
+        lastModified: originalFile.lastModified || Date.now(),
+      });
 
-    await uploadFile(file);
+      const previewUrl = URL.createObjectURL(blob);
+      setPreview(previewUrl);
+
+      await uploadFile(localFile);
+    } catch (err) {
+      setPreview(null);
+      toast({
+        title: "Error al leer imagen",
+        description: "No se pudo leer el archivo. Intenta con otra imagen.",
+        variant: "destructive",
+      });
+    }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
