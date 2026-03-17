@@ -28,15 +28,18 @@ function parseObjectPath(path: string): {
 export function registerObjectStorageRoutes(app: Express): void {
   const objectStorageService = new ObjectStorageService();
   const ALLOWED_MIMES = [
-    "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml",
-    "video/mp4", "video/quicktime",
+    "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml",
+    "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence",
+    "image/bmp", "image/tiff", "image/avif",
+    "video/mp4", "video/quicktime", "video/3gpp",
+    "application/octet-stream",
   ];
 
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: (_req, file, cb) => {
-      if (ALLOWED_MIMES.includes(file.mimetype)) {
+      if (ALLOWED_MIMES.includes(file.mimetype) || file.mimetype.startsWith("image/") || file.mimetype.startsWith("video/")) {
         cb(null, true);
       } else {
         cb(new Error("Tipo de archivo no permitido"));
@@ -68,7 +71,18 @@ export function registerObjectStorageRoutes(app: Express): void {
     }
   });
 
-  app.post("/api/uploads/direct", upload.single("file"), async (req, res) => {
+  app.post("/api/uploads/direct", (req, res, next) => {
+    upload.single("file")(req, res, (err: any) => {
+      if (err) {
+        console.error("Multer error:", err.message, "code:", err.code);
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({ error: "El archivo es demasiado grande (máximo 10MB)" });
+        }
+        return res.status(400).json({ error: err.message || "Error al procesar el archivo" });
+      }
+      next();
+    });
+  }, async (req, res) => {
     try {
       const authHeader = req.headers.authorization;
       let token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null;
