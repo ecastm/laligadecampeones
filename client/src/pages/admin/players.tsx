@@ -24,6 +24,7 @@ export default function PlayersManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [selectedTeamFilter, setSelectedTeamFilter] = useState<string>("all");
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const { data: teams = [] } = useQuery<Team[]>({
     queryKey: ["/api/admin/teams"],
@@ -103,6 +104,7 @@ export default function PlayersManagement() {
   const closeDialog = () => {
     setIsDialogOpen(false);
     setEditingPlayer(null);
+    setIsImageUploading(false);
     form.reset();
   };
 
@@ -203,6 +205,7 @@ export default function PlayersManagement() {
                       <ImageUpload
                         value={field.value?.[0] || ""}
                         onChange={(url) => field.onChange(url ? [url] : [])}
+                        onUploadingChange={setIsImageUploading}
                         label="Subir foto"
                         shape="circle"
                         size="lg"
@@ -395,10 +398,11 @@ export default function PlayersManagement() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending || isImageUploading}
                 data-testid="button-submit-player"
               >
-                {(createMutation.isPending || updateMutation.isPending) 
+                {isImageUploading ? "Subiendo foto..." :
+                  (createMutation.isPending || updateMutation.isPending) 
                   ? "Guardando..." 
                   : editingPlayer 
                     ? "Guardar Cambios" 

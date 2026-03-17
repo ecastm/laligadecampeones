@@ -27,6 +27,8 @@ export default function TeamsManagement() {
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set());
   const [playerDialogTeamId, setPlayerDialogTeamId] = useState<string | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [isTeamLogoUploading, setIsTeamLogoUploading] = useState(false);
+  const [isPlayerPhotoUploading, setIsPlayerPhotoUploading] = useState(false);
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -213,6 +215,7 @@ export default function TeamsManagement() {
   const closePlayerDialog = () => {
     setPlayerDialogTeamId(null);
     setEditingPlayer(null);
+    setIsPlayerPhotoUploading(false);
     playerForm.reset();
   };
 
@@ -293,6 +296,7 @@ export default function TeamsManagement() {
           if (!open) {
             setIsDialogOpen(false);
             setEditingTeam(null);
+            setIsTeamLogoUploading(false);
             form.reset();
           } else {
             setIsDialogOpen(true);
@@ -396,6 +400,7 @@ export default function TeamsManagement() {
                         <ImageUpload
                           value={field.value || ""}
                           onChange={field.onChange}
+                          onUploadingChange={setIsTeamLogoUploading}
                           label="Subir logo"
                           shape="square"
                           size="md"
@@ -426,10 +431,10 @@ export default function TeamsManagement() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={createMutation.isPending || updateMutation.isPending || isTeamLogoUploading}
                   data-testid="button-submit-team"
                 >
-                  {createMutation.isPending || updateMutation.isPending ? "Guardando..." : editingTeam ? "Actualizar" : "Crear Equipo"}
+                  {isTeamLogoUploading ? "Subiendo imagen..." : createMutation.isPending || updateMutation.isPending ? "Guardando..." : editingTeam ? "Actualizar" : "Crear Equipo"}
                 </Button>
               </form>
             </Form>
@@ -790,6 +795,7 @@ export default function TeamsManagement() {
                       <ImageUpload
                         value={field.value?.[0] || ""}
                         onChange={(url) => field.onChange(url ? [url] : [])}
+                        onUploadingChange={setIsPlayerPhotoUploading}
                         label="Subir foto"
                         shape="circle"
                         size="md"
@@ -835,10 +841,11 @@ export default function TeamsManagement() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={createPlayerMutation.isPending || updatePlayerMutation.isPending}
+                disabled={createPlayerMutation.isPending || updatePlayerMutation.isPending || isPlayerPhotoUploading}
                 data-testid="button-submit-player"
               >
-                {(createPlayerMutation.isPending || updatePlayerMutation.isPending) 
+                {isPlayerPhotoUploading ? "Subiendo foto..." :
+                  (createPlayerMutation.isPending || updatePlayerMutation.isPending) 
                   ? "Guardando..." 
                   : editingPlayer 
                     ? "Guardar Cambios" 

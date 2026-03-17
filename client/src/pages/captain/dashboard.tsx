@@ -152,6 +152,7 @@ function TeamInfo() {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const { data: team, isLoading } = useQuery<Team | null>({
     queryKey: ["/api/captain/team"],
@@ -246,7 +247,7 @@ function TeamInfo() {
           </CardContent>
         </Card>
 
-        <Dialog open={isCreating} onOpenChange={setIsCreating}>
+        <Dialog open={isCreating} onOpenChange={(open) => { setIsCreating(open); if (!open) setIsImageUploading(false); }}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Crear Mi Equipo</DialogTitle>
@@ -350,7 +351,7 @@ function TeamInfo() {
                     <FormItem>
                       <FormLabel>Logo del Equipo (opcional)</FormLabel>
                       <FormControl>
-                        <ImageUpload value={field.value || ""} onChange={field.onChange} />
+                        <ImageUpload value={field.value || ""} onChange={field.onChange} onUploadingChange={setIsImageUploading} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -369,8 +370,8 @@ function TeamInfo() {
                     </FormItem>
                   )}
                 />
-                <Button type="submit" className="w-full" disabled={createMutation.isPending} data-testid="button-submit-create-team">
-                  {createMutation.isPending ? "Creando..." : "Crear Equipo"}
+                <Button type="submit" className="w-full" disabled={createMutation.isPending || isImageUploading} data-testid="button-submit-create-team">
+                  {isImageUploading ? "Subiendo imagen..." : createMutation.isPending ? "Creando..." : "Crear Equipo"}
                 </Button>
               </form>
             </Form>
@@ -448,6 +449,7 @@ function TeamInfo() {
                       <ImageUpload
                         value={field.value || ""}
                         onChange={field.onChange}
+                        onUploadingChange={setIsImageUploading}
                         label="Subir logo"
                         shape="square"
                         size="md"
@@ -476,11 +478,11 @@ function TeamInfo() {
                 )}
               />
               <div className="flex gap-2">
-                <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save-team">
+                <Button type="submit" disabled={updateMutation.isPending || isImageUploading} data-testid="button-save-team">
                   <Save className="mr-2 h-4 w-4" />
-                  {updateMutation.isPending ? "Guardando..." : "Guardar"}
+                  {isImageUploading ? "Subiendo imagen..." : updateMutation.isPending ? "Guardando..." : "Guardar"}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setIsEditing(false)}>
+                <Button type="button" variant="outline" onClick={() => { setIsEditing(false); setIsImageUploading(false); }}>
                   Cancelar
                 </Button>
               </div>
@@ -553,6 +555,7 @@ function TeamPlayers() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+  const [isPlayerImageUploading, setIsPlayerImageUploading] = useState(false);
 
   const { data: team } = useQuery<Team>({
     queryKey: ["/api/captain/team"],
@@ -683,7 +686,7 @@ function TeamPlayers() {
           <Plus className="mr-2 h-4 w-4" />
           Agregar Jugador
         </Button>
-        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) setEditingPlayer(null); }}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) { setEditingPlayer(null); setIsPlayerImageUploading(false); } }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingPlayer ? "Editar Jugador" : "Agregar Jugador"}</DialogTitle>
@@ -803,6 +806,7 @@ function TeamPlayers() {
                         <ImageUpload
                           value={field.value?.[0] || ""}
                           onChange={(url) => field.onChange(url ? [url] : [])}
+                          onUploadingChange={setIsPlayerImageUploading}
                           label="Subir foto"
                           shape="circle"
                           size="md"
@@ -845,8 +849,9 @@ function TeamPlayers() {
                     )}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={createMutation.isPending || updateMutation.isPending} data-testid="button-submit-player">
-                  {editingPlayer
+                <Button type="submit" className="w-full" disabled={createMutation.isPending || updateMutation.isPending || isPlayerImageUploading} data-testid="button-submit-player">
+                  {isPlayerImageUploading ? "Subiendo foto..." :
+                    editingPlayer
                     ? (updateMutation.isPending ? "Guardando..." : "Guardar Cambios")
                     : (createMutation.isPending ? "Agregando..." : "Agregar Jugador")}
                 </Button>

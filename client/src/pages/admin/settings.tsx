@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,6 +16,7 @@ import { Settings, Save, Globe, Phone, Mail, MapPin, Instagram, Facebook, Messag
 
 export default function SiteSettingsManagement() {
   const { toast } = useToast();
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   const { data: settings, isLoading } = useQuery<SiteSettings>({
     queryKey: ["/api/site-settings"],
@@ -107,6 +109,7 @@ export default function SiteSettingsManagement() {
                         <ImageUpload
                           value={field.value || ""}
                           onChange={field.onChange}
+                          onUploadingChange={setIsImageUploading}
                           label="Subir logo"
                           shape="circle"
                           size="lg"
@@ -294,11 +297,11 @@ export default function SiteSettingsManagement() {
             type="submit"
             size="lg"
             className="w-full sm:w-auto gap-2"
-            disabled={updateMutation.isPending}
+            disabled={updateMutation.isPending || isImageUploading}
             data-testid="button-save-settings"
           >
             <Save className="h-4 w-4" />
-            {updateMutation.isPending ? "Guardando..." : "Guardar Configuración"}
+            {isImageUploading ? "Subiendo imagen..." : updateMutation.isPending ? "Guardando..." : "Guardar Configuración"}
           </Button>
         </form>
       </Form>

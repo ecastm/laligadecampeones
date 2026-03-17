@@ -1,12 +1,14 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, Upload, X, Loader2 } from "lucide-react";
 import { useUpload } from "@/hooks/use-upload";
+import { useToast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
   onRemove?: () => void;
+  onUploadingChange?: (isUploading: boolean) => void;
   label?: string;
   shape?: "circle" | "square";
   size?: "sm" | "md" | "lg";
@@ -17,6 +19,7 @@ export function ImageUpload({
   value,
   onChange,
   onRemove,
+  onUploadingChange,
   label = "Subir imagen",
   shape = "square",
   size = "md",
@@ -24,6 +27,7 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { uploadFile, isUploading, progress } = useUpload({
     onSuccess: (response) => {
@@ -31,10 +35,19 @@ export function ImageUpload({
       onChange(objectPath);
       setPreview(null);
     },
-    onError: () => {
+    onError: (error) => {
       setPreview(null);
+      toast({
+        title: "Error al subir imagen",
+        description: "No se pudo subir la imagen. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
     },
   });
+
+  useEffect(() => {
+    onUploadingChange?.(isUploading);
+  }, [isUploading, onUploadingChange]);
 
   const sizeClasses = {
     sm: "h-16 w-16",
@@ -114,7 +127,6 @@ export function ImageUpload({
         onChange={handleFileSelect}
         className="hidden"
         data-testid="input-file-upload"
-        capture="environment"
       />
 
       {!displayUrl && !isUploading && (
