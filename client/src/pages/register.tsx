@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, UserPlus, Shield, Users, Flag, Megaphone } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Users, Flag } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export default function Register() {
@@ -55,12 +55,6 @@ export default function Register() {
 
   const roleOptions = [
     {
-      value: "ADMIN",
-      label: "Administrador",
-      description: "Gestión completa del torneo",
-      icon: Shield,
-    },
-    {
       value: "CAPITAN",
       label: "Capitán",
       description: "Gestiona tu equipo y jugadores",
@@ -71,12 +65,6 @@ export default function Register() {
       label: "Árbitro",
       description: "Registra resultados de partidos",
       icon: Flag,
-    },
-    {
-      value: "MARKETING",
-      label: "Marketing",
-      description: "Fotos, contenido y noticias",
-      icon: Megaphone,
     },
   ];
 
