@@ -65,10 +65,10 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const passwordHash = await bcrypt.hash(insertUser.password, 10);
     const result = await this.pool.query(
-      `INSERT INTO users (id, name, email, password_hash, role, team_id, status, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'ACTIVO', NOW())
-       RETURNING id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", status, created_at AS "createdAt"`,
-      [insertUser.name, insertUser.email, passwordHash, insertUser.role, insertUser.teamId || null]
+      `INSERT INTO users (id, name, email, password_hash, role, team_id, phone, status, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'ACTIVO', NOW())
+       RETURNING id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", phone, status, created_at AS "createdAt"`,
+      [insertUser.name, insertUser.email, passwordHash, insertUser.role, insertUser.teamId || null, insertUser.phone || null]
     );
     return result.rows[0];
   }

@@ -67,11 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   };
 
-  const register = async (name: string, email: string, password: string, role: string) => {
+  const register = async (name: string, email: string, password: string, role: string, phone?: string) => {
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, confirmPassword: password, role }),
+      body: JSON.stringify({ name, email, phone, password, confirmPassword: password, role }),
     });
 
     if (!response.ok) {

@@ -114,6 +114,7 @@ export interface User {
   passwordHash: string;
   role: UserRole;
   teamId?: string;
+  phone?: string;
   status: UserStatus;
   createdAt: string;
 }
@@ -124,6 +125,7 @@ export const insertUserSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   role: z.enum(["ADMIN", "CAPITAN", "ARBITRO", "MARKETING"]),
   teamId: z.string().optional(),
+  phone: z.string().optional(),
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 
@@ -146,6 +148,7 @@ export type LoginCredentials = z.infer<typeof loginSchema>;
 export const registerSchema = z.object({
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
   email: z.string().email("Email inválido"),
+  phone: z.string().min(6, "El número de teléfono es obligatorio"),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
   confirmPassword: z.string().min(1, "Confirma tu contraseña"),
   role: z.enum(["ADMIN", "CAPITAN", "ARBITRO", "MARKETING"], {

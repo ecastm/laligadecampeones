@@ -191,6 +191,7 @@ export async function registerRoutes(
         email: data.email,
         password: data.password,
         role: data.role,
+        phone: data.phone,
       });
       const token = generateToken({ userId: user.id, email: user.email, role: user.role });
       const { passwordHash: _, ...userWithoutPassword } = user;

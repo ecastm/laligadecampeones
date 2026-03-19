@@ -27,6 +27,7 @@ export default function Register() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
       role: undefined,
@@ -36,7 +37,7 @@ export default function Register() {
   const onSubmit = async (data: RegisterCredentials) => {
     setIsLoading(true);
     try {
-      await registerUser(data.name, data.email, data.password, data.role);
+      await registerUser(data.name, data.email, data.password, data.role, data.phone);
       toast({
         title: "Cuenta creada",
         description: "Tu cuenta ha sido creada exitosamente",
@@ -117,6 +118,24 @@ export default function Register() {
                         type="email"
                         placeholder="tu@email.com"
                         data-testid="input-email"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Número de teléfono</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="+34 600 000 000"
+                        data-testid="input-phone"
                         {...field}
                       />
                     </FormControl>
