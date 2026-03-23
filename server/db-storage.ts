@@ -41,7 +41,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: string): Promise<User | undefined> {
     const result = await this.pool.query(
-      `SELECT id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", status, created_at AS "createdAt" FROM users WHERE id = $1`,
+      `SELECT id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", phone, status, created_at AS "createdAt" FROM users WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -49,7 +49,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByEmail(email: string): Promise<User | undefined> {
     const result = await this.pool.query(
-      `SELECT id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", status, created_at AS "createdAt" FROM users WHERE email = $1`,
+      `SELECT id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", phone, status, created_at AS "createdAt" FROM users WHERE email = $1`,
       [email]
     );
     return result.rows[0] || undefined;
@@ -57,7 +57,7 @@ export class DatabaseStorage implements IStorage {
 
   async getUsers(): Promise<Omit<User, 'passwordHash'>[]> {
     const result = await this.pool.query(
-      `SELECT id, name, email, role, team_id AS "teamId", status, created_at AS "createdAt" FROM users ORDER BY created_at DESC`
+      `SELECT id, name, email, role, team_id AS "teamId", phone, status, created_at AS "createdAt" FROM users ORDER BY created_at DESC`
     );
     return result.rows;
   }
@@ -98,6 +98,10 @@ export class DatabaseStorage implements IStorage {
       setClauses.push(`status = $${paramIndex++}`);
       values.push(data.status);
     }
+    if ((data as any).phone !== undefined) {
+      setClauses.push(`phone = $${paramIndex++}`);
+      values.push((data as any).phone || null);
+    }
     if (data.password) {
       const passwordHash = await bcrypt.hash(data.password, 10);
       setClauses.push(`password_hash = $${paramIndex++}`);
@@ -109,7 +113,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE users SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", status, created_at AS "createdAt"`,
+       RETURNING id, name, email, password_hash AS "passwordHash", role, team_id AS "teamId", phone, status, created_at AS "createdAt"`,
       values
     );
     return result.rows[0] || undefined;
