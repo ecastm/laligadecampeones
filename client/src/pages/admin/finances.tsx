@@ -341,24 +341,6 @@ export default function FinancesManagement() {
             </TabsList>
 
             <TabsContent value="fines" className="mt-4 space-y-4">
-              {!hasFineConfig && (
-                <div className="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 p-4 flex items-start gap-3" data-testid="warning-no-fine-config">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Multas por tarjetas no configuradas</p>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                      El torneo no tiene montos definidos para tarjetas amarillas, rojas o rojas directas.
-                      Las multas por tarjetas solo se generan automáticamente si configuras los montos en la sección de <strong>Torneos</strong>.
-                    </p>
-                    {currentTournament && (
-                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
-                        Configuración actual: Amarilla: {currentTournament.fineYellow ? `${currentTournament.fineYellow}€` : "—"} | Roja: {currentTournament.fineRed ? `${currentTournament.fineRed}€` : "—"} | Roja Directa: {currentTournament.fineRedDirect ? `${currentTournament.fineRedDirect}€` : "—"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {(finesByType.yellow.length > 0 || finesByType.red.length > 0 || finesByType.redDirect.length > 0 || finesByType.noShow.length > 0) && (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-md border p-3 flex items-center gap-3">
