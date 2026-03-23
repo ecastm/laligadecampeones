@@ -675,148 +675,270 @@ function MatchResultDialog({
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Eventos del Partido</h4>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    append({
-                      type: "GOAL",
-                      minute: 1,
-                      teamId: match.homeTeamId || "",
-                      playerId: "",
-                    })
-                  }
-                  data-testid="button-add-event"
-                >
-                  <Plus className="mr-1 h-4 w-4" />
-                  Agregar Evento
-                </Button>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950"
+                    onClick={() =>
+                      append({
+                        type: "GOAL",
+                        minute: 1,
+                        teamId: match.homeTeamId || "",
+                        playerId: "",
+                      })
+                    }
+                    data-testid="button-add-goal"
+                  >
+                    <Goal className="mr-1 h-4 w-4" />
+                    Gol
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-950"
+                    onClick={() =>
+                      append({
+                        type: "YELLOW",
+                        minute: 1,
+                        teamId: match.homeTeamId || "",
+                        playerId: "",
+                      })
+                    }
+                    data-testid="button-add-yellow"
+                  >
+                    <Flag className="mr-1 h-4 w-4" />
+                    Amarilla
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950"
+                    onClick={() =>
+                      append({
+                        type: "RED",
+                        minute: 1,
+                        teamId: match.homeTeamId || "",
+                        playerId: "",
+                      })
+                    }
+                    data-testid="button-add-red"
+                  >
+                    <Flag className="mr-1 h-4 w-4" />
+                    Roja
+                  </Button>
+                </div>
               </div>
 
               {fields.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">
-                  No hay eventos registrados
+                  No hay eventos registrados. Usa los botones de arriba para agregar goles y tarjetas.
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {fields.map((field, index) => (
-                    <div
-                      key={field.id}
-                      className="grid grid-cols-2 sm:grid-cols-12 gap-2 items-end border rounded-md p-3"
-                    >
-                      <FormField
-                        control={form.control}
-                        name={`events.${index}.type`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-1 sm:col-span-3">
-                            <FormLabel className="text-xs">Tipo</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger data-testid={`select-event-type-${index}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="GOAL">Gol</SelectItem>
-                                <SelectItem value="YELLOW">Amarilla</SelectItem>
-                                <SelectItem value="RED">Roja</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`events.${index}.minute`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-1 sm:col-span-2">
-                            <FormLabel className="text-xs">Min</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min={1}
-                                max={120}
-                                data-testid={`input-event-minute-${index}`}
-                                {...field}
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`events.${index}.teamId`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-1 sm:col-span-3">
-                            <FormLabel className="text-xs">Equipo</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger data-testid={`select-event-team-${index}`}>
-                                  <SelectValue />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {match.homeTeamId && (
-                                  <SelectItem value={match.homeTeamId}>
-                                    {match.homeTeam?.name || "Por definir"}
-                                  </SelectItem>
-                                )}
-                                {match.awayTeamId && (
-                                  <SelectItem value={match.awayTeamId}>
-                                    {match.awayTeam?.name || "Por definir"}
-                                  </SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name={`events.${index}.playerId`}
-                        render={({ field }) => (
-                          <FormItem className="col-span-1 sm:col-span-3">
-                            <FormLabel className="text-xs">Jugador</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger data-testid={`select-event-player-${index}`}>
-                                  <SelectValue placeholder="Jugador" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {allPlayers
-                                  .filter(
-                                    (p) =>
-                                      p.teamId === form.watch(`events.${index}.teamId`)
-                                  )
-                                  .map((player) => (
-                                    <SelectItem key={player.id} value={player.id}>
-                                      {player.jerseyNumber} - {player.firstName} {player.lastName}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="col-span-1"
-                        onClick={() => remove(index)}
-                        data-testid={`button-remove-event-${index}`}
+                  {fields.map((field, index) => {
+                    const eventType = form.watch(`events.${index}.type`);
+                    const eventTeamId = form.watch(`events.${index}.teamId`);
+                    const eventPlayerId = form.watch(`events.${index}.playerId`);
+                    const eventMinute = form.watch(`events.${index}.minute`);
+                    const eventPlayer = allPlayers.find(p => p.id === eventPlayerId);
+                    const teamPlayers = allPlayers.filter(p => p.teamId === eventTeamId && p.active);
+                    const isHome = eventTeamId === match.homeTeamId;
+                    const teamName = isHome ? match.homeTeam?.name : match.awayTeam?.name;
+
+                    return (
+                      <div
+                        key={field.id}
+                        className={`border rounded-lg p-3 space-y-3 ${
+                          eventType === "GOAL" ? "border-emerald-300 bg-emerald-500/5" :
+                          eventType === "YELLOW" ? "border-yellow-300 bg-yellow-500/5" :
+                          "border-red-300 bg-red-500/5"
+                        }`}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            {eventType === "GOAL" ? (
+                              <span className="flex items-center gap-1 text-sm font-semibold text-emerald-600">
+                                <Goal className="h-4 w-4" /> GOL
+                              </span>
+                            ) : eventType === "YELLOW" ? (
+                              <span className="flex items-center gap-1 text-sm font-semibold text-yellow-600">
+                                <span className="inline-block w-3 h-4 bg-yellow-400 rounded-sm" /> AMARILLA
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1 text-sm font-semibold text-red-600">
+                                <span className="inline-block w-3 h-4 bg-red-500 rounded-sm" /> ROJA
+                              </span>
+                            )}
+                            {eventPlayer && (
+                              <span className="text-xs text-muted-foreground">
+                                — #{eventPlayer.jerseyNumber} {eventPlayer.firstName} {eventPlayer.lastName} ({teamName})
+                              </span>
+                            )}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => remove(index)}
+                            data-testid={`button-remove-event-${index}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-2 items-end">
+                          <FormField
+                            control={form.control}
+                            name={`events.${index}.type`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-3">
+                                <FormLabel className="text-xs">Tipo</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid={`select-event-type-${index}`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="GOAL">⚽ Gol</SelectItem>
+                                    <SelectItem value="YELLOW">🟡 Amarilla</SelectItem>
+                                    <SelectItem value="RED">🔴 Roja</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`events.${index}.minute`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-2">
+                                <FormLabel className="text-xs">Minuto</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    min={1}
+                                    max={120}
+                                    placeholder="Min"
+                                    data-testid={`input-event-minute-${index}`}
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`events.${index}.teamId`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-3">
+                                <FormLabel className="text-xs">Equipo</FormLabel>
+                                <Select onValueChange={(val) => {
+                                  field.onChange(val);
+                                  form.setValue(`events.${index}.playerId`, "");
+                                }} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid={`select-event-team-${index}`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {match.homeTeamId && (
+                                      <SelectItem value={match.homeTeamId}>
+                                        {match.homeTeam?.name || "Local"}
+                                      </SelectItem>
+                                    )}
+                                    {match.awayTeamId && (
+                                      <SelectItem value={match.awayTeamId}>
+                                        {match.awayTeam?.name || "Visitante"}
+                                      </SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name={`events.${index}.playerId`}
+                            render={({ field }) => (
+                              <FormItem className="col-span-4">
+                                <FormLabel className="text-xs">Jugador</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid={`select-event-player-${index}`}>
+                                      <SelectValue placeholder="Seleccionar jugador" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {teamPlayers.map((player) => (
+                                      <SelectItem key={player.id} value={player.id}>
+                                        #{player.jerseyNumber} — {player.firstName} {player.lastName}
+                                      </SelectItem>
+                                    ))}
+                                    {teamPlayers.length === 0 && (
+                                      <SelectItem value="__none" disabled>Sin jugadores</SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {fields.length > 0 && (
+                <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
+                  <h5 className="text-sm font-semibold flex items-center gap-2">
+                    <ScrollText className="h-4 w-4" />
+                    Cronología del Partido
+                  </h5>
+                  <div className="space-y-1">
+                    {fields
+                      .map((field, index) => ({
+                        index,
+                        type: form.watch(`events.${index}.type`),
+                        minute: form.watch(`events.${index}.minute`),
+                        teamId: form.watch(`events.${index}.teamId`),
+                        playerId: form.watch(`events.${index}.playerId`),
+                      }))
+                      .sort((a, b) => (a.minute || 0) - (b.minute || 0))
+                      .map((ev) => {
+                        const player = allPlayers.find(p => p.id === ev.playerId);
+                        const isHome = ev.teamId === match.homeTeamId;
+                        const teamName = isHome ? match.homeTeam?.name : match.awayTeam?.name;
+                        return (
+                          <div key={ev.index} className="flex items-center gap-2 text-sm py-1 border-b border-border/50 last:border-0" data-testid={`chronology-event-${ev.index}`}>
+                            <span className="font-mono text-xs text-muted-foreground w-8 text-right">{ev.minute}'</span>
+                            {ev.type === "GOAL" ? (
+                              <Goal className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                            ) : ev.type === "YELLOW" ? (
+                              <span className="inline-block w-3 h-3.5 bg-yellow-400 rounded-sm shrink-0" />
+                            ) : (
+                              <span className="inline-block w-3 h-3.5 bg-red-500 rounded-sm shrink-0" />
+                            )}
+                            <span className="truncate">
+                              {player ? `${player.firstName} ${player.lastName}` : "Sin jugador"}{" "}
+                              <span className="text-muted-foreground text-xs">({teamName})</span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
               )}
             </div>
