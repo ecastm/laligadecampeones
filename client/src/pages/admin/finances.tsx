@@ -277,6 +277,16 @@ export default function FinancesManagement() {
   const totalPayments = payments.reduce((acc, p) => acc + p.amount, 0);
   const totalExpenses = expenses.reduce((acc, e) => acc + e.amount, 0);
 
+  const currentTournament = tournaments.find(t => t.id === effectiveTournamentId);
+  const hasFineConfig = !!(currentTournament?.fineYellow || currentTournament?.fineRed || currentTournament?.fineRedDirect);
+
+  const finesByType = {
+    yellow: fines.filter(f => f.cardType === "YELLOW"),
+    red: fines.filter(f => f.cardType === "RED"),
+    redDirect: fines.filter(f => f.cardType === "RED_DIRECT"),
+    noShow: fines.filter(f => f.cardType === "NO_PRESENTADO"),
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -330,13 +340,65 @@ export default function FinancesManagement() {
               <TabsTrigger value="expenses" data-testid="tab-expenses" className="text-xs sm:text-sm">Gastos</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="fines" className="mt-4">
+            <TabsContent value="fines" className="mt-4 space-y-4">
+              {!hasFineConfig && (
+                <div className="rounded-lg border border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 p-4 flex items-start gap-3" data-testid="warning-no-fine-config">
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Multas por tarjetas no configuradas</p>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                      El torneo no tiene montos definidos para tarjetas amarillas, rojas o rojas directas.
+                      Las multas por tarjetas solo se generan automáticamente si configuras los montos en la sección de <strong>Torneos</strong>.
+                    </p>
+                    {currentTournament && (
+                      <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-2">
+                        Configuración actual: Amarilla: {currentTournament.fineYellow ? `${currentTournament.fineYellow}€` : "—"} | Roja: {currentTournament.fineRed ? `${currentTournament.fineRed}€` : "—"} | Roja Directa: {currentTournament.fineRedDirect ? `${currentTournament.fineRedDirect}€` : "—"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(finesByType.yellow.length > 0 || finesByType.red.length > 0 || finesByType.redDirect.length > 0 || finesByType.noShow.length > 0) && (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-md border p-3 flex items-center gap-3">
+                    <span className="inline-block w-4 h-5 bg-yellow-400 rounded-sm shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tarjetas Amarillas</p>
+                      <p className="text-lg font-bold">{finesByType.yellow.length} <span className="text-sm font-normal text-muted-foreground">({finesByType.yellow.reduce((a, f) => a + f.amount, 0)}€)</span></p>
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 flex items-center gap-3">
+                    <span className="inline-block w-4 h-5 bg-red-500 rounded-sm shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Tarjetas Rojas</p>
+                      <p className="text-lg font-bold">{finesByType.red.length + finesByType.redDirect.length} <span className="text-sm font-normal text-muted-foreground">({(finesByType.red.reduce((a, f) => a + f.amount, 0) + finesByType.redDirect.reduce((a, f) => a + f.amount, 0))}€)</span></p>
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">No Presentados</p>
+                      <p className="text-lg font-bold">{finesByType.noShow.length} <span className="text-sm font-normal text-muted-foreground">({finesByType.noShow.reduce((a, f) => a + f.amount, 0)}€)</span></p>
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 flex items-center gap-3">
+                    <DollarSign className="h-5 w-5 text-primary shrink-0" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total Multas</p>
+                      <p className="text-lg font-bold">{totalFines}€ <span className="text-sm font-normal text-muted-foreground">({fines.filter(f => f.status === "PENDIENTE").length} pendientes)</span></p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {loadingFines ? (
                 <Skeleton className="h-48" />
               ) : fines.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   <AlertTriangle className="mx-auto h-12 w-12 opacity-50" />
                   <p className="mt-4">No hay multas registradas</p>
+                  <p className="text-sm mt-1">Las multas se generan automáticamente al registrar tarjetas o equipos no presentados</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -348,6 +410,7 @@ export default function FinancesManagement() {
                         <TableHead>Tipo</TableHead>
                         <TableHead>Monto</TableHead>
                         <TableHead>Estado</TableHead>
+                        <TableHead>Fecha</TableHead>
                         <TableHead>Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -357,15 +420,34 @@ export default function FinancesManagement() {
                           <TableCell className="font-medium">{getTeamName(fine.teamId)}</TableCell>
                           <TableCell>{getPlayerName(fine.playerId)}</TableCell>
                           <TableCell>
-                            <Badge variant={fine.cardType === "NO_PRESENTADO" ? "destructive" : fine.cardType === "YELLOW" ? "outline" : "destructive"} className={fine.cardType === "NO_PRESENTADO" ? "bg-orange-600" : ""}>
-                              {FineTypeLabels[fine.cardType as FineType] || fine.cardType}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              {fine.cardType === "YELLOW" ? (
+                                <span className="inline-block w-3 h-4 bg-yellow-400 rounded-sm shrink-0" />
+                              ) : fine.cardType === "RED" || fine.cardType === "RED_DIRECT" ? (
+                                <span className="inline-block w-3 h-4 bg-red-500 rounded-sm shrink-0" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
+                              )}
+                              <Badge
+                                variant={fine.cardType === "NO_PRESENTADO" ? "destructive" : fine.cardType === "YELLOW" ? "outline" : "destructive"}
+                                className={
+                                  fine.cardType === "NO_PRESENTADO" ? "bg-orange-600 text-white" :
+                                  fine.cardType === "YELLOW" ? "border-yellow-400 text-yellow-700 dark:text-yellow-400" :
+                                  "bg-red-600 text-white"
+                                }
+                              >
+                                {FineTypeLabels[fine.cardType as FineType] || fine.cardType}
+                              </Badge>
+                            </div>
                           </TableCell>
-                          <TableCell className="font-medium">{fine.amount.toLocaleString()}€</TableCell>
+                          <TableCell className="font-bold">{fine.amount.toLocaleString()}€</TableCell>
                           <TableCell>
                             <Badge variant={fine.status === "PAGADA" ? "default" : "secondary"} className={fine.status === "PENDIENTE" ? "bg-destructive/20 text-destructive" : "bg-emerald-500/20 text-emerald-500"}>
                               {fine.status}
                             </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {fine.createdAt ? format(new Date(fine.createdAt), "dd/MM/yyyy", { locale: es }) : "—"}
                           </TableCell>
                           <TableCell>
                             {fine.status === "PENDIENTE" && (
