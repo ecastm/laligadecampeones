@@ -199,7 +199,11 @@ function RefereeMatches({
     },
   });
 
-  const filteredMatches = matches.filter((m) => m.status === status);
+  const filteredMatches = matches.filter((m) =>
+    status === "PROGRAMADO"
+      ? (m.status === "PROGRAMADO" || m.status === "EN_CURSO")
+      : m.status === "JUGADO"
+  );
 
   return (
     <div className="space-y-6">
