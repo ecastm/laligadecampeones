@@ -17,6 +17,7 @@ The design adheres to a specific brand palette: 40% Black, 40% Gold, 15% Green, 
 - **Silver (#C0C0C0)**: Dividers, secondary icons, subtle details (`--silver`).
 CSS variables are centralized in `client/src/index.css`, with Tailwind colors extended in `tailwind.config.ts`.
 Canvas image generators (for match graphics, social media posts) use this black/gold palette. The UI is built using Shadcn UI components for a consistent and modern look. The application is entirely in Spanish and is fully responsive.
+- **Numeric Input Fields**: All numeric fields for amounts/montos (payments, fines, expenses, points, scores, counts) use `type="text"` with `inputMode="decimal"` or `inputMode="numeric"` to avoid spinner arrows. This provides a cleaner UX for free numeric entry without up/down controls.
 
 ### Technical Implementations
 - **Frontend**: React, Vite, TypeScript, TailwindCSS, Shadcn UI.

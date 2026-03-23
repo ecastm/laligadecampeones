@@ -569,19 +569,19 @@ export default function CompetitionRulesManagement() {
                 <FormField control={ruleForm.control} name="pointsWin" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pts Victoria</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                    <FormControl><Input type="text" inputMode="numeric" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                   </FormItem>
                 )} />
                 <FormField control={ruleForm.control} name="pointsDraw" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pts Empate</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                    <FormControl><Input type="text" inputMode="numeric" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                   </FormItem>
                 )} />
                 <FormField control={ruleForm.control} name="pointsLoss" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Pts Derrota</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                    <FormControl><Input type="text" inputMode="numeric" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                   </FormItem>
                 )} />
               </div>
@@ -601,13 +601,13 @@ export default function CompetitionRulesManagement() {
                 <FormField control={ruleForm.control} name="teamsPerDivision" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Equipos/División</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                    <FormControl><Input type="text" inputMode="numeric" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                   </FormItem>
                 )} />
                 <FormField control={ruleForm.control} name="federatedLimit" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Máx. Federados</FormLabel>
-                    <FormControl><Input type="number" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                    <FormControl><Input type="text" inputMode="numeric" {...field} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                   </FormItem>
                 )} />
               </div>
@@ -616,13 +616,13 @@ export default function CompetitionRulesManagement() {
                   <FormField control={ruleForm.control} name="promotionCount" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Ascienden</FormLabel>
-                      <FormControl><Input type="number" {...field} value={field.value ?? 0} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                      <FormControl><Input type="text" inputMode="numeric" {...field} value={field.value ?? 0} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                     </FormItem>
                   )} />
                   <FormField control={ruleForm.control} name="relegationCount" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Descienden</FormLabel>
-                      <FormControl><Input type="number" {...field} value={field.value ?? 0} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
+                      <FormControl><Input type="text" inputMode="numeric" {...field} value={field.value ?? 0} onChange={e => field.onChange(Number(e.target.value))} /></FormControl>
                     </FormItem>
                   )} />
                 </div>
@@ -757,12 +757,12 @@ function BracketView({ matches, seasonId, onResult }: { matches: BracketMatch[];
               <div className="grid grid-cols-3 gap-3 items-center">
                 <div className="text-center">
                   <p className="text-sm font-medium">{resultDialog.homeTeamName}</p>
-                  <Input type="number" min={0} value={homeScore} onChange={e => setHomeScore(Number(e.target.value))} className="mt-1 text-center" data-testid="input-bracket-home-score" />
+                  <Input type="text" inputMode="numeric" min={0} value={homeScore} onChange={e => setHomeScore(Number(e.target.value))} className="mt-1 text-center" data-testid="input-bracket-home-score" />
                 </div>
                 <p className="text-center text-[#C0C0C0] font-bold">VS</p>
                 <div className="text-center">
                   <p className="text-sm font-medium">{resultDialog.awayTeamName}</p>
-                  <Input type="number" min={0} value={awayScore} onChange={e => setAwayScore(Number(e.target.value))} className="mt-1 text-center" data-testid="input-bracket-away-score" />
+                  <Input type="text" inputMode="numeric" min={0} value={awayScore} onChange={e => setAwayScore(Number(e.target.value))} className="mt-1 text-center" data-testid="input-bracket-away-score" />
                 </div>
               </div>
               <div>

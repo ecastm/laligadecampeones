@@ -672,7 +672,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Monto</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-payment-amount" />
+                      <Input type="text" inputMode="decimal" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-payment-amount" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -764,7 +764,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Monto</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-fine-payment-amount" />
+                      <Input type="text" inputMode="decimal" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-fine-payment-amount" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -834,7 +834,7 @@ export default function FinancesManagement() {
                   <FormItem>
                     <FormLabel>Monto</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-expense-amount" />
+                      <Input type="text" inputMode="decimal" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} data-testid="input-expense-amount" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
