@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -1669,9 +1669,9 @@ function ProfileRequiredDialog({
             <User className="h-5 w-5" />
             Completa tu Perfil de Árbitro
           </DialogTitle>
-          <CardDescription>
+          <DialogDescription>
             Antes de continuar, es obligatorio completar tus datos generales.
-          </CardDescription>
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
