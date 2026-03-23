@@ -1305,12 +1305,12 @@ export async function registerRoutes(
             for (const ev of insertedEvents.rows) {
               let amount = 0;
               let cardType: string | null = null;
-              if (ev.type === "YELLOW" && tournament.fineYellow) {
-                amount = tournament.fineYellow; cardType = "YELLOW";
-              } else if (ev.type === "RED" && tournament.fineRed) {
-                amount = tournament.fineRed; cardType = "RED";
-              } else if (ev.type === "RED_DIRECT" && tournament.fineRedDirect) {
-                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
+              if (ev.type === "YELLOW") {
+                amount = tournament.fineYellow || 5; cardType = "YELLOW";
+              } else if (ev.type === "RED") {
+                amount = tournament.fineRed || 10; cardType = "RED";
+              } else if (ev.type === "RED_DIRECT") {
+                amount = tournament.fineRedDirect || 15; cardType = "RED_DIRECT";
               }
               if (cardType && amount > 0) {
                 await client.query(
@@ -1754,12 +1754,12 @@ export async function registerRoutes(
               let amount = 0;
               let cardType: string | null = null;
 
-              if (event.type === "YELLOW" && tournament.fineYellow) {
-                amount = tournament.fineYellow; cardType = "YELLOW";
-              } else if (event.type === "RED" && tournament.fineRed) {
-                amount = tournament.fineRed; cardType = "RED";
-              } else if (event.type === "RED_DIRECT" && tournament.fineRedDirect) {
-                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
+              if (event.type === "YELLOW") {
+                amount = tournament.fineYellow || 5; cardType = "YELLOW";
+              } else if (event.type === "RED") {
+                amount = tournament.fineRed || 10; cardType = "RED";
+              } else if (event.type === "RED_DIRECT") {
+                amount = tournament.fineRedDirect || 15; cardType = "RED_DIRECT";
               }
 
               if (cardType && amount > 0) {
