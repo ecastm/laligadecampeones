@@ -166,6 +166,7 @@ export interface IStorage {
   // Fine Payments
   getFinePayments(tournamentId?: string, teamId?: string): Promise<FinePayment[]>;
   createFinePayment(payment: InsertFinePayment): Promise<FinePayment>;
+  deleteFinePaymentByFineId(fineId: string): Promise<void>;
 
   // Expenses
   getExpenses(tournamentId?: string): Promise<Expense[]>;
@@ -1139,6 +1140,12 @@ export class MemStorage implements IStorage {
     };
     this.finePayments.set(id, newPayment);
     return newPayment;
+  }
+
+  async deleteFinePaymentByFineId(fineId: string): Promise<void> {
+    for (const [key, val] of this.finePayments.entries()) {
+      if ((val as any).fineId === fineId) this.finePayments.delete(key);
+    }
   }
 
   // Expenses

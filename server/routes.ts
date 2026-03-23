@@ -1885,12 +1885,36 @@ export async function registerRoutes(
 
   app.put("/api/admin/fines/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
+      const existingFine = await storage.getFine(req.params.id);
+      if (!existingFine) {
+        return res.status(404).json({ message: "Multa no encontrada" });
+      }
+
       const fine = await storage.updateFine(req.params.id, req.body);
       if (!fine) {
         return res.status(404).json({ message: "Multa no encontrada" });
       }
+
+      if (req.body.status === "PAGADA" && existingFine.status !== "PAGADA") {
+        const cardLabels: Record<string, string> = { YELLOW: "Tarjeta Amarilla", RED: "Tarjeta Roja", RED_DIRECT: "Roja Directa", NO_PRESENTADO: "No Presentado" };
+        const label = cardLabels[fine.cardType] || fine.cardType;
+        await storage.createFinePayment({
+          tournamentId: fine.tournamentId,
+          teamId: fine.teamId,
+          fineId: fine.id,
+          amount: fine.amount,
+          paidAt: new Date().toISOString().split('T')[0],
+          notes: `Pago automático - ${label} (${fine.amount}€)`,
+        });
+      }
+
+      if (req.body.status === "PENDIENTE" && existingFine.status === "PAGADA") {
+        await storage.deleteFinePaymentByFineId(req.params.id);
+      }
+
       res.json(fine);
-    } catch {
+    } catch (error) {
+      console.error("Error updating fine:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

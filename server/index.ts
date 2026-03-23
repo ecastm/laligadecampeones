@@ -87,6 +87,13 @@ app.use((req, res, next) => {
     console.log("Schema sync: users.phone already exists or skipped");
   }
 
+  try {
+    await pool.query(`ALTER TABLE fine_payments ADD COLUMN IF NOT EXISTS fine_id VARCHAR(255)`);
+    console.log("Schema sync: fine_payments.fine_id column added");
+  } catch (e) {
+    console.log("Schema sync: fine_payments.fine_id already exists or skipped");
+  }
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

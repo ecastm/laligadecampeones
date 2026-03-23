@@ -261,9 +261,10 @@ export default function FinancesManagement() {
       const res = await apiRequest("PUT", `/api/admin/fines/${id}`, { status });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/fines"] });
-      toast({ title: "Multa actualizada" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/fine-payments"] });
+      toast({ title: variables.status === "PAGADA" ? "Multa cobrada — ingreso registrado" : "Multa actualizada" });
     },
     onError: (error: Error) => {
       toast({ title: "Error al actualizar multa", description: error.message, variant: "destructive" });

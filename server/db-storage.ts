@@ -1416,7 +1416,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getFinePayments(tournamentId?: string, teamId?: string): Promise<FinePayment[]> {
-    let query = `SELECT id, tournament_id AS "tournamentId", team_id AS "teamId", amount, notes, paid_at AS "paidAt", created_at AS "createdAt" FROM fine_payments WHERE 1=1`;
+    let query = `SELECT id, tournament_id AS "tournamentId", team_id AS "teamId", fine_id AS "fineId", amount, notes, paid_at AS "paidAt", created_at AS "createdAt" FROM fine_payments WHERE 1=1`;
     const values: any[] = [];
     let paramIndex = 1;
 
@@ -1435,12 +1435,16 @@ export class DatabaseStorage implements IStorage {
 
   async createFinePayment(payment: InsertFinePayment): Promise<FinePayment> {
     const result = await this.pool.query(
-      `INSERT INTO fine_payments (id, tournament_id, team_id, amount, notes, paid_at, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW())
-       RETURNING id, tournament_id AS "tournamentId", team_id AS "teamId", amount, notes, paid_at AS "paidAt", created_at AS "createdAt"`,
-      [payment.tournamentId, payment.teamId, payment.amount, payment.notes || null, payment.paidAt]
+      `INSERT INTO fine_payments (id, tournament_id, team_id, fine_id, amount, notes, paid_at, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())
+       RETURNING id, tournament_id AS "tournamentId", team_id AS "teamId", fine_id AS "fineId", amount, notes, paid_at AS "paidAt", created_at AS "createdAt"`,
+      [payment.tournamentId, payment.teamId, payment.fineId || null, payment.amount, payment.notes || null, payment.paidAt]
     );
     return result.rows[0];
+  }
+
+  async deleteFinePaymentByFineId(fineId: string): Promise<void> {
+    await this.pool.query(`DELETE FROM fine_payments WHERE fine_id = $1`, [fineId]);
   }
 
   async getExpenses(tournamentId?: string): Promise<Expense[]> {
