@@ -312,7 +312,7 @@ export const insertMatchSchema = z.object({
   homeScore: z.number().optional(),
   awayScore: z.number().optional(),
   vsImageUrl: z.string().optional(),
-  stage: z.enum(["JORNADA", "OCTAVOS", "CUARTOS", "SEMIFINAL", "TERCER_LUGAR", "FINAL"]).optional(),
+  stage: z.string().optional(),
   stageId: z.preprocess((val) => (val === "" ? null : val), z.string().optional().nullable()),
   refereeNotes: z.string().optional(),
 });
