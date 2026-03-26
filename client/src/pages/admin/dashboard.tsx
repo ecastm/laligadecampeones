@@ -31,7 +31,7 @@ const menuItems = [
   { id: "referees" as const, title: "Árbitros", icon: ClipboardList },
   { id: "matches" as const, title: "Partidos", icon: Calendar },
   { id: "tournament" as const, title: "Torneo", icon: Trophy },
-  { id: "competition" as const, title: "Competición", icon: Swords },
+  { id: "competition" as const, title: "Categoría", icon: Swords },
   { id: "statistics" as const, title: "Estadísticas", icon: BarChart3 },
   { id: "finances" as const, title: "Finanzas", icon: DollarSign },
   { id: "news" as const, title: "Noticias", icon: Newspaper },
@@ -177,7 +177,7 @@ function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => 
     { title: "Finanzas", icon: DollarSign, description: "Gestiona pagos, multas y gastos", section: "finances" },
     { title: "Estadísticas", icon: BarChart3, description: "Consulta goleadores y estadísticas", section: "statistics" },
     { title: "Torneo", icon: Trophy, description: "Configura y gestiona los torneos", section: "tournament" },
-    { title: "Competición", icon: Swords, description: "Reglas, temporadas y eliminatorias", section: "competition" },
+    { title: "Categoría", icon: Swords, description: "Reglas, temporadas y eliminatorias", section: "competition" },
   ];
 
   return (

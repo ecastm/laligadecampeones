@@ -12,9 +12,10 @@ interface MatchDetailDialogProps {
   matchId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showReferee?: boolean;
 }
 
-export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDialogProps) {
+export function MatchDetailDialog({ matchId, open, onOpenChange, showReferee = false }: MatchDetailDialogProps) {
   const { data: match, isLoading } = useQuery<MatchWithTeams>({
     queryKey: ["/api/matches", matchId],
     queryFn: async () => {
@@ -60,7 +61,7 @@ export function MatchDetailDialog({ matchId, open, onOpenChange }: MatchDetailDi
                   {match.field}
                 </span>
               </div>
-              {(match.refereeProfile || match.referee) && (
+              {showReferee && (match.refereeProfile || match.referee) && (
                 <div className="mt-2 flex items-center justify-center gap-1 text-sm text-muted-foreground">
                   <User className="h-4 w-4" />
                   Árbitro: {match.refereeProfile?.fullName || match.referee?.name}

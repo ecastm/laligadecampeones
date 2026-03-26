@@ -109,7 +109,7 @@ export default function Regulations() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <FileText className="h-5 w-5 text-primary" />
-            Reglamento de Competición
+            Reglamento de Categoría
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">

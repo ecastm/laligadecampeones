@@ -314,7 +314,7 @@ export default function CompetitionRulesManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-primary" data-testid="text-competition-title">Competición</h2>
+          <h2 className="text-2xl font-bold text-primary" data-testid="text-competition-title">Categoría</h2>
           <p className="text-sm text-[#C0C0C0]">Reglas, temporadas, clasificación y eliminatorias</p>
         </div>
       </div>
@@ -364,7 +364,7 @@ export default function CompetitionRulesManagement() {
             <Card className="border-primary/20 bg-[#1a1a1a]">
               <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                  <CardTitle className="text-primary">Reglas de Competición</CardTitle>
+                  <CardTitle className="text-primary">Reglas de Categoría</CardTitle>
                   <CardDescription className="text-[#C0C0C0]">
                     {currentRules ? `Versión ${currentRules.rulesVersion} — ${CompetitionFormatLabels[currentRules.formatType]}` : "Sin reglas configuradas"}
                   </CardDescription>

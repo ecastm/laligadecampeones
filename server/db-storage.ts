@@ -342,6 +342,14 @@ export class DatabaseStorage implements IStorage {
     return result.rows[0] || undefined;
   }
 
+  async getTeamsByTournamentAndCaptain(tournamentId: string, userId: string): Promise<Team[]> {
+    const result = await this.pool.query(
+      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", name, colors, home_field AS "homeField", logo_url AS "logoUrl", captain_user_id AS "captainUserId", coach_name AS "coachName", instagram_url AS "instagramUrl" FROM teams WHERE tournament_id = $1 AND captain_user_id = $2`,
+      [tournamentId, userId]
+    );
+    return result.rows;
+  }
+
   async createTeam(insertTeam: InsertTeam): Promise<Team> {
     const result = await this.pool.query(
       `INSERT INTO teams (id, tournament_id, division_id, name, colors, home_field, logo_url, captain_user_id, coach_name, instagram_url)

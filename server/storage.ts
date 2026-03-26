@@ -64,6 +64,7 @@ export interface IStorage {
   getTeams(tournamentId?: string): Promise<Team[]>;
   getTeam(id: string): Promise<Team | undefined>;
   getTeamByCaptain(userId: string): Promise<Team | undefined>;
+  getTeamsByTournamentAndCaptain(tournamentId: string, userId: string): Promise<Team[]>;
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: string, data: Partial<InsertTeam>): Promise<Team | undefined>;
   deleteTeam(id: string): Promise<void>;

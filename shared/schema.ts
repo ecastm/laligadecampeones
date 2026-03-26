@@ -179,6 +179,7 @@ export interface Tournament {
   fineRed?: number;
   fineRedDirect?: number;
   maxFederatedPlayers?: number;
+  maxPlayersPerTeam?: number;
   doubleRound?: boolean;
   scheduleGenerated?: boolean;
   createdAt: string;
@@ -197,6 +198,7 @@ export const insertTournamentSchema = z.object({
   fineRed: z.number().min(0).optional(),
   fineRedDirect: z.number().min(0).optional(),
   maxFederatedPlayers: z.number().min(0).optional(),
+  maxPlayersPerTeam: z.number().min(0).optional(),
   doubleRound: z.boolean().optional(),
 });
 export type InsertTournament = z.infer<typeof insertTournamentSchema>;

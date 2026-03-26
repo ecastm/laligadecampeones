@@ -981,15 +981,25 @@ export async function registerRoutes(
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
-      if (user.teamId) {
-        return res.status(400).json({ message: "Ya tienes un equipo asignado" });
-      }
       const data = insertTeamSchema.parse(req.body);
+      
+      // Check if captain already has a team in this tournament
+      if (data.tournamentId) {
+        const existingTeams = await storage.getTeamsByTournamentAndCaptain(data.tournamentId, req.user!.userId);
+        if (existingTeams && existingTeams.length > 0) {
+          return res.status(400).json({ message: "Ya tienes un equipo en este torneo" });
+        }
+      }
+      
       const team = await storage.createTeam({
         ...data,
         captainUserId: req.user!.userId,
       });
-      await storage.updateUser(req.user!.userId, { teamId: team.id });
+      
+      // Only update user.teamId if this is the first team ever
+      if (!user.teamId) {
+        await storage.updateUser(req.user!.userId, { teamId: team.id });
+      }
       
       // Create automatic registration fee payment if tournament has a fee
       if (data.tournamentId) {
@@ -1034,6 +1044,23 @@ export async function registerRoutes(
       if (!user || !user.teamId) {
         return res.status(404).json({ message: "No tienes equipo asignado" });
       }
+      
+      const team = await storage.getTeam(user.teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Equipo no encontrado" });
+      }
+      
+      // Check max players per team if limit is set
+      if (team.tournamentId) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && tournament.maxPlayersPerTeam) {
+          const playerCount = await storage.getPlayers(user.teamId);
+          if (playerCount.length >= tournament.maxPlayersPerTeam) {
+            return res.status(400).json({ message: `No puedes registrar más de ${tournament.maxPlayersPerTeam} jugadores en este torneo` });
+          }
+        }
+      }
+      
       const data = insertPlayerSchema.parse({ ...req.body, teamId: user.teamId });
       const player = await storage.createPlayer(data);
       res.status(201).json(player);

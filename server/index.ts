@@ -95,6 +95,13 @@ app.use((req, res, next) => {
   }
 
   try {
+    await pool.query(`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS max_players_per_team INTEGER`);
+    console.log("Schema sync: tournaments.max_players_per_team column added");
+  } catch (e) {
+    console.log("Schema sync: tournaments.max_players_per_team already exists or skipped");
+  }
+
+  try {
     await pool.query(`CREATE TABLE IF NOT EXISTS match_substitutions (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       match_id VARCHAR(255) NOT NULL,
