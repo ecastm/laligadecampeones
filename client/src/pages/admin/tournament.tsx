@@ -856,6 +856,46 @@ export default function TournamentManagement() {
                   </FormItem>
                 )}
               />
+              <FormField
+                control={editForm.control}
+                name="feePerTeam"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cuota de Inscripción por Equipo (€)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        inputMode="decimal"
+                        placeholder="0"
+                        data-testid="edit-input-fee-per-team"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="maxPlayersPerTeam"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Máximo de Jugadores por Equipo</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="18"
+                        data-testid="edit-input-max-players-per-team"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <div className="border-t pt-4 mt-2">
                 <p className="text-sm font-medium mb-3">Multas por Tarjetas (€)</p>
                 <div className="grid grid-cols-3 gap-3">
