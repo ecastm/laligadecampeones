@@ -357,6 +357,28 @@ export const insertMatchLineupSchema = z.object({
 });
 export type InsertMatchLineup = z.infer<typeof insertMatchLineupSchema>;
 
+// Match Substitutions
+export interface MatchSubstitution {
+  id: string;
+  matchId: string;
+  teamId: string;
+  playerOutId: string;
+  playerInId: string;
+  minute: number;
+  reason?: string;
+  createdAt: string;
+}
+
+export const insertMatchSubstitutionSchema = z.object({
+  matchId: z.string().min(1),
+  teamId: z.string().min(1),
+  playerOutId: z.string().min(1),
+  playerInId: z.string().min(1),
+  minute: z.number().min(0).max(120),
+  reason: z.string().optional(),
+});
+export type InsertMatchSubstitution = z.infer<typeof insertMatchSubstitutionSchema>;
+
 // Match Evidence (photos, videos, audio)
 export const EvidenceType = {
   PHOTO: "PHOTO",

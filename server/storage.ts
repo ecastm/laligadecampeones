@@ -12,6 +12,7 @@ import {
   type Division, type InsertDivision,
   type TournamentType, type InsertTournamentType,
   type MatchLineup, type InsertMatchLineup,
+  type MatchSubstitution, type InsertMatchSubstitution,
   type MatchEvidence, type InsertMatchEvidence,
   type PlayerSuspension, type InsertPlayerSuspension,
   type MatchAttendance, type InsertMatchAttendance,
@@ -136,6 +137,11 @@ export interface IStorage {
   createMatchLineup(lineup: InsertMatchLineup): Promise<MatchLineup>;
   deleteMatchLineups(matchId: string): Promise<void>;
   deleteMatchLineupByTeam(matchId: string, teamId: string): Promise<void>;
+
+  // Match Substitutions
+  getMatchSubstitutions(matchId: string): Promise<MatchSubstitution[]>;
+  createMatchSubstitution(data: InsertMatchSubstitution): Promise<MatchSubstitution>;
+  deleteMatchSubstitution(id: string): Promise<void>;
 
   // Match Evidence
   getMatchEvidence(matchId: string): Promise<MatchEvidence[]>;
@@ -962,6 +968,18 @@ export class MemStorage implements IStorage {
     const toDelete = Array.from(this.matchLineups.values()).filter(l => l.matchId === matchId && l.teamId === teamId);
     toDelete.forEach(l => this.matchLineups.delete(l.id));
   }
+
+  // Match Substitutions
+  async getMatchSubstitutions(matchId: string): Promise<MatchSubstitution[]> {
+    return [];
+  }
+
+  async createMatchSubstitution(data: InsertMatchSubstitution): Promise<MatchSubstitution> {
+    const id = randomUUID();
+    return { id, ...data, createdAt: new Date().toISOString() };
+  }
+
+  async deleteMatchSubstitution(id: string): Promise<void> {}
 
   // Match Evidence
   async getMatchEvidence(matchId: string): Promise<MatchEvidence[]> {

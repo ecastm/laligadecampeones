@@ -19,6 +19,7 @@ import {
   insertCaptainProfileSchema,
   insertDivisionSchema,
   insertMatchLineupSchema,
+  insertMatchSubstitutionSchema,
   insertMatchEvidenceSchema,
   insertTeamPaymentSchema,
   insertFinePaymentSchema,
@@ -1599,6 +1600,38 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  // ==================== MATCH SUBSTITUTIONS (Referee) ====================
+  app.get("/api/referee/matches/:id/substitutions", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const subs = await storage.getMatchSubstitutions(req.params.id);
+      res.json(subs);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/referee/matches/:id/substitutions", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const data = insertMatchSubstitutionSchema.parse({ ...req.body, matchId: req.params.id });
+      const sub = await storage.createMatchSubstitution(data);
+      res.status(201).json(sub);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.delete("/api/referee/matches/:id/substitutions/:subId", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      await storage.deleteMatchSubstitution(req.params.subId);
+      res.json({ ok: true });
+    } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

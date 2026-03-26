@@ -14,6 +14,7 @@ import {
   type Division, type InsertDivision,
   type TournamentType, type InsertTournamentType,
   type MatchLineup, type InsertMatchLineup,
+  type MatchSubstitution, type InsertMatchSubstitution,
   type MatchEvidence, type InsertMatchEvidence,
   type MatchAttendance,
   type PlayerSuspension, type InsertPlayerSuspension,
@@ -1227,6 +1228,28 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMatchLineupByTeam(matchId: string, teamId: string): Promise<void> {
     await this.pool.query(`DELETE FROM match_lineups WHERE match_id = $1 AND team_id = $2`, [matchId, teamId]);
+  }
+
+  async getMatchSubstitutions(matchId: string): Promise<MatchSubstitution[]> {
+    const result = await this.pool.query(
+      `SELECT id, match_id AS "matchId", team_id AS "teamId", player_out_id AS "playerOutId", player_in_id AS "playerInId", minute, reason, created_at AS "createdAt" FROM match_substitutions WHERE match_id = $1 ORDER BY minute ASC, created_at ASC`,
+      [matchId]
+    );
+    return result.rows;
+  }
+
+  async createMatchSubstitution(data: InsertMatchSubstitution): Promise<MatchSubstitution> {
+    const result = await this.pool.query(
+      `INSERT INTO match_substitutions (id, match_id, team_id, player_out_id, player_in_id, minute, reason, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, NOW())
+       RETURNING id, match_id AS "matchId", team_id AS "teamId", player_out_id AS "playerOutId", player_in_id AS "playerInId", minute, reason, created_at AS "createdAt"`,
+      [data.matchId, data.teamId, data.playerOutId, data.playerInId, data.minute, data.reason || null]
+    );
+    return result.rows[0];
+  }
+
+  async deleteMatchSubstitution(id: string): Promise<void> {
+    await this.pool.query(`DELETE FROM match_substitutions WHERE id = $1`, [id]);
   }
 
   async getMatchEvidence(matchId: string): Promise<MatchEvidence[]> {

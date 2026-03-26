@@ -94,6 +94,22 @@ app.use((req, res, next) => {
     console.log("Schema sync: fine_payments.fine_id already exists or skipped");
   }
 
+  try {
+    await pool.query(`CREATE TABLE IF NOT EXISTS match_substitutions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      match_id VARCHAR(255) NOT NULL,
+      team_id VARCHAR(255) NOT NULL,
+      player_out_id VARCHAR(255) NOT NULL,
+      player_in_id VARCHAR(255) NOT NULL,
+      minute INTEGER NOT NULL DEFAULT 0,
+      reason VARCHAR(255),
+      created_at TIMESTAMP DEFAULT NOW()
+    )`);
+    console.log("Schema sync: match_substitutions table created or already exists");
+  } catch (e) {
+    console.log("Schema sync: match_substitutions table skipped:", e);
+  }
+
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";

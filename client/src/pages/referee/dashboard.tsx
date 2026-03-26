@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance, type PlayerSuspension } from "@shared/schema";
+import { matchResultSchema, insertRefereeProfileSchema, MatchStageLabels, identificationTypeLabels, FineTypeLabels, type IdentificationType, type MatchResult, type MatchWithTeams, type Player, type MatchEventWithPlayer, type Standing, type RefereeProfile, type InsertRefereeProfile, type MatchStage, type MatchAttendance, type PlayerSuspension, type MatchSubstitution } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { SidebarProvider, SidebarTrigger, Sidebar, SidebarContent, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent, useSidebar } from "@/components/ui/sidebar";
@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX, ShieldAlert } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX, ShieldAlert, ClipboardCheck, ArrowLeftRight } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
@@ -190,6 +190,7 @@ function RefereeMatches({
   onSelectMatch: (match: MatchWithTeams) => void;
   onViewMatch: (match: MatchWithTeams) => void;
 }) {
+  const [lineupMatch, setLineupMatch] = useState<MatchWithTeams | null>(null);
   const { data: matches = [], isLoading } = useQuery<MatchWithTeams[]>({
     queryKey: ["/api/referee/matches"],
     queryFn: async () => {
@@ -283,6 +284,17 @@ function RefereeMatches({
                           </Button>
                         </>
                       )}
+                      {(match.status === "PROGRAMADO" || match.status === "EN_CURSO") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLineupMatch(match)}
+                          data-testid={`button-lineup-${match.id}`}
+                        >
+                          <ClipboardCheck className="mr-1 h-4 w-4" />
+                          Alineaciones
+                        </Button>
+                      )}
                       {match.status === "PROGRAMADO" && (
                         <Button
                           onClick={() => onSelectMatch(match)}
@@ -299,6 +311,14 @@ function RefereeMatches({
           )}
         </CardContent>
       </Card>
+
+      {lineupMatch && (
+        <LineupManagerDialog
+          match={lineupMatch}
+          open={!!lineupMatch}
+          onOpenChange={(open) => !open && setLineupMatch(null)}
+        />
+      )}
     </div>
   );
 }
@@ -1810,6 +1830,374 @@ function ProfileRequiredDialog({
             </Button>
           </form>
         </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ==================== LINEUP MANAGER DIALOG ====================
+function LineupManagerDialog({
+  match,
+  open,
+  onOpenChange,
+}: {
+  match: MatchWithTeams;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { toast } = useToast();
+  const [activeTeam, setActiveTeam] = useState<"home" | "away">("home");
+
+  const teamId = activeTeam === "home" ? match.homeTeamId : match.awayTeamId;
+  const teamName = activeTeam === "home" ? match.homeTeam?.name : match.awayTeam?.name;
+
+  const { data: homePlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", match.homeTeamId, "players"],
+    queryFn: async () => {
+      const r = await fetch(`/api/teams/${match.homeTeamId}/players`, { headers: getAuthHeader() });
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: open,
+  });
+
+  const { data: awayPlayers = [] } = useQuery<Player[]>({
+    queryKey: ["/api/teams", match.awayTeamId, "players"],
+    queryFn: async () => {
+      const r = await fetch(`/api/teams/${match.awayTeamId}/players`, { headers: getAuthHeader() });
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: open,
+  });
+
+  const { data: lineups = [] } = useQuery({
+    queryKey: ["/api/referee/matches", match.id, "lineups"],
+    queryFn: async () => {
+      const r = await fetch(`/api/referee/matches/${match.id}/lineups`, { headers: getAuthHeader() });
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: open,
+  });
+
+  const { data: substitutions = [] } = useQuery<MatchSubstitution[]>({
+    queryKey: ["/api/referee/matches", match.id, "substitutions"],
+    queryFn: async () => {
+      const r = await fetch(`/api/referee/matches/${match.id}/substitutions`, { headers: getAuthHeader() });
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: open,
+  });
+
+  const players = activeTeam === "home" ? homePlayers : awayPlayers;
+
+  const currentLineup = lineups.find((l: any) => l.teamId === teamId);
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [lineupInitialized, setLineupInitialized] = useState(false);
+
+  if (!lineupInitialized && players.length > 0) {
+    setLineupInitialized(true);
+    if (currentLineup?.playerIds) {
+      setSelectedPlayerIds(currentLineup.playerIds);
+    } else {
+      setSelectedPlayerIds([]);
+    }
+  }
+
+  const togglePlayer = (playerId: string) => {
+    setSelectedPlayerIds((prev) =>
+      prev.includes(playerId) ? prev.filter((id) => id !== playerId) : [...prev, playerId]
+    );
+  };
+
+  const saveLineupMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/referee/matches/${match.id}/lineups`, {
+        teamId,
+        playerIds: selectedPlayerIds,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/referee/matches", match.id, "lineups"] });
+      toast({ title: "Alineación guardada correctamente" });
+    },
+    onError: () => {
+      toast({ title: "Error al guardar alineación", variant: "destructive" });
+    },
+  });
+
+  const [subPlayerOut, setSubPlayerOut] = useState("");
+  const [subPlayerIn, setSubPlayerIn] = useState("");
+  const [subMinute, setSubMinute] = useState("");
+
+  const teamSubs = substitutions.filter((s) => s.teamId === teamId);
+
+  const addSubMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/referee/matches/${match.id}/substitutions`, {
+        teamId,
+        playerOutId: subPlayerOut,
+        playerInId: subPlayerIn,
+        minute: parseInt(subMinute) || 0,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/referee/matches", match.id, "substitutions"] });
+      setSubPlayerOut("");
+      setSubPlayerIn("");
+      setSubMinute("");
+      toast({ title: "Cambio registrado" });
+    },
+    onError: () => {
+      toast({ title: "Error al registrar cambio", variant: "destructive" });
+    },
+  });
+
+  const deleteSubMutation = useMutation({
+    mutationFn: async (subId: string) => {
+      return apiRequest("DELETE", `/api/referee/matches/${match.id}/substitutions/${subId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/referee/matches", match.id, "substitutions"] });
+      toast({ title: "Cambio eliminado" });
+    },
+    onError: () => {
+      toast({ title: "Error al eliminar cambio", variant: "destructive" });
+    },
+  });
+
+  const getPlayerName = (playerId: string) => {
+    const all = [...homePlayers, ...awayPlayers];
+    const p = all.find((p) => p.id === playerId);
+    return p ? `${p.firstName} ${p.lastName}` : playerId;
+  };
+
+  const handleTeamSwitch = (team: "home" | "away") => {
+    setActiveTeam(team);
+    setLineupInitialized(false);
+    setSelectedPlayerIds([]);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ClipboardCheck className="h-5 w-5 text-primary" />
+            Alineaciones y Cambios
+          </DialogTitle>
+          <DialogDescription>
+            {match.homeTeam?.name} vs {match.awayTeam?.name}
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Team toggle */}
+        <div className="flex gap-2 border rounded-md p-1">
+          <Button
+            variant={activeTeam === "home" ? "default" : "ghost"}
+            size="sm"
+            className="flex-1 truncate"
+            onClick={() => handleTeamSwitch("home")}
+            data-testid="button-team-home"
+          >
+            {match.homeTeam?.name}
+          </Button>
+          <Button
+            variant={activeTeam === "away" ? "default" : "ghost"}
+            size="sm"
+            className="flex-1 truncate"
+            onClick={() => handleTeamSwitch("away")}
+            data-testid="button-team-away"
+          >
+            {match.awayTeam?.name}
+          </Button>
+        </div>
+
+        {/* Lineup section */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">
+              Alineación Titular{" "}
+              <span className="text-primary">({selectedPlayerIds.length} seleccionados)</span>
+            </h3>
+            <Button
+              size="sm"
+              onClick={() => saveLineupMutation.mutate()}
+              disabled={saveLineupMutation.isPending}
+              data-testid="button-save-lineup"
+            >
+              {saveLineupMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4 mr-1" />
+              )}
+              Guardar
+            </Button>
+          </div>
+
+          {players.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">
+              No hay jugadores registrados en este equipo.
+            </p>
+          ) : (
+            <div className="border rounded-md divide-y max-h-52 overflow-y-auto">
+              {players.map((player) => {
+                const isSelected = selectedPlayerIds.includes(player.id);
+                return (
+                  <div
+                    key={player.id}
+                    className={`flex items-center gap-3 px-3 py-2 cursor-pointer hover:bg-muted/50 transition-colors ${
+                      isSelected ? "bg-primary/10" : ""
+                    }`}
+                    onClick={() => togglePlayer(player.id)}
+                    data-testid={`player-lineup-${player.id}`}
+                  >
+                    <div
+                      className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                        isSelected ? "bg-primary border-primary" : "border-muted-foreground"
+                      }`}
+                    >
+                      {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                    </div>
+                    <span className="text-sm font-medium flex-1">{player.firstName} {player.lastName}</span>
+                    {player.jerseyNumber && (
+                      <span className="text-xs text-muted-foreground">#{player.jerseyNumber}</span>
+                    )}
+                    {player.position && (
+                      <Badge variant="outline" className="text-xs">
+                        {player.position}
+                      </Badge>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Substitutions section */}
+        <div className="space-y-3 border-t pt-3">
+          <h3 className="font-semibold text-sm flex items-center gap-2">
+            <ArrowLeftRight className="h-4 w-4 text-primary" />
+            Cambios — {teamName}
+          </h3>
+
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Sale</label>
+                <Select value={subPlayerOut} onValueChange={setSubPlayerOut}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="select-player-out">
+                    <SelectValue placeholder="Jugador que sale" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {players.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.firstName} {p.lastName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Entra</label>
+                <Select value={subPlayerIn} onValueChange={setSubPlayerIn}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="select-player-in">
+                    <SelectValue placeholder="Jugador que entra" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {players
+                      .filter((p) => p.id !== subPlayerOut)
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.firstName} {p.lastName}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex items-end gap-2">
+              <div className="space-y-1 flex-1">
+                <label className="text-xs text-muted-foreground">Minuto</label>
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Ej: 65"
+                  value={subMinute}
+                  onChange={(e) => setSubMinute(e.target.value.replace(/\D/g, ""))}
+                  className="h-8 text-xs"
+                  data-testid="input-sub-minute"
+                />
+              </div>
+              <Button
+                size="sm"
+                className="h-8"
+                onClick={() => {
+                  if (!subPlayerOut || !subPlayerIn) {
+                    toast({ title: "Selecciona ambos jugadores", variant: "destructive" });
+                    return;
+                  }
+                  if (subPlayerOut === subPlayerIn) {
+                    toast({ title: "No puede ser el mismo jugador", variant: "destructive" });
+                    return;
+                  }
+                  addSubMutation.mutate();
+                }}
+                disabled={addSubMutation.isPending}
+                data-testid="button-add-sub"
+              >
+                {addSubMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {teamSubs.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-2">
+              No hay cambios registrados
+            </p>
+          ) : (
+            <div className="border rounded-md divide-y">
+              {teamSubs.map((sub) => (
+                <div
+                  key={sub.id}
+                  className="flex items-center gap-2 px-3 py-2"
+                  data-testid={`sub-row-${sub.id}`}
+                >
+                  <span className="text-xs font-bold text-primary w-8 shrink-0">
+                    '{sub.minute}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 flex-wrap text-xs">
+                      <span className="text-green-600 dark:text-green-400 font-medium">
+                        ↑ {getPlayerName(sub.playerInId)}
+                      </span>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="text-red-500">↓ {getPlayerName(sub.playerOutId)}</span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 shrink-0"
+                    onClick={() => deleteSubMutation.mutate(sub.id)}
+                    disabled={deleteSubMutation.isPending}
+                    data-testid={`button-delete-sub-${sub.id}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );
