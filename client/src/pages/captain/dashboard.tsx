@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, IdCard, ScrollText } from "lucide-react";
+import { Shield, Users, Calendar, LogOut, Plus, Trash2, Edit, Save, User, IdCard, ScrollText, AlertCircle } from "lucide-react";
 import { ImageUpload } from "@/components/image-upload";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Switch } from "@/components/ui/switch";
@@ -134,7 +134,12 @@ export default function CaptainDashboard() {
           </header>
 
           <main className="flex-1 overflow-auto p-3 sm:p-6">
-            {effectiveSection === "team" && <TeamInfo />}
+            {effectiveSection === "team" && (
+              <div className="space-y-4">
+                <TeamInfo />
+                <PendingPayments />
+              </div>
+            )}
             {effectiveSection === "players" && <TeamPlayers />}
             {effectiveSection === "schedule" && <TeamSchedule />}
             {effectiveSection === "regulations" && <Regulations />}
@@ -545,6 +550,101 @@ function TeamInfo() {
               </a>
             </div>
           )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PendingPayments() {
+  const { data: team } = useQuery<Team>({
+    queryKey: ["/api/captain/team"],
+    queryFn: async () => {
+      const response = await fetch("/api/captain/team", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar equipo");
+      return response.json();
+    },
+  });
+
+  const { data: payments = [] } = useQuery<any[]>({
+    queryKey: ["/api/captain/payments"],
+    queryFn: async () => {
+      const response = await fetch("/api/captain/payments", { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Filter pending payments (those without a corresponding payment record or with amount not fully paid)
+  const pendingPayments = payments.filter((p: any) => {
+    const totalPaid = (p.totalPaid || 0);
+    const amount = parseFloat(p.amount || 0);
+    return totalPaid < amount;
+  });
+
+  // Group by concept
+  const groupedPayments = pendingPayments.reduce((acc: any, p: any) => {
+    const key = p.concept || "Otro";
+    if (!acc[key]) {
+      acc[key] = { concept: key, amount: 0, count: 0 };
+    }
+    acc[key].amount += parseFloat(p.amount || 0) - (p.totalPaid || 0);
+    acc[key].count += 1;
+    return acc;
+  }, {});
+
+  const pendingByType = Object.values(groupedPayments) as any[];
+  const totalPending = pendingByType.reduce((sum, p: any) => sum + p.amount, 0);
+
+  if (!team) {
+    return null;
+  }
+
+  if (pendingByType.length === 0) {
+    return (
+      <Card className="border-emerald-500/20 bg-emerald-500/5">
+        <CardContent className="py-6 text-center">
+          <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium">✓ Tu equipo no tiene pagos pendientes</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-amber-500/30">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <AlertCircle className="h-5 w-5 text-amber-500" />
+          Pagos Pendientes
+        </CardTitle>
+        <CardDescription>Importes pendientes por concepto</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {pendingByType.map((payment: any) => (
+            <div
+              key={payment.concept}
+              className="flex items-center justify-between p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30"
+              data-testid={`payment-item-${payment.concept}`}
+            >
+              <div className="min-w-0">
+                <p className="font-medium text-sm sm:text-base text-amber-900 dark:text-amber-100">{payment.concept}</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
+                  {payment.count === 1 ? "1 pendiente" : `${payment.count} pendientes`}
+                </p>
+              </div>
+              <div className="text-right shrink-0 ml-4">
+                <p className="font-bold text-amber-900 dark:text-amber-100">€{payment.amount.toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
+
+          <div className="border-t border-amber-200 dark:border-amber-800 pt-3 mt-4">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-amber-100/40 dark:bg-amber-900/20">
+              <p className="font-semibold text-amber-900 dark:text-amber-100">Total Pendiente</p>
+              <p className="font-bold text-lg text-amber-900 dark:text-amber-100">€{totalPending.toFixed(2)}</p>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
