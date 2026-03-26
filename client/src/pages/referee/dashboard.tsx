@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -286,21 +287,10 @@ function RefereeMatches({
                       )}
                       {(match.status === "PROGRAMADO" || match.status === "EN_CURSO") && (
                         <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setLineupMatch(match)}
-                          data-testid={`button-lineup-${match.id}`}
-                        >
-                          <ClipboardCheck className="mr-1 h-4 w-4" />
-                          Alineaciones
-                        </Button>
-                      )}
-                      {match.status === "PROGRAMADO" && (
-                        <Button
                           onClick={() => onSelectMatch(match)}
-                          data-testid={`button-register-result-${match.id}`}
+                          data-testid={`button-start-match-${match.id}`}
                         >
-                          Cargar Resultado
+                          Iniciar Partido
                         </Button>
                       )}
                     </div>
@@ -312,13 +302,6 @@ function RefereeMatches({
         </CardContent>
       </Card>
 
-      {lineupMatch && (
-        <LineupManagerDialog
-          match={lineupMatch}
-          open={!!lineupMatch}
-          onOpenChange={(open) => !open && setLineupMatch(null)}
-        />
-      )}
     </div>
   );
 }
@@ -506,15 +489,29 @@ function MatchResultDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Cargar Resultado</DialogTitle>
+          <DialogTitle>
+            {match.status === "PROGRAMADO" ? "Iniciar Partido" : "Gestión del Partido"}
+          </DialogTitle>
           <CardDescription>
             {match.homeTeam?.name} vs {match.awayTeam?.name}
           </CardDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <Tabs defaultValue="attendance" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="lineups">Alineaciones</TabsTrigger>
+            <TabsTrigger value="attendance">Asistencia</TabsTrigger>
+            <TabsTrigger value="events">Eventos</TabsTrigger>
+            <TabsTrigger value="result">Resultado</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="lineups" className="space-y-4">
+            <LineupTab match={match} homePlayers={homePlayers} awayPlayers={awayPlayers} />
+          </TabsContent>
+
+          <TabsContent value="attendance" className="space-y-4">
           <div className="flex items-center gap-2 text-sm font-medium">
             <ClipboardList className="h-4 w-4 text-primary" />
             Pase de Lista
