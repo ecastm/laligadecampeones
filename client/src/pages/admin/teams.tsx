@@ -29,18 +29,30 @@ export default function TeamsManagement() {
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [isTeamLogoUploading, setIsTeamLogoUploading] = useState(false);
   const [isPlayerPhotoUploading, setIsPlayerPhotoUploading] = useState(false);
+  const [selectedTournament, setSelectedTournament] = useState<string>("");
 
-  const { data: tournament } = useQuery<Tournament>({
-    queryKey: ["/api/tournaments/active"],
+  const { data: tournaments = [] } = useQuery<Tournament[]>({
+    queryKey: ["/api/admin/tournaments"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/tournaments", { headers: getAuthHeader() });
+      if (!res.ok) throw new Error("Error");
+      return res.json();
+    },
   });
 
+  const activeTournament = tournaments.find(t => t.status === "ACTIVO");
+  const selectedTournamentData = tournaments.find(t => t.id === selectedTournament);
+  const effectiveTournamentId = selectedTournament || activeTournament?.id || "";
+  const isCurrentTournamentFinalized = selectedTournamentData?.status === "FINALIZADO";
+
   const { data: teams = [], isLoading } = useQuery<Team[]>({
-    queryKey: ["/api/admin/teams"],
+    queryKey: ["/api/admin/teams", effectiveTournamentId],
     queryFn: async () => {
-      const response = await fetch("/api/admin/teams", { headers: getAuthHeader() });
+      const response = await fetch(`/api/admin/teams?tournamentId=${effectiveTournamentId}`, { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar equipos");
       return response.json();
     },
+    enabled: !!effectiveTournamentId,
   });
 
   const { data: allPlayers = [] } = useQuery<Player[]>({
@@ -303,7 +315,7 @@ export default function TeamsManagement() {
           }
         }}>
           <DialogTrigger asChild>
-            <Button data-testid="button-add-team" className="w-full sm:w-auto">
+            <Button data-testid="button-add-team" className="w-full sm:w-auto" disabled={isCurrentTournamentFinalized}>
               <Plus className="mr-2 h-4 w-4" />
               Nuevo Equipo
             </Button>
@@ -440,6 +452,25 @@ export default function TeamsManagement() {
             </Form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="mb-4">
+        <label className="text-sm font-medium">Seleccionar Torneo</label>
+        <Select value={selectedTournament || activeTournament?.id || ""} onValueChange={setSelectedTournament}>
+          <SelectTrigger data-testid="select-tournament">
+            <SelectValue placeholder="Seleccionar torneo" />
+          </SelectTrigger>
+          <SelectContent>
+            {tournaments.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name} {t.status === "FINALIZADO" ? " (Finalizado)" : ""}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isCurrentTournamentFinalized && (
+          <p className="text-xs text-amber-600 mt-2">Este torneo está finalizado. Los datos son de solo lectura.</p>
+        )}
       </div>
 
       <Card>
