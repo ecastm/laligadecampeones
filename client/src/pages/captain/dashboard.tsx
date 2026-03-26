@@ -575,20 +575,16 @@ function PendingPayments() {
     },
   });
 
-  // Filter pending payments (those without a corresponding payment record or with amount not fully paid)
-  const pendingPayments = payments.filter((p: any) => {
-    const totalPaid = (p.totalPaid || 0);
-    const amount = parseFloat(p.amount || 0);
-    return totalPaid < amount;
-  });
+  // Filter pending payments (where paidAt is null)
+  const pendingPayments = payments.filter((p: any) => !p.paidAt);
 
-  // Group by concept
+  // Group by method/concept
   const groupedPayments = pendingPayments.reduce((acc: any, p: any) => {
-    const key = p.concept || "Otro";
+    const key = p.method === "INSCRIPCION" ? "Inscripción" : p.notes || "Otro";
     if (!acc[key]) {
       acc[key] = { concept: key, amount: 0, count: 0 };
     }
-    acc[key].amount += parseFloat(p.amount || 0) - (p.totalPaid || 0);
+    acc[key].amount += parseFloat(p.amount || 0);
     acc[key].count += 1;
     return acc;
   }, {});

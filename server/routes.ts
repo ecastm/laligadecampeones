@@ -990,6 +990,22 @@ export async function registerRoutes(
         captainUserId: req.user!.userId,
       });
       await storage.updateUser(req.user!.userId, { teamId: team.id });
+      
+      // Create automatic registration fee payment if tournament has a fee
+      if (data.tournamentId) {
+        const tournament = await storage.getTournament(data.tournamentId);
+        if (tournament && tournament.feePerTeam && tournament.feePerTeam > 0) {
+          await storage.createTeamPayment({
+            tournamentId: data.tournamentId,
+            teamId: team.id,
+            amount: tournament.feePerTeam,
+            method: "INSCRIPCION",
+            notes: `Inscripción en ${tournament.name}`,
+            paidAt: null as any, // Null indicates pending
+          });
+        }
+      }
+      
       res.status(201).json(team);
     } catch (error) {
       if (error instanceof z.ZodError) {
