@@ -1349,17 +1349,23 @@ export async function registerRoutes(
             for (const ev of insertedEvents.rows) {
               let amount = 0;
               let cardType: string | null = null;
-              if (ev.type === "YELLOW") {
-                amount = tournament.fineYellow || 5; cardType = "YELLOW";
-              } else if (ev.type === "RED") {
-                amount = tournament.fineRed || 10; cardType = "RED";
-              } else if (ev.type === "RED_DIRECT") {
-                amount = tournament.fineRedDirect || 15; cardType = "RED_DIRECT";
+              if (ev.type === "YELLOW" && tournament.fineYellow) {
+                amount = tournament.fineYellow; cardType = "YELLOW";
+              } else if (ev.type === "RED" && tournament.fineRed) {
+                amount = tournament.fineRed; cardType = "RED";
+              } else if (ev.type === "RED_DIRECT" && tournament.fineRedDirect) {
+                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
               }
               if (cardType && amount > 0) {
-                await client.query(
-                  `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE')`,
+                const fineId = await client.query(
+                  `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE') RETURNING id`,
                   [match.tournamentId, match.id, ev.id, ev.teamId, ev.playerId, cardType, amount]
+                );
+                
+                // Create pending payment record for the card fine
+                await client.query(
+                  `INSERT INTO team_payments (id, tournament_id, team_id, amount, method, notes, paid_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NULL)`,
+                  [match.tournamentId, ev.teamId, amount, cardType === "YELLOW" ? "TARJETA_AMARILLA" : "TARJETA_ROJA", `${cardType} en partido`]
                 );
               }
               if ((ev.type === "RED" || ev.type === "RED_DIRECT") && ev.playerId) {
@@ -1830,18 +1836,24 @@ export async function registerRoutes(
               let amount = 0;
               let cardType: string | null = null;
 
-              if (event.type === "YELLOW") {
-                amount = tournament.fineYellow || 5; cardType = "YELLOW";
-              } else if (event.type === "RED") {
-                amount = tournament.fineRed || 10; cardType = "RED";
-              } else if (event.type === "RED_DIRECT") {
-                amount = tournament.fineRedDirect || 15; cardType = "RED_DIRECT";
+              if (event.type === "YELLOW" && tournament.fineYellow) {
+                amount = tournament.fineYellow; cardType = "YELLOW";
+              } else if (event.type === "RED" && tournament.fineRed) {
+                amount = tournament.fineRed; cardType = "RED";
+              } else if (event.type === "RED_DIRECT" && tournament.fineRedDirect) {
+                amount = tournament.fineRedDirect; cardType = "RED_DIRECT";
               }
 
               if (cardType && amount > 0) {
                 await client.query(
                   `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE')`,
                   [match.tournamentId, req.params.id, event.id, event.teamId, event.playerId, cardType, amount]
+                );
+                
+                // Create pending payment record for the card fine
+                await client.query(
+                  `INSERT INTO team_payments (id, tournament_id, team_id, amount, method, notes, paid_at) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NULL)`,
+                  [match.tournamentId, event.teamId, amount, cardType === "YELLOW" ? "TARJETA_AMARILLA" : "TARJETA_ROJA", `${cardType} en partido`]
                 );
               }
 
