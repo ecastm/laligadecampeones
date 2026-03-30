@@ -2586,48 +2586,66 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.post("/api/messages", authenticate, async (req: AuthRequest, res) => {
     try {
-      const { toUserId, subject, content } = req.body;
+      const { toUserIds, subject, content } = req.body;
       
       // Validation based on role
       if (req.user!.role === "ADMIN") {
-        // Admin can send to anyone (toUserId can be null for broadcast or specific)
+        // Admin can send to anyone (toUserIds can be null for broadcast or array for specific)
       } else if (req.user!.role === "ARBITRO" || req.user!.role === "CAPITAN") {
         // ARBITRO and CAPITAN can only send to ADMIN
-        if (!toUserId) {
+        if (!toUserIds || toUserIds.length === 0) {
           return res.status(403).json({ message: "Solo puedes enviar mensajes a administración" });
         }
-        const recipient = await storage.getUser(toUserId);
-        if (!recipient || recipient.role !== "ADMIN") {
-          return res.status(403).json({ message: "Solo puedes enviar mensajes a administración" });
+        for (const userId of toUserIds) {
+          const recipient = await storage.getUser(userId);
+          if (!recipient || recipient.role !== "ADMIN") {
+            return res.status(403).json({ message: "Solo puedes enviar mensajes a administración" });
+          }
         }
       } else {
         return res.status(403).json({ message: "No tienes permiso para enviar mensajes" });
       }
 
-      const insertMessageSchema = z.object({
-        toUserId: z.string().optional().nullable(),
+      const messageSchema = z.object({
+        toUserIds: z.array(z.string()).optional().nullable(),
         subject: z.string().min(1),
         content: z.string().min(1),
       });
       
-      const data = insertMessageSchema.parse({ toUserId: toUserId || null, subject, content });
-      const message = await storage.createMessage({
-        fromUserId: req.user!.userId,
-        toUserId: data.toUserId || null,
-        subject: data.subject,
-        content: data.content,
-      });
-
-      // Send notification if PWA is installed
-      if (toUserId) {
-        const recipient = await storage.getUser(toUserId);
-        if (recipient) {
-          // Queue notification (simplified - in production would use proper queue)
-          console.log(`Notification queued for ${toUserId}: ${subject}`);
+      const data = messageSchema.parse({ toUserIds: toUserIds || null, subject, content });
+      const messages = [];
+      
+      // If no specific users, send to all valid recipients
+      if (!data.toUserIds || data.toUserIds.length === 0) {
+        // Get all ARBITRO and CAPITAN users
+        const allUsers = await storage.getUsers();
+        const validRecipients = allUsers.filter((u: any) => u.role === "ARBITRO" || u.role === "CAPITAN");
+        
+        for (const user of validRecipients) {
+          const message = await storage.createMessage({
+            fromUserId: req.user!.userId,
+            toUserId: user.id,
+            subject: data.subject,
+            content: data.content,
+          });
+          messages.push(message);
+          console.log(`Message sent to ${user.id}: ${subject}`);
+        }
+      } else {
+        // Send to specific users
+        for (const userId of data.toUserIds) {
+          const message = await storage.createMessage({
+            fromUserId: req.user!.userId,
+            toUserId: userId,
+            subject: data.subject,
+            content: data.content,
+          });
+          messages.push(message);
+          console.log(`Message sent to ${userId}: ${subject}`);
         }
       }
 
-      res.status(201).json(message);
+      res.status(201).json(messages);
     } catch (error: any) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Datos inválidos" });

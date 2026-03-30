@@ -1035,7 +1035,7 @@ export interface Message {
 }
 
 export const insertMessageSchema = z.object({
-  toUserId: z.string().optional().nullable(),
+  toUserIds: z.array(z.string()).optional().nullable(),
   subject: z.string().min(1, "El asunto es requerido"),
   content: z.string().min(1, "El mensaje es requerido"),
 });

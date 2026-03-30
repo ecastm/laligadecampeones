@@ -36,7 +36,7 @@ import { Mail, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const messageSchema = z.object({
-  toUserId: z.string().optional().nullable(),
+  toUserIds: z.array(z.string()).optional().nullable(),
   subject: z.string().min(1, "El asunto es requerido"),
   content: z.string().min(1, "El mensaje es requerido"),
 });
@@ -58,11 +58,20 @@ export default function MessagingPanel() {
   const form = useForm<MessageForm>({
     resolver: zodResolver(messageSchema),
     defaultValues: {
-      toUserId: undefined,
+      toUserIds: undefined,
       subject: "",
       content: "",
     },
   });
+
+  // Fetch users for admin selector
+  const { data: users = [] } = useQuery({
+    queryKey: ["/api/admin/users"],
+    queryFn: () => apiRequest("/api/admin/users"),
+    enabled: user?.role === "ADMIN",
+  });
+
+  const validRecipients = users.filter((u: any) => u.role === "ARBITRO" || u.role === "CAPITAN");
 
   // Fetch messages with polling
   const { data: messages = [], isLoading: messagesLoading, refetch } = useQuery({
@@ -126,7 +135,11 @@ export default function MessagingPanel() {
     mutationFn: async (data: MessageForm) => {
       return apiRequest("/api/messages", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          toUserIds: data.toUserIds && data.toUserIds.length > 0 ? data.toUserIds : null,
+          subject: data.subject,
+          content: data.content,
+        }),
       });
     },
     onSuccess: () => {
@@ -346,16 +359,54 @@ export default function MessagingPanel() {
               {user?.role === "ADMIN" && (
                 <FormField
                   control={form.control}
-                  name="toUserId"
+                  name="toUserIds"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Destinatario (opcional)</FormLabel>
+                      <FormLabel>Destinatarios (dejar vacío para enviar a todos)</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="Dejar en blanco para enviar a todos"
-                          {...field}
-                          value={field.value || ""}
-                        />
+                        <div className="space-y-2">
+                          <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-2">
+                            {validRecipients.length === 0 ? (
+                              <p className="text-sm text-muted-foreground py-4 text-center">
+                                No hay árbitros ni capitanes registrados
+                              </p>
+                            ) : (
+                              validRecipients.map((u: any) => (
+                                <label
+                                  key={u.id}
+                                  className="flex items-center gap-2 cursor-pointer hover:bg-accent p-2 rounded transition"
+                                  data-testid={`checkbox-user-${u.id}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={field.value?.includes(u.id) || false}
+                                    onChange={(e) => {
+                                      const current = field.value || [];
+                                      if (e.target.checked) {
+                                        field.onChange([...current, u.id]);
+                                      } else {
+                                        field.onChange(current.filter((id: string) => id !== u.id));
+                                      }
+                                    }}
+                                    className="cursor-pointer"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{u.name}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                                    <Badge variant="outline" className="mt-1 text-xs">
+                                      {u.role === "ARBITRO" ? "Árbitro" : "Capitán"}
+                                    </Badge>
+                                  </div>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {field.value && field.value.length > 0
+                              ? `${field.value.length} usuario(s) seleccionado(s)`
+                              : "Sin selección = enviar a todos"}
+                          </p>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
