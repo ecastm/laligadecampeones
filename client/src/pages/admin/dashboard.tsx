@@ -21,6 +21,7 @@ import MessagesManagement from "./messages";
 import Regulations from "@/components/regulations";
 import CompetitionRulesManagement from "./competition-rules";
 import SiteSettingsManagement from "./settings";
+import MessagingPanel from "@/components/messaging-panel";
 
 type AdminSection = "dashboard" | "users" | "teams" | "players" | "matches" | "tournament" | "news" | "referees" | "divisions" | "finances" | "statistics" | "regulations" | "marketing" | "messages" | "settings" | "competition";
 
@@ -206,6 +207,8 @@ function AdminOverview({ onNavigate }: { onNavigate: (section: AdminSection) => 
           </div>
         ))}
       </div>
+
+      <MessagingPanel />
     </div>
   );
 }

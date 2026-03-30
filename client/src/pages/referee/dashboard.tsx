@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 import Regulations from "@/components/regulations";
+import MessagingPanel from "@/components/messaging-panel";
 
 type RefereeSection = "pending" | "completed" | "standings" | "results" | "profile" | "regulations";
 
@@ -139,13 +140,16 @@ export default function RefereeDashboard() {
             <ThemeToggle />
           </header>
 
-          <main className="flex-1 overflow-auto p-3 sm:p-6">
+          <main className="flex-1 overflow-auto p-3 sm:p-6 space-y-6">
             {(effectiveSection === "pending" || effectiveSection === "completed") && (
-              <RefereeMatches
-                status={effectiveSection === "pending" ? "PROGRAMADO" : "JUGADO"}
-                onSelectMatch={setSelectedMatch}
-                onViewMatch={setViewingMatch}
-              />
+              <>
+                <RefereeMatches
+                  status={effectiveSection === "pending" ? "PROGRAMADO" : "JUGADO"}
+                  onSelectMatch={setSelectedMatch}
+                  onViewMatch={setViewingMatch}
+                />
+                <MessagingPanel />
+              </>
             )}
             {effectiveSection === "standings" && <StandingsSection />}
             {effectiveSection === "results" && <ResultsSection />}

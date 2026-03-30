@@ -2574,5 +2574,76 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
     }
   });
 
+  // ==================== MESSAGING ====================
+  app.get("/api/messages", authenticate, async (req: AuthRequest, res) => {
+    try {
+      const messages = await storage.getMessages(req.user!.userId);
+      res.json(messages);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.post("/api/messages", authenticate, async (req: AuthRequest, res) => {
+    try {
+      const { toUserId, subject, content } = req.body;
+      
+      // Validation based on role
+      if (req.user!.role === "ADMIN") {
+        // Admin can send to anyone (toUserId can be null for broadcast or specific)
+      } else if (req.user!.role === "ARBITRO" || req.user!.role === "CAPITAN") {
+        // ARBITRO and CAPITAN can only send to ADMIN
+        if (!toUserId) {
+          return res.status(403).json({ message: "Solo puedes enviar mensajes a administración" });
+        }
+        const recipient = await storage.getUser(toUserId);
+        if (!recipient || recipient.role !== "ADMIN") {
+          return res.status(403).json({ message: "Solo puedes enviar mensajes a administración" });
+        }
+      } else {
+        return res.status(403).json({ message: "No tienes permiso para enviar mensajes" });
+      }
+
+      const insertMessageSchema = z.object({
+        toUserId: z.string().optional().nullable(),
+        subject: z.string().min(1),
+        content: z.string().min(1),
+      });
+      
+      const data = insertMessageSchema.parse({ toUserId: toUserId || null, subject, content });
+      const message = await storage.createMessage({
+        fromUserId: req.user!.userId,
+        toUserId: data.toUserId || null,
+        subject: data.subject,
+        content: data.content,
+      });
+
+      // Send notification if PWA is installed
+      if (toUserId) {
+        const recipient = await storage.getUser(toUserId);
+        if (recipient) {
+          // Queue notification (simplified - in production would use proper queue)
+          console.log(`Notification queued for ${toUserId}: ${subject}`);
+        }
+      }
+
+      res.status(201).json(message);
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Datos inválidos" });
+      }
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.put("/api/messages/:id/read", authenticate, async (req: AuthRequest, res) => {
+    try {
+      await storage.markMessageAsRead(req.params.id);
+      res.json({ message: "Mensaje marcado como leído" });
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   return httpServer;
 }

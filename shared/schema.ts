@@ -1022,3 +1022,21 @@ export const insertContactMessageSchema = z.object({
   comments: z.string().min(1, "Los comentarios son obligatorios"),
 });
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+
+// Messages
+export interface Message {
+  id: string;
+  fromUserId: string;
+  toUserId: string | null;
+  subject: string;
+  content: string;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export const insertMessageSchema = z.object({
+  toUserId: z.string().optional().nullable(),
+  subject: z.string().min(1, "El asunto es requerido"),
+  content: z.string().min(1, "El mensaje es requerido"),
+});
+export type InsertMessage = z.infer<typeof insertMessageSchema>;

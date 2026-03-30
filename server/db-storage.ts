@@ -1944,4 +1944,28 @@ export class DatabaseStorage implements IStorage {
   async deleteBracketMatches(seasonId: string): Promise<void> {
     await this.pool.query(`DELETE FROM bracket_matches WHERE season_id = $1`, [seasonId]);
   }
+
+  // Messages
+  async getMessages(userId: string): Promise<any[]> {
+    const result = await this.pool.query(
+      `SELECT id, from_user_id AS "fromUserId", to_user_id AS "toUserId", subject, content, created_at AS "createdAt", read_at AS "readAt" FROM messages WHERE to_user_id = $1 OR (from_user_id = $1) ORDER BY created_at DESC`,
+      [userId]
+    );
+    return result.rows;
+  }
+
+  async createMessage(data: { fromUserId: string; toUserId: string | null; subject: string; content: string }): Promise<any> {
+    const result = await this.pool.query(
+      `INSERT INTO messages (from_user_id, to_user_id, subject, content) VALUES ($1, $2, $3, $4) RETURNING id, from_user_id AS "fromUserId", to_user_id AS "toUserId", subject, content, created_at AS "createdAt", read_at AS "readAt"`,
+      [data.fromUserId, data.toUserId || null, data.subject, data.content]
+    );
+    return result.rows[0];
+  }
+
+  async markMessageAsRead(messageId: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE messages SET read_at = NOW() WHERE id = $1`,
+      [messageId]
+    );
+  }
 }

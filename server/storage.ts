@@ -229,6 +229,11 @@ export interface IStorage {
   createBracketMatch(match: Omit<BracketMatch, 'id' | 'createdAt' | 'homeTeamName' | 'awayTeamName'>): Promise<BracketMatch>;
   updateBracketMatch(id: string, data: Partial<BracketMatch>): Promise<BracketMatch | undefined>;
   deleteBracketMatches(seasonId: string): Promise<void>;
+
+  // Messages
+  getMessages(userId: string): Promise<any[]>;
+  createMessage(data: { fromUserId: string; toUserId: string | null; subject: string; content: string }): Promise<any>;
+  markMessageAsRead(messageId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -1384,6 +1389,16 @@ export class MemStorage implements IStorage {
   async createBracketMatch(_match: Omit<BracketMatch, 'id' | 'createdAt' | 'homeTeamName' | 'awayTeamName'>): Promise<BracketMatch> { throw new Error("Not implemented"); }
   async updateBracketMatch(_id: string, _data: Partial<BracketMatch>): Promise<BracketMatch | undefined> { return undefined; }
   async deleteBracketMatches(_seasonId: string): Promise<void> {}
+
+  async getMessages(_userId: string): Promise<any[]> {
+    return [];
+  }
+
+  async createMessage(_data: { fromUserId: string; toUserId: string | null; subject: string; content: string }): Promise<any> {
+    return {};
+  }
+
+  async markMessageAsRead(_messageId: string): Promise<void> {}
 }
 
 import { Pool } from "pg";

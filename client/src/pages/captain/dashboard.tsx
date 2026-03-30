@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Regulations from "@/components/regulations";
+import MessagingPanel from "@/components/messaging-panel";
 
 type CaptainSection = "team" | "players" | "schedule" | "profile" | "regulations";
 
@@ -138,6 +139,7 @@ export default function CaptainDashboard() {
               <div className="space-y-4">
                 <TeamInfo />
                 <PendingPayments />
+                <MessagingPanel />
               </div>
             )}
             {effectiveSection === "players" && <TeamPlayers />}
