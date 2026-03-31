@@ -842,7 +842,7 @@ export async function registerRoutes(
         const team = await storage.getTeam(data.teamId);
         if (team && team.tournamentId) {
           const tournament = await storage.getTournament(team.tournamentId);
-          if (tournament && !tournament.registrationOpen) {
+          if (tournament && tournament.registrationOpen === false) {
             return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
           }
         }
@@ -870,7 +870,7 @@ export async function registerRoutes(
       const team = await storage.getTeam(player.teamId);
       if (team && team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
-        if (tournament && !tournament.registrationOpen) {
+        if (tournament && tournament.registrationOpen === false) {
           return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
         }
       }
@@ -896,7 +896,7 @@ export async function registerRoutes(
       const team = await storage.getTeam(player.teamId);
       if (team && team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
-        if (tournament && !tournament.registrationOpen) {
+        if (tournament && tournament.registrationOpen === false) {
           return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
         }
       }
@@ -1159,7 +1159,7 @@ export async function registerRoutes(
       // Check if registration is open
       if (team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
-        if (tournament && !tournament.registrationOpen) {
+        if (tournament && tournament.registrationOpen === false) {
           return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
         }
         
@@ -1198,7 +1198,7 @@ export async function registerRoutes(
       // Check if registration is open
       if (team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
-        if (tournament && !tournament.registrationOpen) {
+        if (tournament && tournament.registrationOpen === false) {
           return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
         }
       }
@@ -1234,7 +1234,7 @@ export async function registerRoutes(
       // Check if registration is open
       if (team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
-        if (tournament && !tournament.registrationOpen) {
+        if (tournament && tournament.registrationOpen === false) {
           return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
         }
       }
