@@ -395,6 +395,75 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/home/player-cards", async (req, res) => {
+    try {
+      const tournamentId = req.query.tournamentId as string | undefined;
+      let targetTournamentId = tournamentId;
+      
+      if (!targetTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        if (!tournament) {
+          return res.json({ withCards: [], suspended: [] });
+        }
+        targetTournamentId = tournament.id;
+      }
+
+      const allEvents = await storage.getAllMatchEvents();
+      const teams = await storage.getTeams(targetTournamentId);
+      const teamIds = new Set(teams.map(t => t.id));
+      
+      // Count YELLOW and RED cards per player
+      const playerCards: Map<string, { yellow: number; red: number }> = new Map();
+      const cardEvents = allEvents.filter(e => (e.type === "YELLOW" || e.type === "RED" || e.type === "RED_DIRECT") && teamIds.has(e.teamId));
+      
+      for (const event of cardEvents) {
+        const current = playerCards.get(event.playerId) || { yellow: 0, red: 0 };
+        if (event.type === "YELLOW") current.yellow++;
+        if (event.type === "RED" || event.type === "RED_DIRECT") current.red++;
+        playerCards.set(event.playerId, current);
+      }
+      
+      const allPlayers = await storage.getPlayers();
+      const withCards = Array.from(playerCards.entries())
+        .map(([playerId, cards]) => {
+          const player = allPlayers.find(p => p.id === playerId);
+          const team = teams.find(t => t.id === player?.teamId);
+          return {
+            playerId,
+            playerName: player ? `${player.firstName} ${player.lastName}` : "Desconocido",
+            teamId: player?.teamId || "",
+            teamName: team?.name || "Sin equipo",
+            yellowCards: cards.yellow,
+            redCards: cards.red,
+            photoUrl: player?.photoUrls?.[0] || null,
+          };
+        })
+        .sort((a, b) => (b.redCards - a.redCards) || (b.yellowCards - a.yellowCards));
+      
+      // Get suspensions for this tournament
+      const suspensions = await storage.getPlayerSuspensions(targetTournamentId);
+      const activeSuspensions = suspensions.filter(s => s.status === "ACTIVO");
+      
+      const suspended = activeSuspensions.map(susp => {
+        const player = allPlayers.find(p => p.id === susp.playerId);
+        const team = teams.find(t => t.id === susp.teamId);
+        return {
+          playerId: susp.playerId,
+          playerName: player ? `${player.firstName} ${player.lastName}` : "Desconocido",
+          teamId: susp.teamId,
+          teamName: team?.name || "Sin equipo",
+          reason: susp.reason,
+          matchesRemaining: susp.matchesRemaining,
+          photoUrl: player?.photoUrls?.[0] || null,
+        };
+      });
+      
+      res.json({ withCards, suspended });
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/matches/:id", async (req, res) => {
     try {
       const match = await storage.getMatchWithTeams(req.params.id);

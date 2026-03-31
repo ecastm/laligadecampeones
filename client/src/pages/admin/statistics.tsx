@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Target, Users, Trophy, TrendingUp } from "lucide-react";
+import { Target, Users, Trophy, TrendingUp, AlertCircle, Lock } from "lucide-react";
 import { getAuthHeader } from "@/lib/auth";
 import type { Tournament, Player, Team } from "@shared/schema";
 import { useState } from "react";
@@ -14,6 +14,26 @@ interface TopScorer {
   teamId: string;
   teamName: string;
   goals: number;
+  photoUrl?: string;
+}
+
+interface PlayerWithCards {
+  playerId: string;
+  playerName: string;
+  teamId: string;
+  teamName: string;
+  yellowCards: number;
+  redCards: number;
+  photoUrl?: string;
+}
+
+interface SuspendedPlayer {
+  playerId: string;
+  playerName: string;
+  teamId: string;
+  teamName: string;
+  reason: string;
+  matchesRemaining: number;
   photoUrl?: string;
 }
 
@@ -59,8 +79,19 @@ export default function StatisticsManagement() {
     },
   });
 
+  const { data: playerCardsData, isLoading: loadingCards } = useQuery<{ withCards: PlayerWithCards[]; suspended: SuspendedPlayer[] }>({
+    queryKey: ["/api/home/player-cards", selectedTournamentId],
+    queryFn: async () => {
+      const response = await fetch(`/api/home/player-cards${tournamentQueryParam}`);
+      if (!response.ok) throw new Error("Error al cargar tarjetas");
+      return response.json();
+    },
+  });
+
   const activeTournaments = tournaments.filter(t => t.status === "ACTIVO");
   const totalGoals = topScorers.reduce((sum, s) => sum + s.goals, 0);
+  const withCards = playerCardsData?.withCards || [];
+  const suspended = playerCardsData?.suspended || [];
 
   return (
     <div className="space-y-6">
@@ -229,6 +260,131 @@ export default function StatisticsManagement() {
           )}
         </CardContent>
       </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card data-testid="card-player-cards">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              Jugadores Sancionados
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingCards ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12" />)}
+              </div>
+            ) : withCards.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                <AlertCircle className="mx-auto h-10 w-10 opacity-50" />
+                <p className="mt-2">No hay jugadores con tarjetas</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-muted-foreground">
+                      <th className="pb-3 text-left font-medium">Jugador</th>
+                      <th className="pb-3 text-left font-medium">Equipo</th>
+                      <th className="pb-3 text-center font-medium w-16">
+                        <span className="inline-block w-6 h-6 bg-yellow-400 rounded-sm" title="Tarjetas Amarillas" />
+                      </th>
+                      <th className="pb-3 text-center font-medium w-16">
+                        <span className="inline-block w-6 h-6 bg-red-600 rounded-sm" title="Tarjetas Rojas" />
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {withCards.slice(0, 15).map((player) => (
+                      <tr key={player.playerId} className="border-b last:border-0">
+                        <td className="py-3">
+                          <div className="flex items-center gap-2">
+                            {player.photoUrl ? (
+                              <img 
+                                src={player.photoUrl} 
+                                alt={player.playerName}
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold text-xs">
+                                {player.playerName.charAt(0)}
+                              </div>
+                            )}
+                            <span className="font-medium text-sm">{player.playerName}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 text-muted-foreground text-sm">{player.teamName}</td>
+                        <td className="py-3 text-center">
+                          {player.yellowCards > 0 && (
+                            <Badge className="bg-yellow-400 text-yellow-900 font-bold">
+                              {player.yellowCards}
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="py-3 text-center">
+                          {player.redCards > 0 && (
+                            <Badge className="bg-red-600 text-white font-bold">
+                              {player.redCards}
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card data-testid="card-suspended-players">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5 text-red-600" />
+              Jugadores Suspendidos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loadingCards ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-12" />)}
+              </div>
+            ) : suspended.length === 0 ? (
+              <div className="py-8 text-center text-muted-foreground">
+                <Lock className="mx-auto h-10 w-10 opacity-50" />
+                <p className="mt-2">No hay jugadores suspendidos</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {suspended.map((player) => (
+                  <div key={player.playerId} className="flex items-center gap-3 rounded-lg border p-3">
+                    {player.photoUrl ? (
+                      <img 
+                        src={player.photoUrl} 
+                        alt={player.playerName}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white font-bold text-sm">
+                        {player.playerName.charAt(0)}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{player.playerName}</p>
+                      <p className="text-xs text-muted-foreground truncate">{player.teamName}</p>
+                      <p className="text-xs text-red-600 font-medium">{player.reason}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-lg font-bold text-red-600">{player.matchesRemaining}</p>
+                      <p className="text-xs text-muted-foreground">partidos</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
