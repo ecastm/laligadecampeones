@@ -102,6 +102,13 @@ app.use((req, res, next) => {
   }
 
   try {
+    await pool.query(`ALTER TABLE tournaments ADD COLUMN IF NOT EXISTS registration_open BOOLEAN DEFAULT TRUE`);
+    console.log("Schema sync: tournaments.registration_open column added");
+  } catch (e) {
+    console.log("Schema sync: tournaments.registration_open already exists or skipped");
+  }
+
+  try {
     await pool.query(`CREATE TABLE IF NOT EXISTS match_substitutions (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       match_id VARCHAR(255) NOT NULL,

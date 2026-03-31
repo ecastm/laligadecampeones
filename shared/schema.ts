@@ -182,6 +182,7 @@ export interface Tournament {
   maxPlayersPerTeam?: number;
   doubleRound?: boolean;
   scheduleGenerated?: boolean;
+  registrationOpen?: boolean;
   createdAt: string;
 }
 
@@ -200,6 +201,7 @@ export const insertTournamentSchema = z.object({
   maxFederatedPlayers: z.number().min(0).optional(),
   maxPlayersPerTeam: z.number().min(0).optional(),
   doubleRound: z.boolean().optional(),
+  registrationOpen: z.boolean().optional().default(true),
 });
 export type InsertTournament = z.infer<typeof insertTournamentSchema>;
 

@@ -155,9 +155,9 @@ export class DatabaseStorage implements IStorage {
 
   async createTournament(tournament: InsertTournament): Promise<Tournament> {
     const result = await this.pool.query(
-      `INSERT INTO tournaments (id, division_id, tournament_type_id, name, season_name, location, start_date, status, fee_per_team, fine_yellow, fine_red, fine_red_direct, max_federated_players, double_round, created_at)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
-       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", created_at AS "createdAt"`,
+      `INSERT INTO tournaments (id, division_id, tournament_type_id, name, season_name, location, start_date, status, fee_per_team, fine_yellow, fine_red, fine_red_direct, max_federated_players, double_round, registration_open, created_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW())
+       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", registration_open AS "registrationOpen", created_at AS "createdAt"`,
       [
         tournament.divisionId || null,
         tournament.tournamentTypeId || null,
@@ -172,6 +172,7 @@ export class DatabaseStorage implements IStorage {
         tournament.fineRedDirect ?? null,
         tournament.maxFederatedPlayers ?? null,
         tournament.doubleRound ?? null,
+        tournament.registrationOpen !== false,
       ]
     );
     return result.rows[0];
@@ -196,13 +197,14 @@ export class DatabaseStorage implements IStorage {
     if (data.maxFederatedPlayers !== undefined) { setClauses.push(`max_federated_players = $${paramIndex++}`); values.push(data.maxFederatedPlayers); }
     if (data.doubleRound !== undefined) { setClauses.push(`double_round = $${paramIndex++}`); values.push(data.doubleRound); }
     if ((data as any).scheduleGenerated !== undefined) { setClauses.push(`schedule_generated = $${paramIndex++}`); values.push((data as any).scheduleGenerated); }
+    if ((data as any).registrationOpen !== undefined) { setClauses.push(`registration_open = $${paramIndex++}`); values.push((data as any).registrationOpen); }
 
     if (setClauses.length === 0) return this.getTournament(id);
 
     values.push(id);
     const result = await this.pool.query(
       `UPDATE tournaments SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", created_at AS "createdAt"`,
+       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", registration_open AS "registrationOpen", created_at AS "createdAt"`,
       values
     );
     return result.rows[0] || undefined;
@@ -215,7 +217,7 @@ export class DatabaseStorage implements IStorage {
 
     const result = await this.pool.query(
       `UPDATE tournaments SET status = 'FINALIZADO', end_date = NOW(), champion_team_id = $1, champion_team_name = $2, final_standings = $3 WHERE id = $4
-       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", created_at AS "createdAt"`,
+       RETURNING id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", registration_open AS "registrationOpen", created_at AS "createdAt"`,
       [championTeamId, championTeamName, JSON.stringify(finalStandings), id]
     );
     return result.rows[0] || undefined;

@@ -767,6 +767,18 @@ export async function registerRoutes(
   app.post("/api/admin/players", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertPlayerSchema.parse(req.body);
+      
+      // Check if registration is open for the team's tournament
+      if (data.teamId) {
+        const team = await storage.getTeam(data.teamId);
+        if (team && team.tournamentId) {
+          const tournament = await storage.getTournament(team.tournamentId);
+          if (tournament && !tournament.registrationOpen) {
+            return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+          }
+        }
+      }
+      
       const player = await storage.createPlayer(data);
       res.status(201).json(player);
     } catch (error) {
@@ -780,11 +792,22 @@ export async function registerRoutes(
   app.put("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertPlayerSchema.partial().parse(req.body);
-      const player = await storage.updatePlayer(req.params.id, data);
+      const player = await storage.getPlayer(req.params.id);
       if (!player) {
         return res.status(404).json({ message: "Jugador no encontrado" });
       }
-      res.json(player);
+      
+      // Check if registration is open for the player's team's tournament
+      const team = await storage.getTeam(player.teamId);
+      if (team && team.tournamentId) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+        }
+      }
+      
+      const updated = await storage.updatePlayer(req.params.id, data);
+      res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
@@ -795,6 +818,20 @@ export async function registerRoutes(
 
   app.delete("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
+      const player = await storage.getPlayer(req.params.id);
+      if (!player) {
+        return res.status(404).json({ message: "Jugador no encontrado" });
+      }
+      
+      // Check if registration is open for the player's team's tournament
+      const team = await storage.getTeam(player.teamId);
+      if (team && team.tournamentId) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+        }
+      }
+      
       await storage.deletePlayer(req.params.id);
       res.status(204).send();
     } catch {
@@ -1050,9 +1087,14 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Equipo no encontrado" });
       }
       
-      // Check max players per team if limit is set
+      // Check if registration is open
       if (team.tournamentId) {
         const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+        }
+        
+        // Check max players per team if limit is set
         if (tournament && tournament.maxPlayersPerTeam) {
           const playerCount = await storage.getPlayers(user.teamId);
           if (playerCount.length >= tournament.maxPlayersPerTeam) {
@@ -1078,6 +1120,20 @@ export async function registerRoutes(
       if (!user || !user.teamId) {
         return res.status(404).json({ message: "No tienes equipo asignado" });
       }
+      
+      const team = await storage.getTeam(user.teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Equipo no encontrado" });
+      }
+      
+      // Check if registration is open
+      if (team.tournamentId) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+        }
+      }
+      
       const player = await storage.getPlayer(req.params.id);
       if (!player || player.teamId !== user.teamId) {
         return res.status(403).json({ message: "No puedes editar jugadores de otro equipo" });
@@ -1100,6 +1156,20 @@ export async function registerRoutes(
       if (!user || !user.teamId) {
         return res.status(404).json({ message: "No tienes equipo asignado" });
       }
+      
+      const team = await storage.getTeam(user.teamId);
+      if (!team) {
+        return res.status(404).json({ message: "Equipo no encontrado" });
+      }
+      
+      // Check if registration is open
+      if (team.tournamentId) {
+        const tournament = await storage.getTournament(team.tournamentId);
+        if (tournament && !tournament.registrationOpen) {
+          return res.status(403).json({ message: "El período de fichajes está cerrado para este torneo" });
+        }
+      }
+      
       const player = await storage.getPlayer(req.params.id);
       if (!player || player.teamId !== user.teamId) {
         return res.status(403).json({ message: "No puedes eliminar jugadores de otro equipo" });

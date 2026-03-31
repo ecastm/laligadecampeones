@@ -482,6 +482,26 @@ export default function TournamentManagement() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={createForm.control}
+                  name="registrationOpen"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3 rounded-lg border p-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value ?? true}
+                          onCheckedChange={field.onChange}
+                          data-testid="checkbox-registration-open"
+                        />
+                      </FormControl>
+                      <div className="flex-1">
+                        <FormLabel className="text-sm font-medium cursor-pointer">Fichaje Abierto</FormLabel>
+                        <p className="text-xs text-muted-foreground">Permite agregar, editar o eliminar jugadores</p>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <div className="border-t pt-4 mt-2">
                   <p className="text-sm font-medium mb-3">Multas por Tarjetas (€)</p>
                   <div className="grid grid-cols-3 gap-3">
@@ -892,6 +912,26 @@ export default function TournamentManagement() {
                         onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={editForm.control}
+                name="registrationOpen"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center gap-3 rounded-lg border p-3">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value ?? true}
+                        onCheckedChange={field.onChange}
+                        data-testid="edit-checkbox-registration-open"
+                      />
+                    </FormControl>
+                    <div className="flex-1">
+                      <FormLabel className="text-sm font-medium cursor-pointer">Fichaje Abierto</FormLabel>
+                      <p className="text-xs text-muted-foreground">Permite agregar, editar o eliminar jugadores</p>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
