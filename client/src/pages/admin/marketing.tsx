@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertMarketingMediaSchema, type InsertMarketingMedia, type MarketingMedia } from "@shared/schema";
+import { insertMarketingMediaSchema, type InsertMarketingMedia, type MarketingMedia, type Tournament } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getAuthHeader } from "@/lib/auth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,10 +17,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2, Images, Share2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Upload, Loader2, Images, Share2, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { SocialMediaEditor } from "@/components/social-media-editor";
+import { StandingsSocialGenerator } from "@/components/standings-social-generator";
 
 async function uploadFile(file: File): Promise<string> {
   const token = localStorage.getItem("auth_token");
@@ -67,12 +68,22 @@ export default function MarketingManagement() {
   const bulkInputRef = useRef<HTMLInputElement>(null);
   const [socialEditorOpen, setSocialEditorOpen] = useState(false);
   const [socialEditorMedia, setSocialEditorMedia] = useState<MarketingMedia | null>(null);
+  const [standingsGeneratorOpen, setStandingsGeneratorOpen] = useState(false);
 
   const { data: media = [], isLoading } = useQuery<MarketingMedia[]>({
     queryKey: ["/api/admin/marketing"],
     queryFn: async () => {
       const response = await fetch("/api/admin/marketing", { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar contenido");
+      return response.json();
+    },
+  });
+
+  const { data: tournaments = [] } = useQuery<Tournament[]>({
+    queryKey: ["/api/admin/tournaments"],
+    queryFn: async () => {
+      const response = await fetch("/api/admin/tournaments", { headers: getAuthHeader() });
+      if (!response.ok) throw new Error("Error al cargar torneos");
       return response.json();
     },
   });
@@ -213,6 +224,15 @@ export default function MarketingManagement() {
           >
             <Share2 className="h-4 w-4" />
             Crear para Redes
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setStandingsGeneratorOpen(true)}
+            className="gap-2"
+            data-testid="button-standings-generator"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Tabla de Posiciones
           </Button>
           <Button onClick={handleCreate} className="gap-2" data-testid="button-add-media">
             <Plus className="h-4 w-4" />
@@ -393,6 +413,12 @@ export default function MarketingManagement() {
         onOpenChange={setSocialEditorOpen}
         media={socialEditorMedia}
         allPhotos={photos}
+      />
+
+      <StandingsSocialGenerator
+        open={standingsGeneratorOpen}
+        onOpenChange={setStandingsGeneratorOpen}
+        tournaments={tournaments}
       />
     </div>
   );
