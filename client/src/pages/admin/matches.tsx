@@ -34,6 +34,7 @@ export default function MatchesManagement() {
   const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string>("");
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>("");
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string>("");
 
   const { data: tournament } = useQuery<Tournament>({
     queryKey: ["/api/tournaments/active"],
@@ -214,6 +215,8 @@ export default function MatchesManagement() {
     setEditingMatch(match);
     setSelectedStageId(match.stageId || "");
     setSelectedTournamentId(match.tournamentId || "");
+    const tourney = allTournaments.find(t => t.id === match.tournamentId);
+    setSelectedDivisionId(tourney?.divisionId || "");
     form.reset({
       roundNumber: match.roundNumber,
       dateTime: match.dateTime.slice(0, 16),
@@ -267,10 +270,13 @@ export default function MatchesManagement() {
             setEditingMatch(null);
             setSelectedStageId("");
             setSelectedTournamentId("");
+            setSelectedDivisionId("");
             form.reset();
           } else {
             setSelectedStageId("");
             setSelectedTournamentId(tournament?.id || "");
+            const activeTourney = allTournaments.find(t => t.id === tournament?.id);
+            setSelectedDivisionId(activeTourney?.divisionId || "");
             setIsDialogOpen(true);
           }
         }}>
@@ -291,15 +297,12 @@ export default function MatchesManagement() {
                     <FormLabel>Categoría</FormLabel>
                     <Select
                       onValueChange={(val) => {
+                        setSelectedDivisionId(val);
                         const tournamentForDiv = allTournaments.find(t => t.divisionId === val);
                         setSelectedTournamentId(tournamentForDiv?.id || "");
                         setSelectedStageId("");
                       }}
-                      value={(() => {
-                        const tid = selectedTournamentId || tournament?.id;
-                        const t = allTournaments.find(tr => tr.id === tid);
-                        return t?.divisionId || "";
-                      })()}
+                      value={selectedDivisionId}
                     >
                       <SelectTrigger data-testid="select-match-category">
                         <SelectValue placeholder="Selecciona una categoría" />
