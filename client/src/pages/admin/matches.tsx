@@ -490,12 +490,12 @@ export default function MatchesManagement() {
       {/* Tournament Selector */}
       <div className="mb-4">
         <label className="text-sm font-medium">Seleccionar Torneo</label>
-        <Select value={selectedTournamentId || ""} onValueChange={setSelectedTournamentId}>
+        <Select value={selectedTournamentId || "all"} onValueChange={(val) => setSelectedTournamentId(val === "all" ? "" : val)}>
           <SelectTrigger data-testid="select-match-tournament">
             <SelectValue placeholder="Seleccionar torneo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos los torneos</SelectItem>
+            <SelectItem value="all">Todos los torneos</SelectItem>
             {allTournaments.map((t) => (
               <SelectItem key={t.id} value={t.id}>
                 {t.name}
