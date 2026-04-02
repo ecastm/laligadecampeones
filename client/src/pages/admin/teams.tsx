@@ -332,7 +332,16 @@ export default function TeamsManagement() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>División</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                      <Select 
+                        onValueChange={(val) => {
+                          field.onChange(val);
+                          const tourney = tournaments.find(t => t.divisionId === val);
+                          if (tourney) {
+                            setSelectedTournament(tourney.id);
+                          }
+                        }} 
+                        value={field.value || ""}
+                      >
                         <FormControl>
                           <SelectTrigger data-testid="select-team-division">
                             <SelectValue placeholder="Seleccionar división" />
