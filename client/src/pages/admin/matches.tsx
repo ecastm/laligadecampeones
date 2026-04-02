@@ -273,10 +273,14 @@ export default function MatchesManagement() {
             setSelectedDivisionId("");
             form.reset();
           } else {
-            setSelectedStageId("");
-            setSelectedTournamentId(tournament?.id || "");
-            const activeTourney = allTournaments.find(t => t.id === tournament?.id);
-            setSelectedDivisionId(activeTourney?.divisionId || "");
+            if (editingMatch) {
+              openEditDialog(editingMatch);
+            } else {
+              setSelectedStageId("");
+              setSelectedTournamentId(tournament?.id || "");
+              const activeTourney = allTournaments.find(t => t.id === tournament?.id);
+              setSelectedDivisionId(activeTourney?.divisionId || "");
+            }
             setIsDialogOpen(true);
           }
         }}>
