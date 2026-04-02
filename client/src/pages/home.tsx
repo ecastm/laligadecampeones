@@ -92,6 +92,7 @@ export default function Home() {
   const { toast } = useToast();
   const { logoUrl } = useSiteSettings();
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
+  const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
   const [showPrizes, setShowPrizes] = useState(false);
   const [showCompetencia, setShowCompetencia] = useState(false);
@@ -144,15 +145,15 @@ export default function Home() {
     }
   }, [divisions, selectedDivision]);
 
-  const currentTournament = selectedDivision
+  const currentTournament = selectedTournament
+    ? allTournaments.find((t) => t.id === selectedTournament) || null
+    : selectedDivision
     ? allTournaments.find((t) => t.divisionId === selectedDivision) || null
     : activeTournament;
 
-  const currentDivision = selectedDivision
-    ? divisions.find((d) => d.id === selectedDivision)
-    : currentTournament?.divisionId
-      ? divisions.find((d) => d.id === currentTournament.divisionId)
-      : null;
+  const currentDivision = currentTournament?.divisionId
+    ? divisions.find((d) => d.id === currentTournament.divisionId)
+    : null;
 
   const tournamentId = currentTournament?.id;
 
@@ -167,7 +168,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch standings");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   const { data: results = [], isLoading: loadingResults } = useQuery<
@@ -181,7 +182,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch results");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   const { data: teams = [] } = useQuery<Team[]>({
@@ -193,7 +194,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch teams");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   const { data: news = [], isLoading: loadingNews } = useQuery<
@@ -207,7 +208,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch news");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   interface TopScorer {
@@ -230,7 +231,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch scorers");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   const { data: allTournamentSchedule = [], isLoading: loadingSchedule } = useQuery<
@@ -244,7 +245,7 @@ export default function Home() {
       if (!res.ok) throw new Error("Failed to fetch schedule");
       return res.json();
     },
-    enabled: !!tournamentId && !!selectedDivision,
+    enabled: !!tournamentId,
   });
 
   const tournamentSchedule = (allTournamentSchedule || []).filter(m => {
@@ -265,7 +266,10 @@ export default function Home() {
 
   const handleDivisionSelect = (divisionId: string) => {
     setSelectedDivision(divisionId);
+    setSelectedTournament(null);
   };
+
+  const activeTournaments = allTournaments.filter(t => t.status === 'ACTIVO');
 
   return (
     <div className="min-h-screen bg-background">
@@ -561,8 +565,34 @@ export default function Home() {
             )}
           </div>
 
+          {/* Active Tournaments Selector */}
+          {activeTournaments.length > 0 && (
+            <div className="mb-6">
+              <p className="text-sm font-medium text-muted-foreground mb-3">O selecciona directamente un torneo activo:</p>
+              <div className="flex flex-wrap gap-2">
+                {activeTournaments.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => {
+                      setSelectedTournament(t.id);
+                      setSelectedDivision(null);
+                    }}
+                    className={`px-4 py-2 rounded-md transition-all ${
+                      selectedTournament === t.id
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-primary/30 text-primary hover:bg-primary/10"
+                    }`}
+                    data-testid={`button-tournament-${t.id}`}
+                  >
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Tournament Content */}
-          {selectedDivision && currentTournament ? (
+          {currentTournament ? (
             <div className="space-y-6">
               {/* Tournament Header */}
               <Card className="border-2">

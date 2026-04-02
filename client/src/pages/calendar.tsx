@@ -29,6 +29,7 @@ export default function CalendarView() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedMatch, setSelectedMatch] = useState<MatchWithTeams | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedTournament, setSelectedTournament] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const { data: tournaments = [] } = useQuery<Tournament[]>({
@@ -52,7 +53,11 @@ export default function CalendarView() {
   const startDayOfWeek = getDay(monthStart);
   const paddingDays = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-  const validMatches = allMatches;
+  const activeTournaments = tournaments.filter(t => t.status === 'ACTIVO');
+  
+  const validMatches = selectedTournament 
+    ? allMatches.filter(m => m.tournamentId === selectedTournament)
+    : allMatches;
 
   const matchesByDate = validMatches.reduce<Record<string, MatchWithTeams[]>>((acc, match) => {
     if (!match.dateTime || isNaN(new Date(match.dateTime).getTime())) return acc;
@@ -440,6 +445,38 @@ export default function CalendarView() {
       </nav>
 
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-5xl">
+        {activeTournaments.length > 0 && (
+          <div className="mb-6">
+            <p className="text-sm font-medium text-muted-foreground mb-3">Filtrar por torneo:</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedTournament(null)}
+                className={`px-4 py-2 rounded-md transition-all ${
+                  !selectedTournament
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-primary/30 text-primary hover:bg-primary/10"
+                }`}
+              >
+                Todos
+              </button>
+              {activeTournaments.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => setSelectedTournament(t.id)}
+                  className={`px-4 py-2 rounded-md transition-all ${
+                    selectedTournament === t.id
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-primary/30 text-primary hover:bg-primary/10"
+                  }`}
+                  data-testid={`button-tournament-${t.id}`}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} data-testid="button-prev-month">
             <ChevronLeft className="h-5 w-5" />
