@@ -68,9 +68,12 @@ export default function MatchesManagement() {
   });
 
   const { data: matches = [], isLoading } = useQuery<Match[]>({
-    queryKey: ["/api/admin/matches"],
+    queryKey: ["/api/admin/matches", selectedTournamentId],
     queryFn: async () => {
-      const response = await fetch("/api/admin/matches", { headers: getAuthHeader() });
+      const url = selectedTournamentId 
+        ? `/api/admin/matches?tournamentId=${selectedTournamentId}`
+        : "/api/admin/matches";
+      const response = await fetch(url, { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar partidos");
       return response.json();
     },
@@ -482,6 +485,24 @@ export default function MatchesManagement() {
             </Form>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Tournament Selector */}
+      <div className="mb-4">
+        <label className="text-sm font-medium">Seleccionar Torneo</label>
+        <Select value={selectedTournamentId || ""} onValueChange={setSelectedTournamentId}>
+          <SelectTrigger data-testid="select-match-tournament">
+            <SelectValue placeholder="Seleccionar torneo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Todos los torneos</SelectItem>
+            {allTournaments.map((t) => (
+              <SelectItem key={t.id} value={t.id}>
+                {t.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card>
