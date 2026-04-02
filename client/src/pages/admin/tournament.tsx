@@ -27,6 +27,7 @@ export default function TournamentManagement() {
   const [viewingTournament, setViewingTournament] = useState<Tournament | null>(null);
   const [generatingSchedule, setGeneratingSchedule] = useState<Tournament | null>(null);
   const [doubleRound, setDoubleRound] = useState(false);
+  const [scheduleDivisionId, setScheduleDivisionId] = useState<string>("");
   const [managingStages, setManagingStages] = useState<Tournament | null>(null);
   const [newStageName, setNewStageName] = useState("");
   const [editingStage, setEditingStage] = useState<TournamentStage | null>(null);
@@ -161,7 +162,7 @@ export default function TournamentManagement() {
     },
   });
 
-  const { data: scheduleTeams = [] } = useQuery<Team[]>({
+  const { data: allScheduleTeams = [] } = useQuery<Team[]>({
     queryKey: ["/api/admin/teams", generatingSchedule?.id],
     queryFn: async () => {
       const response = await fetch(`/api/admin/teams?tournamentId=${generatingSchedule!.id}`, { headers: getAuthHeader() });
@@ -171,9 +172,13 @@ export default function TournamentManagement() {
     enabled: !!generatingSchedule,
   });
 
+  const scheduleTeams = scheduleDivisionId
+    ? allScheduleTeams.filter((t: Team) => t.divisionId === scheduleDivisionId)
+    : allScheduleTeams;
+
   const generateScheduleMutation = useMutation({
-    mutationFn: async ({ id, doubleRound }: { id: string; doubleRound: boolean }) => {
-      return apiRequest("POST", `/api/admin/tournaments/${id}/generate-schedule`, { doubleRound });
+    mutationFn: async ({ id, doubleRound, divisionId }: { id: string; doubleRound: boolean; divisionId?: string }) => {
+      return apiRequest("POST", `/api/admin/tournaments/${id}/generate-schedule`, { doubleRound, divisionId: divisionId || undefined });
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/matches"] });
@@ -1126,7 +1131,7 @@ export default function TournamentManagement() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!generatingSchedule} onOpenChange={() => { setGeneratingSchedule(null); setDoubleRound(false); }}>
+      <Dialog open={!!generatingSchedule} onOpenChange={() => { setGeneratingSchedule(null); setDoubleRound(false); setScheduleDivisionId(""); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1138,8 +1143,29 @@ export default function TournamentManagement() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {divisions.length > 0 && (
+              <div>
+                <label className="text-sm font-medium mb-1 block">Categoría (opcional)</label>
+                <Select value={scheduleDivisionId || "all"} onValueChange={(val) => setScheduleDivisionId(val === "all" ? "" : val)}>
+                  <SelectTrigger data-testid="select-schedule-division">
+                    <SelectValue placeholder="Todos los equipos del torneo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos los equipos del torneo</SelectItem>
+                    {divisions.map((d) => (
+                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Si seleccionas una categoría, solo se generarán partidos entre los equipos de esa categoría.
+                </p>
+              </div>
+            )}
             <div className="p-4 bg-muted rounded-lg space-y-2">
-              <p className="text-sm font-medium">Equipos registrados: {scheduleTeams.length}</p>
+              <p className="text-sm font-medium">
+                Equipos{scheduleDivisionId ? ` en ${divisions.find(d => d.id === scheduleDivisionId)?.name}` : " registrados"}: {scheduleTeams.length}
+              </p>
               {scheduleTeams.length >= 2 && (
                 <>
                   <p className="text-sm text-muted-foreground">
@@ -1169,19 +1195,19 @@ export default function TournamentManagement() {
             </div>
             <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
               <p className="text-sm text-primary">
-                <strong>Advertencia:</strong> Generar el calendario eliminará todos los partidos existentes del torneo.
+                <strong>Advertencia:</strong> Generar el calendario eliminará los partidos existentes {scheduleDivisionId ? `de la categoría seleccionada` : `del torneo`}.
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setGeneratingSchedule(null); setDoubleRound(false); }}>
+            <Button variant="outline" onClick={() => { setGeneratingSchedule(null); setDoubleRound(false); setScheduleDivisionId(""); }}>
               Cancelar
             </Button>
             <Button
               disabled={scheduleTeams.length < 2 || generateScheduleMutation.isPending}
               onClick={() => {
                 if (generatingSchedule) {
-                  generateScheduleMutation.mutate({ id: generatingSchedule.id, doubleRound });
+                  generateScheduleMutation.mutate({ id: generatingSchedule.id, doubleRound, divisionId: scheduleDivisionId || undefined });
                 }
               }}
               data-testid="button-confirm-generate"

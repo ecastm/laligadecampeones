@@ -1624,17 +1624,23 @@ export class DatabaseStorage implements IStorage {
     await this.pool.query(`DELETE FROM contact_messages WHERE id = $1`, [id]);
   }
 
-  async generateRoundRobinSchedule(tournamentId: string, doubleRound: boolean = false): Promise<Match[]> {
+  async generateRoundRobinSchedule(tournamentId: string, doubleRound: boolean = false, divisionId?: string): Promise<Match[]> {
     const tournament = await this.getTournament(tournamentId);
     if (!tournament) throw new Error("Torneo no encontrado");
 
-    const teams = await this.getTeams(tournamentId);
-    if (teams.length < 2) throw new Error("Se necesitan al menos 2 equipos");
+    const allTeams = await this.getTeams(tournamentId);
+    const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
+    if (teams.length < 2) throw new Error("Se necesitan al menos 2 equipos para generar el calendario");
 
-    const existingMatches = await this.getMatches(tournamentId);
+    // Solo borra partidos de esta división (o todos si no hay división)
+    const existingMatches = await this.getMatches(tournamentId, divisionId);
     for (const match of existingMatches) {
       await this.deleteMatch(match.id);
     }
+
+    // La división del partido: si se proporciona explícitamente, úsala;
+    // si no, usa la del torneo como fallback para mantener coherencia
+    const effectiveDivisionId = divisionId || (tournament as any).divisionId || null;
 
     const teamIds = teams.map(t => t.id);
     const n = teamIds.length;
@@ -1671,6 +1677,7 @@ export class DatabaseStorage implements IStorage {
 
         const match = await this.createMatch({
           tournamentId,
+          divisionId: effectiveDivisionId,
           roundNumber,
           dateTime: "",
           field: "Por asignar",
@@ -1689,6 +1696,7 @@ export class DatabaseStorage implements IStorage {
       for (const match of firstLegMatches) {
         const secondLegMatch = await this.createMatch({
           tournamentId,
+          divisionId: effectiveDivisionId,
           roundNumber: match.roundNumber + numRounds,
           dateTime: "",
           field: "Por asignar",

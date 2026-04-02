@@ -131,6 +131,28 @@ app.use((req, res, next) => {
     console.log("Schema sync: matches.division_id already exists or skipped");
   }
 
+  // Backfill: propagar division_id a partidos existentes con NULL
+  // Prioridad: 1) equipo local, 2) equipo visitante, 3) torneo
+  // Solo actualiza registros con division_id IS NULL → idempotente y seguro en producción
+  try {
+    const backfill = await pool.query(`
+      UPDATE matches m
+      SET division_id = COALESCE(
+        (SELECT ht.division_id FROM teams ht WHERE ht.id = m.home_team_id AND ht.division_id IS NOT NULL),
+        (SELECT at2.division_id FROM teams at2 WHERE at2.id = m.away_team_id AND at2.division_id IS NOT NULL),
+        (SELECT t.division_id FROM tournaments t WHERE t.id = m.tournament_id AND t.division_id IS NOT NULL)
+      )
+      WHERE m.division_id IS NULL
+    `);
+    if (backfill.rowCount && backfill.rowCount > 0) {
+      console.log(`Schema sync: backfilled division_id for ${backfill.rowCount} existing matches`);
+    } else {
+      console.log("Schema sync: no matches needed division_id backfill");
+    }
+  } catch (e) {
+    console.log("Schema sync: division_id backfill skipped:", e);
+  }
+
   try {
     await pool.query(`CREATE TABLE IF NOT EXISTS messages (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

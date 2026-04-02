@@ -1705,19 +1705,20 @@ export async function registerRoutes(
   app.post("/api/admin/tournaments/:id/generate-schedule", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const tournamentId = req.params.id;
-      const { doubleRound } = req.body;
+      const { doubleRound, divisionId } = req.body;
       
       const tournament = await storage.getTournament(tournamentId);
       if (!tournament) {
         return res.status(404).json({ message: "Torneo no encontrado" });
       }
       
-      const teams = await storage.getTeams(tournamentId);
-      if (teams.length < 2) {
+      const allTeams = await storage.getTeams(tournamentId);
+      const teamsForCheck = divisionId ? allTeams.filter((t: any) => t.divisionId === divisionId) : allTeams;
+      if (teamsForCheck.length < 2) {
         return res.status(400).json({ message: "Se necesitan al menos 2 equipos para generar el calendario" });
       }
       
-      const matches = await storage.generateRoundRobinSchedule(tournamentId, doubleRound === true);
+      const matches = await storage.generateRoundRobinSchedule(tournamentId, doubleRound === true, divisionId || undefined);
       res.status(201).json({ 
         message: `Calendario generado: ${matches.length} partidos en ${Math.max(...matches.map(m => m.roundNumber))} jornadas`,
         matches 
