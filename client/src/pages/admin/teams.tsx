@@ -125,7 +125,7 @@ export default function TeamsManagement() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertTeam, 'tournamentId'>) => {
-      return apiRequest("POST", "/api/admin/teams", { ...data, tournamentId: tournament?.id });
+      return apiRequest("POST", "/api/admin/teams", { ...data, tournamentId: effectiveTournamentId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/teams"] });
