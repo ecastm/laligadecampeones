@@ -469,19 +469,20 @@ export class DatabaseStorage implements IStorage {
     await this.pool.query(`DELETE FROM players WHERE id = $1`, [id]);
   }
 
-  async getMatches(tournamentId?: string): Promise<Match[]> {
-    const cols = `id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`;
-    if (tournamentId) {
-      const result = await this.pool.query(`SELECT ${cols} FROM matches WHERE tournament_id = $1`, [tournamentId]);
-      return result.rows;
-    }
-    const result = await this.pool.query(`SELECT ${cols} FROM matches`);
+  async getMatches(tournamentId?: string, divisionId?: string): Promise<Match[]> {
+    const cols = `id, tournament_id AS "tournamentId", division_id AS "divisionId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`;
+    const conditions: string[] = [];
+    const values: any[] = [];
+    if (tournamentId) { conditions.push(`tournament_id = $${values.length + 1}`); values.push(tournamentId); }
+    if (divisionId) { conditions.push(`division_id = $${values.length + 1}`); values.push(divisionId); }
+    const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const result = await this.pool.query(`SELECT ${cols} FROM matches ${where}`, values);
     return result.rows;
   }
 
   async getMatch(id: string): Promise<Match | undefined> {
     const result = await this.pool.query(
-      `SELECT id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes" FROM matches WHERE id = $1`,
+      `SELECT id, tournament_id AS "tournamentId", division_id AS "divisionId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes" FROM matches WHERE id = $1`,
       [id]
     );
     return result.rows[0] || undefined;
@@ -510,7 +511,7 @@ export class DatabaseStorage implements IStorage {
   async getAllMatchesWithTeams(tournamentId: string): Promise<MatchWithTeams[]> {
     const result = await this.pool.query(`
       SELECT
-        m.id, m.tournament_id AS "tournamentId", m.round_number AS "roundNumber",
+        m.id, m.tournament_id AS "tournamentId", m.division_id AS "divisionId", m.round_number AS "roundNumber",
         m.date_time AS "dateTime", m.field, m.home_team_id AS "homeTeamId",
         m.away_team_id AS "awayTeamId", m.referee_user_id AS "refereeUserId",
         m.status, m.home_score AS "homeScore", m.away_score AS "awayScore",
@@ -634,11 +635,12 @@ export class DatabaseStorage implements IStorage {
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
     const result = await this.pool.query(
-      `INSERT INTO matches (id, tournament_id, round_number, date_time, field, home_team_id, away_team_id, referee_user_id, status, home_score, away_score, vs_image_url, stage, stage_id, referee_notes)
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
+      `INSERT INTO matches (id, tournament_id, division_id, round_number, date_time, field, home_team_id, away_team_id, referee_user_id, status, home_score, away_score, vs_image_url, stage, stage_id, referee_notes)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
       [
         insertMatch.tournamentId,
+        insertMatch.divisionId || null,
         insertMatch.roundNumber,
         insertMatch.dateTime,
         insertMatch.field,
@@ -663,6 +665,7 @@ export class DatabaseStorage implements IStorage {
     let paramIndex = 1;
 
     if (data.tournamentId !== undefined) { setClauses.push(`tournament_id = $${paramIndex++}`); values.push(data.tournamentId); }
+    if (data.divisionId !== undefined) { setClauses.push(`division_id = $${paramIndex++}`); values.push(data.divisionId || null); }
     if (data.roundNumber !== undefined) { setClauses.push(`round_number = $${paramIndex++}`); values.push(data.roundNumber); }
     if (data.dateTime !== undefined) { setClauses.push(`date_time = $${paramIndex++}`); values.push(data.dateTime); }
     if (data.field !== undefined) { setClauses.push(`field = $${paramIndex++}`); values.push(data.field); }
@@ -682,7 +685,7 @@ export class DatabaseStorage implements IStorage {
     values.push(id);
     const result = await this.pool.query(
       `UPDATE matches SET ${setClauses.join(', ')} WHERE id = $${paramIndex}
-       RETURNING id, tournament_id AS "tournamentId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
+       RETURNING id, tournament_id AS "tournamentId", division_id AS "divisionId", round_number AS "roundNumber", date_time AS "dateTime", field, home_team_id AS "homeTeamId", away_team_id AS "awayTeamId", referee_user_id AS "refereeUserId", status, home_score AS "homeScore", away_score AS "awayScore", vs_image_url AS "vsImageUrl", stage, stage_id AS "stageId", referee_notes AS "refereeNotes"`,
       values
     );
     return result.rows[0] || undefined;

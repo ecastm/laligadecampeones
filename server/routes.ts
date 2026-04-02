@@ -911,8 +911,14 @@ export async function registerRoutes(
   // Matches
   app.get("/api/admin/matches", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      const tournament = await storage.getActiveTournament();
-      const matches = await storage.getMatches(tournament?.id);
+      const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
+      let effectiveTournamentId = tournamentId;
+      if (!effectiveTournamentId) {
+        const tournament = await storage.getActiveTournament();
+        effectiveTournamentId = tournament?.id;
+      }
+      const matches = await storage.getMatches(effectiveTournamentId, divisionId);
       matches.sort((a, b) => a.roundNumber - b.roundNumber || new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
       res.json(matches);
     } catch {

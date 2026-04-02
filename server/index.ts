@@ -125,6 +125,13 @@ app.use((req, res, next) => {
   }
 
   try {
+    await pool.query(`ALTER TABLE matches ADD COLUMN IF NOT EXISTS division_id VARCHAR(255)`);
+    console.log("Schema sync: matches.division_id column added");
+  } catch (e) {
+    console.log("Schema sync: matches.division_id already exists or skipped");
+  }
+
+  try {
     await pool.query(`CREATE TABLE IF NOT EXISTS messages (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       from_user_id VARCHAR(255) NOT NULL,

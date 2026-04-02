@@ -289,6 +289,7 @@ export type InsertTournamentStage = z.infer<typeof insertTournamentStageSchema>;
 export interface Match {
   id: string;
   tournamentId: string;
+  divisionId?: string | null;
   roundNumber: number;
   dateTime: string;
   field: string;
@@ -306,6 +307,7 @@ export interface Match {
 
 export const insertMatchSchema = z.object({
   tournamentId: z.string(),
+  divisionId: z.preprocess((val) => (val === "" ? null : val), z.string().optional().nullable()),
   roundNumber: z.number().min(1, "La jornada debe ser al menos 1"),
   dateTime: z.string(),
   field: z.string().min(2, "La cancha es requerida"),

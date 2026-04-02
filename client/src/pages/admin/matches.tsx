@@ -68,11 +68,13 @@ export default function MatchesManagement() {
   });
 
   const { data: matches = [], isLoading } = useQuery<Match[]>({
-    queryKey: ["/api/admin/matches", selectedTournamentId],
+    queryKey: ["/api/admin/matches", selectedTournamentId, selectedDivisionId],
     queryFn: async () => {
-      const url = selectedTournamentId 
-        ? `/api/admin/matches?tournamentId=${selectedTournamentId}`
-        : "/api/admin/matches";
+      const params = new URLSearchParams();
+      if (selectedTournamentId) params.set("tournamentId", selectedTournamentId);
+      if (selectedDivisionId) params.set("divisionId", selectedDivisionId);
+      const qs = params.toString();
+      const url = qs ? `/api/admin/matches?${qs}` : "/api/admin/matches";
       const response = await fetch(url, { headers: getAuthHeader() });
       if (!response.ok) throw new Error("Error al cargar partidos");
       return response.json();
@@ -106,7 +108,11 @@ export default function MatchesManagement() {
       if (!homeTeam || !awayTeam) return;
 
       const tournamentForImage = allTournaments.find(t => t.id === (matchData.tournamentId || tournament?.id));
-      const divisionForImage = tournamentForImage?.divisionId ? divisions.find(d => d.id === tournamentForImage.divisionId) : undefined;
+      const divisionForImage = matchData.divisionId
+        ? divisions.find(d => d.id === matchData.divisionId)
+        : tournamentForImage?.divisionId
+          ? divisions.find(d => d.id === tournamentForImage.divisionId)
+          : undefined;
 
       const blob = await generateVsImageBlob({
         match: {
@@ -218,8 +224,7 @@ export default function MatchesManagement() {
     setEditingMatch(match);
     setSelectedStageId(match.stageId || "");
     setSelectedTournamentId(match.tournamentId || "");
-    const tourney = allTournaments.find(t => t.id === match.tournamentId);
-    setSelectedDivisionId(tourney?.divisionId || "");
+    setSelectedDivisionId(match.divisionId || "");
     form.reset({
       roundNumber: match.roundNumber,
       dateTime: match.dateTime.slice(0, 16),
@@ -241,6 +246,7 @@ export default function MatchesManagement() {
       stage: stageName || undefined,
       stageId: selectedStageId || undefined,
       tournamentId: selectedTournamentId || tournament?.id,
+      divisionId: selectedDivisionId || null,
     };
     if (editingMatch) {
       updateMutation.mutate({ id: editingMatch.id, data: cleanData });
@@ -248,6 +254,12 @@ export default function MatchesManagement() {
       createMutation.mutate(cleanData);
     }
   };
+
+  const dialogTournamentId = selectedTournamentId || tournament?.id || "";
+  const availableTeams = teams.filter(t =>
+    (!dialogTournamentId || t.tournamentId === dialogTournamentId) &&
+    (!selectedDivisionId || t.divisionId === selectedDivisionId)
+  );
 
   const getTeamName = (id: string) => id ? (teams.find((t) => t.id === id)?.name || "N/A") : "Por definir";
   const getRefereeName = (id?: string) => referees.find((r) => r.id === id)?.name || "Sin asignar";
@@ -281,8 +293,7 @@ export default function MatchesManagement() {
             } else {
               setSelectedStageId("");
               setSelectedTournamentId(tournament?.id || "");
-              const activeTourney = allTournaments.find(t => t.id === tournament?.id);
-              setSelectedDivisionId(activeTourney?.divisionId || "");
+              setSelectedDivisionId("");
             }
             setIsDialogOpen(true);
           }
@@ -299,22 +310,43 @@ export default function MatchesManagement() {
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                {allTournaments.length > 0 && (
+                  <FormItem>
+                    <FormLabel>Torneo</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        setSelectedTournamentId(val);
+                        setSelectedDivisionId("");
+                        setSelectedStageId("");
+                      }}
+                      value={selectedTournamentId}
+                    >
+                      <SelectTrigger data-testid="select-match-tournament-dialog">
+                        <SelectValue placeholder="Selecciona un torneo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allTournaments.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
                 {divisions.length > 0 && (
                   <FormItem>
                     <FormLabel>Categoría</FormLabel>
                     <Select
                       onValueChange={(val) => {
-                        setSelectedDivisionId(val);
-                        const tournamentForDiv = allTournaments.find(t => t.divisionId === val);
-                        setSelectedTournamentId(tournamentForDiv?.id || "");
+                        setSelectedDivisionId(val === "none" ? "" : val);
                         setSelectedStageId("");
                       }}
-                      value={selectedDivisionId}
+                      value={selectedDivisionId || "none"}
                     >
                       <SelectTrigger data-testid="select-match-category">
                         <SelectValue placeholder="Selecciona una categoría" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="none">— Sin categoría —</SelectItem>
                         {divisions.map((d) => (
                           <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                         ))}
@@ -377,7 +409,7 @@ export default function MatchesManagement() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="tbc">Por confirmar</SelectItem>
-                            {teams.map((team) => (
+                            {availableTeams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                               </SelectItem>
@@ -402,7 +434,7 @@ export default function MatchesManagement() {
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="tbc">Por confirmar</SelectItem>
-                            {teams.map((team) => (
+                            {availableTeams.map((team) => (
                               <SelectItem key={team.id} value={team.id}>
                                 {team.name}
                               </SelectItem>
@@ -487,22 +519,39 @@ export default function MatchesManagement() {
         </Dialog>
       </div>
 
-      {/* Tournament Selector */}
-      <div className="mb-4">
-        <label className="text-sm font-medium">Seleccionar Torneo</label>
-        <Select value={selectedTournamentId || "all"} onValueChange={(val) => setSelectedTournamentId(val === "all" ? "" : val)}>
-          <SelectTrigger data-testid="select-match-tournament">
-            <SelectValue placeholder="Seleccionar torneo" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos los torneos</SelectItem>
-            {allTournaments.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Tournament + Category Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row mb-4">
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-1 block">Torneo</label>
+          <Select value={selectedTournamentId || "all"} onValueChange={(val) => {
+            setSelectedTournamentId(val === "all" ? "" : val);
+            setSelectedDivisionId("");
+          }}>
+            <SelectTrigger data-testid="select-match-tournament">
+              <SelectValue placeholder="Todos los torneos" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los torneos</SelectItem>
+              {allTournaments.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-1 block">Categoría</label>
+          <Select value={selectedDivisionId || "all"} onValueChange={(val) => setSelectedDivisionId(val === "all" ? "" : val)}>
+            <SelectTrigger data-testid="select-match-division">
+              <SelectValue placeholder="Todas las categorías" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las categorías</SelectItem>
+              {divisions.map((d) => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <Card>
