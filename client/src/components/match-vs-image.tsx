@@ -132,7 +132,7 @@ export function MatchVsImage({ match, homeTeam, awayTeam, open, onOpenChange }: 
     ctx.letterSpacing = "0px";
 
     const tournament = tournaments.find(t => t.id === match.tournamentId);
-    const division = tournament?.divisionId ? divisions.find(d => d.id === tournament.divisionId) : null;
+    const division = match.divisionId ? divisions.find(d => d.id === match.divisionId) : null;
 
     const roundY = 230;
     const roundText = `JORNADA ${match.roundNumber}`;
