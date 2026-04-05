@@ -221,20 +221,27 @@ export default function MatchesManagement() {
   });
 
   const openEditDialog = (match: Match) => {
-    setEditingMatch(match);
-    setSelectedStageId(match.stageId || "");
-    setSelectedTournamentId(match.tournamentId || "");
-    setSelectedDivisionId(match.divisionId || "");
-    form.reset({
-      roundNumber: match.roundNumber,
-      dateTime: match.dateTime.slice(0, 16),
-      field: match.field,
-      homeTeamId: match.homeTeamId,
-      awayTeamId: match.awayTeamId,
-      refereeUserId: match.refereeUserId || "",
-      status: match.status,
-      stage: match.stage || undefined,
-    });
+    if (match.status === "JUGADO" || match.status === "EN_CURSO") {
+      // Para partidos jugados o en curso, abrir el diálogo del árbitro para editar eventos/alineaciones
+      setRefereeMatch(toMatchWithTeams(match));
+    } else {
+      // Para partidos programados, abrir el diálogo de edición simple
+      setEditingMatch(match);
+      setSelectedStageId(match.stageId || "");
+      setSelectedTournamentId(match.tournamentId || "");
+      setSelectedDivisionId(match.divisionId || "");
+      form.reset({
+        roundNumber: match.roundNumber,
+        dateTime: match.dateTime.slice(0, 16),
+        field: match.field,
+        homeTeamId: match.homeTeamId,
+        awayTeamId: match.awayTeamId,
+        refereeUserId: match.refereeUserId || "",
+        status: match.status,
+        stage: match.stage || undefined,
+      });
+      setIsDialogOpen(true);
+    }
   };
 
   const handleSubmit = (data: Omit<InsertMatch, 'tournamentId'>) => {
