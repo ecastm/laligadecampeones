@@ -1574,37 +1574,35 @@ function MatchDetailsDialog({
               </Card>
             )}
 
-            {lineups && lineups.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Alineaciones Iniciales
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {[
-                      { teamId: match.homeTeamId, teamName: match.homeTeam?.name },
-                      { teamId: match.awayTeamId, teamName: match.awayTeam?.name },
-                    ].map(({ teamId, teamName }) => {
-                      const teamLineup = lineups.find((l: any) => l.teamId === teamId);
-                      const playerIds = teamLineup?.playerIds || [];
-                      return (
-                        <div key={teamId} className="border rounded-lg p-3">
-                          <p className="font-semibold text-sm mb-2">{teamName}</p>
-                          {playerIds.length === 0 ? (
-                            <p className="text-xs text-muted-foreground">Sin alineación registrada</p>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">{playerIds.length} jugadores alineados</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Alineaciones Iniciales
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    { teamId: match.homeTeamId, teamName: match.homeTeam?.name },
+                    { teamId: match.awayTeamId, teamName: match.awayTeam?.name },
+                  ].map(({ teamId, teamName }) => {
+                    const teamLineup = lineups.find((l: any) => l.teamId === teamId);
+                    const playerIds = teamLineup?.playerIds || [];
+                    return (
+                      <div key={teamId} className="border rounded-lg p-3">
+                        <p className="font-semibold text-sm mb-2">{teamName}</p>
+                        {playerIds.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Sin alineación registrada</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">{playerIds.length} jugadores alineados</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
             {substitutions && substitutions.length > 0 && (
               <Card>
