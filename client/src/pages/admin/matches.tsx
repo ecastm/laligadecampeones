@@ -504,18 +504,31 @@ export default function MatchesManagement() {
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                  data-testid="button-submit-match"
-                >
-                  {createMutation.isPending || updateMutation.isPending
-                    ? "Guardando..."
-                    : editingMatch
-                    ? "Actualizar"
-                    : "Crear Partido"}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    className="flex-1"
+                    disabled={createMutation.isPending || updateMutation.isPending}
+                    data-testid="button-submit-match"
+                  >
+                    {createMutation.isPending || updateMutation.isPending
+                      ? "Guardando..."
+                      : editingMatch
+                      ? "Actualizar"
+                      : "Crear Partido"}
+                  </Button>
+                  {editingMatch?.status === "JUGADO" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => setResultMatch(toMatchWithTeams(editingMatch))}
+                      data-testid="button-edit-result"
+                    >
+                      Editar Resultado
+                    </Button>
+                  )}
+                </div>
               </form>
             </Form>
           </DialogContent>
