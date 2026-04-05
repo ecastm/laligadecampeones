@@ -22,6 +22,7 @@ import { es } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/date-picker";
 import { MatchVsImage } from "@/components/match-vs-image";
 import { SharedMatchResultDialog, SharedMatchDetailsDialog } from "@/components/match-referee-dialog";
+import { MatchResultDialog } from "@/components/match-result-dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function MatchesManagement() {
@@ -31,6 +32,7 @@ export default function MatchesManagement() {
   const [editingMatch, setEditingMatch] = useState<Match | null>(null);
   const [vsImageMatch, setVsImageMatch] = useState<Match | null>(null);
   const [refereeMatch, setRefereeMatch] = useState<MatchWithTeams | null>(null);
+  const [resultMatch, setResultMatch] = useState<MatchWithTeams | null>(null);
   const [viewingMatch, setViewingMatch] = useState<MatchWithTeams | null>(null);
   const [selectedStageId, setSelectedStageId] = useState<string>("");
   const [selectedTournamentId, setSelectedTournamentId] = useState<string>("");
@@ -611,7 +613,7 @@ export default function MatchesManagement() {
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => setRefereeMatch(toMatchWithTeams(match))}
+                          onClick={() => setResultMatch(toMatchWithTeams(match))}
                           data-testid={`button-start-match-${match.id}`}
                           title="Iniciar el partido"
                         >
@@ -698,6 +700,14 @@ export default function MatchesManagement() {
           awayTeam={teams.find(t => t.id === vsImageMatch.awayTeamId)}
           open={!!vsImageMatch}
           onOpenChange={(open) => { if (!open) setVsImageMatch(null); }}
+        />
+      )}
+
+      {resultMatch && (
+        <MatchResultDialog
+          match={resultMatch}
+          open={!!resultMatch}
+          onOpenChange={(open) => { if (!open) setResultMatch(null); }}
         />
       )}
 
