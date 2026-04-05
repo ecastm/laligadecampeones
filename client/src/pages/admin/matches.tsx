@@ -522,7 +522,11 @@ export default function MatchesManagement() {
                       type="button"
                       variant="outline"
                       className="flex-1"
-                      onClick={() => setResultMatch(toMatchWithTeams(editingMatch))}
+                      onClick={() => {
+                        setResultMatch(toMatchWithTeams(editingMatch));
+                        setIsDialogOpen(false);
+                        setEditingMatch(null);
+                      }}
                       data-testid="button-edit-result"
                     >
                       Editar Resultado
