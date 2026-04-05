@@ -1435,7 +1435,7 @@ export async function registerRoutes(
       if (req.user!.role !== "ADMIN" && match.refereeUserId !== req.user!.userId) {
         return res.status(403).json({ message: "No estás asignado a este partido" });
       }
-      if (match.status === "JUGADO") {
+      if (match.status === "JUGADO" && req.user!.role !== "ADMIN") {
         return res.status(400).json({ message: "El partido ya tiene resultado" });
       }
 
@@ -2061,6 +2061,27 @@ export async function registerRoutes(
   });
 
   // ==================== MATCH EVIDENCE ====================
+  app.get("/api/matches/:id/events", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const result = await pool.query(
+        `SELECT id, type, minute, team_id AS "teamId", player_id AS "playerId" FROM match_events WHERE match_id = $1 ORDER BY minute ASC`,
+        [req.params.id]
+      );
+      res.json(result.rows);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
+  app.get("/api/matches/:id/evidence", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
+    try {
+      const evidence = await storage.getMatchEvidence(req.params.id);
+      res.json(evidence);
+    } catch {
+      res.status(500).json({ message: "Error interno del servidor" });
+    }
+  });
+
   app.get("/api/referee/matches/:id/evidence", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
       const evidence = await storage.getMatchEvidence(req.params.id);

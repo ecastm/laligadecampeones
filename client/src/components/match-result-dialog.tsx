@@ -426,6 +426,26 @@ export function MatchResultDialog({
     enabled: open,
   });
 
+  const { data: existingEvents = [] } = useQuery<any[]>({
+    queryKey: ["/api/matches", match.id, "events"],
+    queryFn: async () => {
+      const response = await fetch(`/api/matches/${match.id}/events`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open && match.status === "JUGADO",
+  });
+
+  const { data: existingEvidence = [] } = useQuery<any[]>({
+    queryKey: ["/api/matches", match.id, "evidence"],
+    queryFn: async () => {
+      const response = await fetch(`/api/matches/${match.id}/evidence`, { headers: getAuthHeader() });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: open && match.status === "JUGADO",
+  });
+
   const isPlayerSuspended = (playerId: string) => {
     return activeSuspensions.some(s => s.playerId === playerId);
   };
@@ -477,6 +497,25 @@ export function MatchResultDialog({
     control: form.control,
     name: "events",
   });
+
+  // Load existing result data when editing a finished match
+  const [resultInitialized, setResultInitialized] = useState(false);
+  if (open && match.status === "JUGADO" && !resultInitialized && existingEvents.length > 0) {
+    setResultInitialized(true);
+    form.reset({
+      homeScore: match.homeScore || 0,
+      awayScore: match.awayScore || 0,
+      events: existingEvents.map(e => ({
+        type: e.type as "GOAL" | "YELLOW" | "RED",
+        minute: e.minute,
+        teamId: e.teamId,
+        playerId: e.playerId,
+      })),
+      refereeNotes: match.refereeNotes || "",
+      evidenceUrls: existingEvidence.map(e => e.url),
+    });
+    setUploadedPhotos(existingEvidence.map(e => e.url));
+  }
 
   const noShowMutation = useMutation({
     mutationFn: async (teamId: string) => {
