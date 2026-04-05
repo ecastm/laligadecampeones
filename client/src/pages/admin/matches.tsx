@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Calendar, Edit, Image, Flag, Eye } from "lucide-react";
+import { Plus, Trash2, Calendar, Edit, Image, Flag, Eye, Play } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { DateTimePicker } from "@/components/ui/date-picker";
@@ -606,16 +606,28 @@ export default function MatchesManagement() {
                       </Badge>
                     </div>
                     {match.status === "PROGRAMADO" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRefereeMatch(toMatchWithTeams(match))}
-                        data-testid={`button-referee-match-${match.id}`}
-                        title="Gestionar como árbitro"
-                      >
-                        <Flag className="mr-1 h-4 w-4" />
-                        <span className="hidden sm:inline">Arbitrar</span>
-                      </Button>
+                      <>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => setRefereeMatch(toMatchWithTeams(match))}
+                          data-testid={`button-start-match-${match.id}`}
+                          title="Iniciar el partido"
+                        >
+                          <Play className="mr-1 h-4 w-4" />
+                          <span className="hidden sm:inline">Iniciar</span>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRefereeMatch(toMatchWithTeams(match))}
+                          data-testid={`button-referee-match-${match.id}`}
+                          title="Gestionar como árbitro"
+                        >
+                          <Flag className="mr-1 h-4 w-4" />
+                          <span className="hidden sm:inline">Arbitrar</span>
+                        </Button>
+                      </>
                     )}
                     {match.status === "JUGADO" && (
                       <Button
