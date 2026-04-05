@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX, ShieldAlert, ClipboardCheck, ArrowLeftRight } from "lucide-react";
+import { Flag, Calendar, LogOut, Plus, Trash2, CircleDot, Eye, CircleAlert, Goal, Trophy, ListOrdered, User, ScrollText, Camera, X, Loader2, FileText, Check, Ban, ClipboardList, UserCheck, UserX, ShieldAlert, ClipboardCheck, ArrowLeftRight, Users } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Textarea } from "@/components/ui/textarea";
 import { useUpload } from "@/hooks/use-upload";
@@ -1405,6 +1405,24 @@ function MatchDetailsDialog({
     enabled: open,
   });
 
+  const { data: lineups = [] } = useQuery({
+    queryKey: ["/api/referee/matches", match.id, "lineups"],
+    queryFn: async () => {
+      const r = await fetch(`/api/referee/matches/${match.id}/lineups`, { headers: getAuthHeader() });
+      return r.ok ? r.json() : [];
+    },
+    enabled: open,
+  });
+
+  const { data: substitutions = [] } = useQuery<MatchSubstitution[]>({
+    queryKey: ["/api/referee/matches", match.id, "substitutions"],
+    queryFn: async () => {
+      const r = await fetch(`/api/referee/matches/${match.id}/substitutions`, { headers: getAuthHeader() });
+      return r.ok ? r.json() : [];
+    },
+    enabled: open,
+  });
+
   const events: MatchEventWithPlayer[] = matchDetails?.events || [];
   const goals = events.filter((e: MatchEventWithPlayer) => e.type === "GOAL");
   const yellowCards = events.filter((e: MatchEventWithPlayer) => e.type === "YELLOW");
@@ -1548,6 +1566,75 @@ function MatchDetailsDialog({
                             <p className="text-xs text-muted-foreground">
                               {getEventLabel(event.type)} · {event.teamId === match.homeTeamId ? match.homeTeam?.name : match.awayTeam?.name}
                             </p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {lineups && lineups.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Alineaciones Iniciales
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {[
+                      { teamId: match.homeTeamId, teamName: match.homeTeam?.name },
+                      { teamId: match.awayTeamId, teamName: match.awayTeam?.name },
+                    ].map(({ teamId, teamName }) => {
+                      const teamLineup = lineups.find((l: any) => l.teamId === teamId);
+                      const playerIds = teamLineup?.playerIds || [];
+                      return (
+                        <div key={teamId} className="border rounded-lg p-3">
+                          <p className="font-semibold text-sm mb-2">{teamName}</p>
+                          {playerIds.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">Sin alineación registrada</p>
+                          ) : (
+                            <p className="text-xs text-muted-foreground">{playerIds.length} jugadores alineados</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {substitutions && substitutions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ArrowLeftRight className="h-4 w-4" />
+                    Cambios ({substitutions.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {substitutions
+                      .sort((a, b) => (a.minute || 0) - (b.minute || 0))
+                      .map((sub, idx) => (
+                        <div key={idx} className="flex items-center gap-3 rounded-md border p-3 text-sm">
+                          <Badge variant="outline" className="shrink-0">
+                            {sub.minute || "--"}'
+                          </Badge>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-muted-foreground mb-1">
+                              {sub.teamId === match.homeTeamId ? match.homeTeam?.name : match.awayTeam?.name}
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-red-500 text-xs">✖</span>
+                              <span className="truncate">{sub.playerOutName || "Jugador"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-green-500 text-xs">✓</span>
+                              <span className="truncate">{sub.playerInName || "Jugador"}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
