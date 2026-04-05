@@ -1445,8 +1445,13 @@ export async function registerRoutes(
       try {
         await client.query('BEGIN');
 
+        // For non-admin users, only allow update if not already JUGADO
+        const whereClause = req.user!.role === "ADMIN" 
+          ? "WHERE id = $5"
+          : "WHERE id = $5 AND status != 'JUGADO'";
+        
         const updateResult = await client.query(
-          `UPDATE matches SET home_score = $1, away_score = $2, status = 'JUGADO', referee_user_id = $3, referee_notes = $4 WHERE id = $5 AND status != 'JUGADO' RETURNING id`,
+          `UPDATE matches SET home_score = $1, away_score = $2, status = 'JUGADO', referee_user_id = $3, referee_notes = $4 ${whereClause} RETURNING id`,
           [data.homeScore, data.awayScore, req.user!.userId, data.refereeNotes || null, match.id]
         );
         if (updateResult.rowCount === 0) {
