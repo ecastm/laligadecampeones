@@ -145,10 +145,19 @@ export default function Home() {
     }
   }, [divisions, selectedDivision]);
 
-  // Use the active tournament always; selectedDivision drives the filter, not which tournament to use
+  // Resolve the tournament for the selected division:
+  // 1. If user explicitly selected a tournament, use it.
+  // 2. Else if there is a tournament dedicated to the selected division, use it (no extra filter needed).
+  // 3. Else fall back to the global active tournament and send divisionId as filter.
+  const divisionSpecificTournament = selectedDivision
+    ? allTournaments.find((t) => t.divisionId === selectedDivision) || null
+    : null;
+
   const currentTournament = selectedTournament
     ? allTournaments.find((t) => t.id === selectedTournament) || null
-    : activeTournament || (allTournaments.length > 0 ? allTournaments[0] : null);
+    : divisionSpecificTournament ||
+      activeTournament ||
+      (allTournaments.length > 0 ? allTournaments[0] : null);
 
   const currentDivision = selectedDivision
     ? divisions.find((d) => d.id === selectedDivision)
@@ -157,7 +166,11 @@ export default function Home() {
     : null;
 
   const tournamentId = currentTournament?.id;
-  const activeDivisionId = selectedDivision || undefined;
+  // Only send divisionId filter when the resolved tournament is not already specific to that division
+  const activeDivisionId =
+    selectedDivision && currentTournament?.divisionId !== selectedDivision
+      ? selectedDivision
+      : undefined;
 
   const buildUrl = (base: string) => {
     const params = new URLSearchParams();
