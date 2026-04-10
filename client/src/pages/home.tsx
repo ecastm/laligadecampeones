@@ -145,26 +145,34 @@ export default function Home() {
     }
   }, [divisions, selectedDivision]);
 
+  // Use the active tournament always; selectedDivision drives the filter, not which tournament to use
   const currentTournament = selectedTournament
     ? allTournaments.find((t) => t.id === selectedTournament) || null
-    : selectedDivision
-    ? allTournaments.find((t) => t.divisionId === selectedDivision) || null
-    : activeTournament;
+    : activeTournament || (allTournaments.length > 0 ? allTournaments[0] : null);
 
-  const currentDivision = currentTournament?.divisionId
+  const currentDivision = selectedDivision
+    ? divisions.find((d) => d.id === selectedDivision)
+    : currentTournament?.divisionId
     ? divisions.find((d) => d.id === currentTournament.divisionId)
     : null;
 
   const tournamentId = currentTournament?.id;
+  const activeDivisionId = selectedDivision || undefined;
+
+  const buildUrl = (base: string) => {
+    const params = new URLSearchParams();
+    if (tournamentId) params.set("tournamentId", tournamentId);
+    if (activeDivisionId) params.set("divisionId", activeDivisionId);
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  };
 
   const { data: standings = [], isLoading: loadingStandings } = useQuery<
     Standing[]
   >({
-    queryKey: ["/api/home/standings", tournamentId],
+    queryKey: ["/api/home/standings", tournamentId, activeDivisionId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/home/standings${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
+      const res = await fetch(buildUrl("/api/home/standings"));
       if (!res.ok) throw new Error("Failed to fetch standings");
       return res.json();
     },
@@ -174,11 +182,9 @@ export default function Home() {
   const { data: results = [], isLoading: loadingResults } = useQuery<
     MatchWithTeams[]
   >({
-    queryKey: ["/api/home/results", tournamentId],
+    queryKey: ["/api/home/results", tournamentId, activeDivisionId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/home/results${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
+      const res = await fetch(buildUrl("/api/home/results"));
       if (!res.ok) throw new Error("Failed to fetch results");
       return res.json();
     },
@@ -186,11 +192,9 @@ export default function Home() {
   });
 
   const { data: teams = [] } = useQuery<Team[]>({
-    queryKey: ["/api/home/teams", tournamentId],
+    queryKey: ["/api/home/teams", tournamentId, activeDivisionId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/home/teams${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
+      const res = await fetch(buildUrl("/api/home/teams"));
       if (!res.ok) throw new Error("Failed to fetch teams");
       return res.json();
     },
@@ -223,11 +227,9 @@ export default function Home() {
   const { data: scorers = [], isLoading: loadingScorers } = useQuery<
     TopScorer[]
   >({
-    queryKey: ["/api/home/scorers", tournamentId],
+    queryKey: ["/api/home/scorers", tournamentId, activeDivisionId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/home/scorers${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
+      const res = await fetch(buildUrl("/api/home/scorers"));
       if (!res.ok) throw new Error("Failed to fetch scorers");
       return res.json();
     },
@@ -237,11 +239,9 @@ export default function Home() {
   const { data: allTournamentSchedule = [], isLoading: loadingSchedule } = useQuery<
     MatchWithTeams[]
   >({
-    queryKey: ["/api/home/schedule", tournamentId],
+    queryKey: ["/api/home/schedule", tournamentId, activeDivisionId],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/home/schedule${tournamentId ? `?tournamentId=${tournamentId}` : ""}`,
-      );
+      const res = await fetch(buildUrl("/api/home/schedule"));
       if (!res.ok) throw new Error("Failed to fetch schedule");
       return res.json();
     },

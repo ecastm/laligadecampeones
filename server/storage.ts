@@ -94,7 +94,7 @@ export interface IStorage {
   deleteMatchEvents(matchId: string): Promise<void>;
 
   // Standings
-  calculateStandings(tournamentId: string): Promise<Standing[]>;
+  calculateStandings(tournamentId: string, divisionId?: string): Promise<Standing[]>;
 
   // News
   getNews(tournamentId?: string): Promise<NewsWithAuthor[]>;
@@ -645,9 +645,11 @@ export class MemStorage implements IStorage {
   }
 
   // Standings
-  async calculateStandings(tournamentId: string): Promise<Standing[]> {
-    const teams = await this.getTeams(tournamentId);
-    const matches = (await this.getMatches(tournamentId)).filter(m => m.status === "JUGADO");
+  async calculateStandings(tournamentId: string, divisionId?: string): Promise<Standing[]> {
+    const allTeams = await this.getTeams(tournamentId);
+    const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
+    const allMatches = (await this.getMatches(tournamentId)).filter(m => m.status === "JUGADO");
+    const matches = divisionId ? allMatches.filter(m => m.divisionId === divisionId) : allMatches;
 
     const standings: Map<string, Standing> = new Map();
 

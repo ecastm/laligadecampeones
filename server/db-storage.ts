@@ -771,10 +771,12 @@ export class DatabaseStorage implements IStorage {
     await this.pool.query(`DELETE FROM match_events WHERE match_id = $1`, [matchId]);
   }
 
-  async calculateStandings(tournamentId: string): Promise<Standing[]> {
-    const teams = await this.getTeams(tournamentId);
+  async calculateStandings(tournamentId: string, divisionId?: string): Promise<Standing[]> {
+    const allTeams = await this.getTeams(tournamentId);
+    const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
     const allMatches = await this.getMatches(tournamentId);
-    const matches = allMatches.filter(m => m.status === "JUGADO");
+    const allJugados = allMatches.filter(m => m.status === "JUGADO");
+    const matches = divisionId ? allJugados.filter(m => m.divisionId === divisionId) : allJugados;
 
     const standings: Map<string, Standing> = new Map();
 

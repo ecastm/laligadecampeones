@@ -231,6 +231,7 @@ export async function registerRoutes(
   app.get("/api/home/schedule", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
       let targetTournamentId = tournamentId;
       
       if (!targetTournamentId) {
@@ -241,7 +242,8 @@ export async function registerRoutes(
         targetTournamentId = tournament.id;
       }
       
-      const result = await storage.getAllMatchesWithTeams(targetTournamentId);
+      const allMatches = await storage.getAllMatchesWithTeams(targetTournamentId);
+      const result = divisionId ? allMatches.filter(m => m.divisionId === divisionId) : allMatches;
       res.json(result);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -282,6 +284,7 @@ export async function registerRoutes(
   app.get("/api/home/standings", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
       let targetTournamentId = tournamentId;
       
       if (!targetTournamentId) {
@@ -292,7 +295,7 @@ export async function registerRoutes(
         targetTournamentId = tournament.id;
       }
       
-      const standings = await storage.calculateStandings(targetTournamentId);
+      const standings = await storage.calculateStandings(targetTournamentId, divisionId);
       res.json(standings);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -302,6 +305,7 @@ export async function registerRoutes(
   app.get("/api/home/results", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
       let targetTournamentId = tournamentId;
       
       if (!targetTournamentId) {
@@ -314,7 +318,7 @@ export async function registerRoutes(
       
       const allWithTeams = await storage.getAllMatchesWithTeams(targetTournamentId);
       const result = allWithTeams
-        .filter(m => m.status === "JUGADO" && m.homeTeam && m.awayTeam)
+        .filter(m => m.status === "JUGADO" && m.homeTeam && m.awayTeam && (!divisionId || m.divisionId === divisionId))
         .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
         .slice(0, 10);
       res.json(result);
@@ -326,6 +330,7 @@ export async function registerRoutes(
   app.get("/api/home/teams", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
       let targetTournamentId = tournamentId;
       
       if (!targetTournamentId) {
@@ -336,7 +341,8 @@ export async function registerRoutes(
         targetTournamentId = tournament.id;
       }
       
-      const teams = await storage.getTeams(targetTournamentId);
+      const allTeams = await storage.getTeams(targetTournamentId);
+      const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
       res.json(teams);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -347,6 +353,7 @@ export async function registerRoutes(
   app.get("/api/home/scorers", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
+      const divisionId = req.query.divisionId as string | undefined;
       let targetTournamentId = tournamentId;
       
       if (!targetTournamentId) {
@@ -358,7 +365,8 @@ export async function registerRoutes(
       }
 
       const allEvents = await storage.getAllMatchEvents();
-      const teams = await storage.getTeams(targetTournamentId);
+      const allTeams = await storage.getTeams(targetTournamentId);
+      const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
       const teamIds = new Set(teams.map(t => t.id));
       
       // Filter goal events for teams in the tournament
