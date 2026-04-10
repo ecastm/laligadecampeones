@@ -232,19 +232,23 @@ export async function registerRoutes(
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
       const divisionId = req.query.divisionId as string | undefined;
-      let targetTournamentId = tournamentId;
-      
-      if (!targetTournamentId) {
-        const tournament = await storage.getActiveTournament();
-        if (!tournament) {
-          return res.json([]);
-        }
-        targetTournamentId = tournament.id;
+
+      if (tournamentId) {
+        const allMatches = await storage.getAllMatchesWithTeams(tournamentId);
+        const result = divisionId ? allMatches.filter(m => m.divisionId === divisionId) : allMatches;
+        return res.json(result);
       }
-      
-      const allMatches = await storage.getAllMatchesWithTeams(targetTournamentId);
-      const result = divisionId ? allMatches.filter(m => m.divisionId === divisionId) : allMatches;
-      res.json(result);
+
+      // No tournamentId: aggregate from ALL active tournaments
+      const allTournaments = await storage.getTournaments();
+      const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+      if (activeTournaments.length === 0) return res.json([]);
+      const combined: any[] = [];
+      for (const t of activeTournaments) {
+        const matches = await storage.getAllMatchesWithTeams(t.id);
+        combined.push(...(divisionId ? matches.filter(m => m.divisionId === divisionId) : matches));
+      }
+      res.json(combined);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
     }
@@ -306,17 +310,20 @@ export async function registerRoutes(
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
       const divisionId = req.query.divisionId as string | undefined;
-      let targetTournamentId = tournamentId;
-      
-      if (!targetTournamentId) {
-        const tournament = await storage.getActiveTournament();
-        if (!tournament) {
-          return res.json([]);
+
+      let allWithTeams: any[] = [];
+      if (tournamentId) {
+        allWithTeams = await storage.getAllMatchesWithTeams(tournamentId);
+      } else {
+        // No tournamentId: aggregate from ALL active tournaments
+        const allTournaments = await storage.getTournaments();
+        const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+        for (const t of activeTournaments) {
+          const matches = await storage.getAllMatchesWithTeams(t.id);
+          allWithTeams.push(...matches);
         }
-        targetTournamentId = tournament.id;
       }
-      
-      const allWithTeams = await storage.getAllMatchesWithTeams(targetTournamentId);
+
       const result = allWithTeams
         .filter(m => m.status === "JUGADO" && m.homeTeam && m.awayTeam && (!divisionId || m.divisionId === divisionId))
         .sort((a, b) => new Date(b.dateTime).getTime() - new Date(a.dateTime).getTime())
@@ -331,17 +338,20 @@ export async function registerRoutes(
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
       const divisionId = req.query.divisionId as string | undefined;
-      let targetTournamentId = tournamentId;
-      
-      if (!targetTournamentId) {
-        const tournament = await storage.getActiveTournament();
-        if (!tournament) {
-          return res.json([]);
+
+      let allTeams: any[] = [];
+      if (tournamentId) {
+        allTeams = await storage.getTeams(tournamentId);
+      } else {
+        // No tournamentId: aggregate from ALL active tournaments
+        const allTournaments = await storage.getTournaments();
+        const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+        for (const t of activeTournaments) {
+          const teams = await storage.getTeams(t.id);
+          allTeams.push(...teams);
         }
-        targetTournamentId = tournament.id;
       }
-      
-      const allTeams = await storage.getTeams(targetTournamentId);
+
       const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
       res.json(teams);
     } catch {
@@ -354,18 +364,21 @@ export async function registerRoutes(
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
       const divisionId = req.query.divisionId as string | undefined;
-      let targetTournamentId = tournamentId;
-      
-      if (!targetTournamentId) {
-        const tournament = await storage.getActiveTournament();
-        if (!tournament) {
-          return res.json([]);
+
+      let allTeams: any[] = [];
+      if (tournamentId) {
+        allTeams = await storage.getTeams(tournamentId);
+      } else {
+        // No tournamentId: aggregate from ALL active tournaments
+        const allTournaments = await storage.getTournaments();
+        const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+        for (const t of activeTournaments) {
+          const teams = await storage.getTeams(t.id);
+          allTeams.push(...teams);
         }
-        targetTournamentId = tournament.id;
       }
 
       const allEvents = await storage.getAllMatchEvents();
-      const allTeams = await storage.getTeams(targetTournamentId);
       const teams = divisionId ? allTeams.filter(t => t.divisionId === divisionId) : allTeams;
       const teamIds = new Set(teams.map(t => t.id));
       
@@ -406,18 +419,26 @@ export async function registerRoutes(
   app.get("/api/home/player-cards", async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
-      let targetTournamentId = tournamentId;
-      
-      if (!targetTournamentId) {
-        const tournament = await storage.getActiveTournament();
-        if (!tournament) {
-          return res.json({ withCards: [], suspended: [] });
+
+      let allTeams: any[] = [];
+      let targetTournamentIds: string[] = [];
+      if (tournamentId) {
+        allTeams = await storage.getTeams(tournamentId);
+        targetTournamentIds = [tournamentId];
+      } else {
+        // No tournamentId: aggregate from ALL active tournaments
+        const allTournaments = await storage.getTournaments();
+        const activeTournaments = allTournaments.filter(t => t.status === "ACTIVO");
+        if (activeTournaments.length === 0) return res.json({ withCards: [], suspended: [] });
+        targetTournamentIds = activeTournaments.map(t => t.id);
+        for (const t of activeTournaments) {
+          const teams = await storage.getTeams(t.id);
+          allTeams.push(...teams);
         }
-        targetTournamentId = tournament.id;
       }
 
       const allEvents = await storage.getAllMatchEvents();
-      const teams = await storage.getTeams(targetTournamentId);
+      const teams = allTeams;
       const teamIds = new Set(teams.map(t => t.id));
       
       // Count YELLOW and RED cards per player
@@ -448,9 +469,13 @@ export async function registerRoutes(
         })
         .sort((a, b) => (b.redCards - a.redCards) || (b.yellowCards - a.yellowCards));
       
-      // Get suspensions for this tournament
-      const suspensions = await storage.getPlayerSuspensions(targetTournamentId);
-      const activeSuspensions = suspensions.filter(s => s.status === "ACTIVO");
+      // Get suspensions for all target tournaments
+      const allSuspensions: any[] = [];
+      for (const tid of targetTournamentIds) {
+        const subs = await storage.getPlayerSuspensions(tid);
+        allSuspensions.push(...subs);
+      }
+      const activeSuspensions = allSuspensions.filter(s => s.status === "ACTIVO");
       
       const suspended = activeSuspensions.map(susp => {
         const player = allPlayers.find(p => p.id === susp.playerId);

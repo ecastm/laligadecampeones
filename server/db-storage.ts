@@ -133,7 +133,7 @@ export class DatabaseStorage implements IStorage {
 
   async getActiveTournament(): Promise<Tournament | undefined> {
     const result = await this.pool.query(
-      `SELECT id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", created_at AS "createdAt" FROM tournaments WHERE status = 'ACTIVO' LIMIT 1`
+      `SELECT id, division_id AS "divisionId", tournament_type_id AS "tournamentTypeId", name, season_name AS "seasonName", location, start_date AS "startDate", end_date AS "endDate", status, champion_team_id AS "championTeamId", champion_team_name AS "championTeamName", final_standings AS "finalStandings", fee_per_team AS "feePerTeam", fine_yellow AS "fineYellow", fine_red AS "fineRed", fine_red_direct AS "fineRedDirect", max_federated_players AS "maxFederatedPlayers", double_round AS "doubleRound", schedule_generated AS "scheduleGenerated", created_at AS "createdAt" FROM tournaments WHERE status = 'ACTIVO' ORDER BY created_at ASC LIMIT 1`
     );
     return result.rows[0] || undefined;
   }
