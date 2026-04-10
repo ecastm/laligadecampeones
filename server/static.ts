@@ -25,6 +25,15 @@ export function serveStatic(app: Express) {
     }),
   );
 
+  // Serve local assets (uploaded images, etc.)
+  const assetsPath = path.resolve(
+    path.dirname(__dirname),
+    "attached_assets",
+  );
+  if (fs.existsSync(assetsPath)) {
+    app.use("/attached_assets", express.static(assetsPath));
+  }
+
   app.use("/{*path}", (_req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.setHeader("Pragma", "no-cache");

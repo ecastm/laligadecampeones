@@ -3,6 +3,8 @@ import multer from "multer";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import { verifyToken, type JWTPayload } from "../../auth";
+import fs from "fs";
+import path from "path";
 
 function parseObjectPath(path: string): {
   bucketName: string;
@@ -27,6 +29,29 @@ function parseObjectPath(path: string): {
 
 export function registerObjectStorageRoutes(app: Express): void {
   const objectStorageService = new ObjectStorageService();
+  const localUploadsDir = path.resolve(
+    process.cwd(),
+    "attached_assets",
+    "replit_images",
+    "uploads",
+  );
+
+  function tryResolveLocalUploadFromLegacyPath(legacyPath: string): string | null {
+    const match = legacyPath.match(/^\/objects\/uploads\/([^\/?]+)/);
+    if (!match) return null;
+
+    const objectId = match[1];
+    if (!fs.existsSync(localUploadsDir)) return null;
+
+    const candidates = fs.readdirSync(localUploadsDir);
+    const fileName = candidates.find(
+      (name) => name.includes(objectId) || name.startsWith(objectId),
+    );
+
+    if (!fileName) return null;
+    return path.join(localUploadsDir, fileName);
+  }
+
   const ALLOWED_MIMES = [
     "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml",
     "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence",
@@ -131,8 +156,16 @@ export function registerObjectStorageRoutes(app: Express): void {
 
   app.use("/objects", async (req, res, next) => {
     if (req.method !== "GET") return next();
+
+    // Local-first fallback for legacy URLs like /objects/uploads/<uuid>
+    // to keep production data working without Replit Object Storage env vars.
+    const fullPath = `/objects${req.path}`;
+    const localFile = tryResolveLocalUploadFromLegacyPath(fullPath);
+    if (localFile) {
+      return res.sendFile(localFile);
+    }
+
     try {
-      const fullPath = `/objects${req.path}`;
       const objectFile = await objectStorageService.getObjectEntityFile(fullPath);
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {

@@ -67,7 +67,10 @@ export default function MessagingPanel() {
   // Fetch users for admin selector
   const { data: users = [] } = useQuery({
     queryKey: ["/api/admin/users"],
-    queryFn: () => apiRequest("/api/admin/users"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/admin/users");
+      return response.json();
+    },
     enabled: user?.role === "ADMIN",
   });
 
@@ -76,7 +79,10 @@ export default function MessagingPanel() {
   // Fetch messages with polling
   const { data: messages = [], isLoading: messagesLoading, refetch } = useQuery({
     queryKey: ["/api/messages"],
-    queryFn: () => apiRequest("/api/messages"),
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/messages");
+      return response.json();
+    },
     refetchInterval: 30000, // Poll every 30 seconds
   });
 
@@ -98,7 +104,7 @@ export default function MessagingPanel() {
   const showNotification = (message: any) => {
     if ("Notification" in window && Notification.permission === "granted") {
       const notification = new Notification("Nuevo Mensaje - Liga de Campeones", {
-        body: `${message.subject}: ${message.content.substring(0, 100)}...`,
+        body: `${message.subject}: ${String(message.content || "").substring(0, 100)}...`,
         icon: "/favicon.png",
         badge: "/favicon.png",
         tag: `message-${message.id}`,
@@ -133,13 +139,10 @@ export default function MessagingPanel() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: MessageForm) => {
-      return apiRequest("/api/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          toUserIds: data.toUserIds && data.toUserIds.length > 0 ? data.toUserIds : null,
-          subject: data.subject,
-          content: data.content,
-        }),
+      return apiRequest("POST", "/api/messages", {
+        toUserIds: data.toUserIds && data.toUserIds.length > 0 ? data.toUserIds : null,
+        subject: data.subject,
+        content: data.content,
       });
     },
     onSuccess: () => {
@@ -163,9 +166,7 @@ export default function MessagingPanel() {
   // Mark message as read
   const markReadMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      return apiRequest(`/api/messages/${messageId}/read`, {
-        method: "PUT",
-      });
+      return apiRequest("PUT", `/api/messages/${messageId}/read`);
     },
   });
 
