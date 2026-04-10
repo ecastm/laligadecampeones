@@ -781,12 +781,10 @@ export async function registerRoutes(
   app.get("/api/admin/teams", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const tournamentId = req.query.tournamentId as string | undefined;
-      if (tournamentId) {
-        const teams = await storage.getTeams(tournamentId);
-        return res.json(teams);
-      }
-      const tournament = await storage.getActiveTournament();
-      const teams = await storage.getTeams(tournament?.id);
+      // Without a specific tournamentId, return ALL teams across all tournaments
+      // so the admin can see teams from every active tournament (avoids N/A when
+      // multiple tournaments are active at the same time).
+      const teams = await storage.getTeams(tournamentId);
       res.json(teams);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
