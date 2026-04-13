@@ -148,18 +148,24 @@ export function registerObjectStorageRoutes(app: Express): void {
 
   app.use("/objects", async (req, res, next) => {
     if (req.method !== "GET") return next();
+
+    // In migrated environments, serve legacy /objects/uploads directly from local assets.
+    const localLegacyFile = tryResolveLegacyUpload(req.path);
+    if (localLegacyFile) {
+      return res.sendFile(localLegacyFile);
+    }
+
+    // If object storage is not configured, return 404 for legacy uploads that
+    // are not present locally instead of throwing noisy configuration errors.
+    if (!process.env.PRIVATE_OBJECT_DIR && req.path.startsWith("/uploads/")) {
+      return res.status(404).json({ error: "Object not found" });
+    }
+
     try {
       const fullPath = `/objects${req.path}`;
       const objectFile = await objectStorageService.getObjectEntityFile(fullPath);
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
-      // Fallback for migrated deployments that keep legacy /objects/uploads links
-      // but now store files under attached_assets/replit_images/uploads.
-      const localLegacyFile = tryResolveLegacyUpload(req.path);
-      if (localLegacyFile) {
-        return res.sendFile(localLegacyFile);
-      }
-
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Object not found" });
       }
