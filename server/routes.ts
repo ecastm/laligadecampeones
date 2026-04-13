@@ -1164,6 +1164,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("[captain/team POST] Error:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });
@@ -1598,6 +1599,7 @@ export async function registerRoutes(
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      console.error("[referee/result] Error:", error);
       res.status(500).json({ message: "Error interno del servidor" });
     }
   });

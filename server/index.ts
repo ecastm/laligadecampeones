@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -155,6 +154,13 @@ app.use((req, res, next) => {
   }
 
   try {
+    await pool.query(`ALTER TABLE team_payments ALTER COLUMN paid_at DROP NOT NULL`);
+    console.log("Schema sync: team_payments.paid_at made nullable");
+  } catch (e) {
+    console.log("Schema sync: team_payments.paid_at already nullable or skipped");
+  }
+
+  try {
     await pool.query(`CREATE TABLE IF NOT EXISTS messages (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       from_user_id VARCHAR(255) NOT NULL,
@@ -197,16 +203,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  const listenOptions: Parameters<typeof httpServer.listen>[0] = {
-    port,
-    host: "0.0.0.0",
-  };
-
-  if (process.platform !== "win32") {
-    listenOptions.reusePort = true;
-  }
-
-  httpServer.listen(listenOptions, () => {
-    log(`serving on port ${port}`);
-  });
+  httpServer.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();

@@ -660,7 +660,7 @@ export default function TournamentManagement() {
                     <Layers className="mr-1 h-3 w-3" />
                     Fases
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setGeneratingSchedule(tournament)} data-testid={`button-generate-schedule-${tournament.id}`}>
+                  <Button size="sm" variant="secondary" onClick={() => setGeneratingSchedule(tournament)} data-testid={`button-generate-schedule-${tournament.id}`} className="hidden">
                     <CalendarPlus className="mr-1 h-3 w-3" />
                     Calendario
                   </Button>
@@ -672,7 +672,7 @@ export default function TournamentManagement() {
                     if (confirm("¿Estás seguro de eliminar este torneo? Se eliminarán todos los equipos, partidos y datos asociados.")) {
                       deleteMutation.mutate(tournament.id);
                     }
-                  }} data-testid={`button-delete-tournament-${tournament.id}`}>
+                  }} data-testid={`button-delete-tournament-${tournament.id}`} className="hidden">
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </CardFooter>
@@ -736,7 +736,7 @@ export default function TournamentManagement() {
                     if (confirm("¿Estás seguro de eliminar este torneo del historial?")) {
                       deleteMutation.mutate(tournament.id);
                     }
-                  }} data-testid={`button-delete-completed-tournament-${tournament.id}`}>
+                  }} data-testid={`button-delete-completed-tournament-${tournament.id}`} className="hidden">
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </CardFooter>
