@@ -62,10 +62,29 @@ function mapUrlToLocal(url: string): string | null {
 
 async function migrateTable(
   tableName: string,
-  columnName: string,
+  columnCandidates: string[],
   isArray: boolean = false
 ) {
   try {
+    const columnResult = await pool.query<{ column_name: string }>(
+      `SELECT column_name
+       FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name = $1
+         AND column_name = ANY($2::text[])
+       LIMIT 1`,
+      [tableName, columnCandidates]
+    );
+
+    if (columnResult.rows.length === 0) {
+      const errorMsg = `Skipping ${tableName}: none of these columns exist [${columnCandidates.join(", ")}]`;
+      console.warn(errorMsg);
+      stats.errors.push(errorMsg);
+      return;
+    }
+
+    const columnName = columnResult.rows[0].column_name;
+
     console.log(
       `\nMigrating ${tableName}.${columnName}${isArray ? " (array)" : ""}...`
     );
@@ -129,7 +148,7 @@ async function migrateTable(
       stats.totalImages++;
     }
   } catch (error) {
-    const errorMsg = `Error migrating ${tableName}.${columnName}: ${
+    const errorMsg = `Error migrating ${tableName} [${columnCandidates.join(", ")}]: ${
       error instanceof Error ? error.message : String(error)
     }`;
     console.error(errorMsg);
@@ -143,18 +162,18 @@ async function main() {
   try {
     // List of tables and columns to migrate
     const columnsToMigrate = [
-      { table: "teams", column: "logoUrl", isArray: false },
-      { table: "players", column: "photoUrls", isArray: true },
-      { table: "matches", column: "vsImageUrl", isArray: false },
-      { table: "news", column: "imageUrl", isArray: false },
-      { table: "expenses", column: "receiptUrl", isArray: false },
-      { table: "marketing_media", column: "url", isArray: false },
-      { table: "marketing_media", column: "thumbnail_url", isArray: false },
-      { table: "site_settings", column: "logoUrl", isArray: false },
+      { table: "teams", columns: ["logo_url", "logoUrl"], isArray: false },
+      { table: "players", columns: ["photo_urls", "photoUrls"], isArray: true },
+      { table: "matches", columns: ["vs_image_url", "vsImageUrl"], isArray: false },
+      { table: "news", columns: ["image_url", "imageUrl"], isArray: false },
+      { table: "expenses", columns: ["receipt_url", "receiptUrl"], isArray: false },
+      { table: "marketing_media", columns: ["url"], isArray: false },
+      { table: "marketing_media", columns: ["thumbnail_url"], isArray: false },
+      { table: "site_settings", columns: ["logo_url", "logoUrl"], isArray: false },
     ];
 
-    for (const { table, column, isArray } of columnsToMigrate) {
-      await migrateTable(table, column, isArray);
+    for (const { table, columns, isArray } of columnsToMigrate) {
+      await migrateTable(table, columns, isArray);
     }
 
     console.log("\n" + "=".repeat(60));
