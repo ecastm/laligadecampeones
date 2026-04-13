@@ -3,6 +3,8 @@ import multer from "multer";
 import { ObjectStorageService, ObjectNotFoundError, objectStorageClient } from "./objectStorage";
 import { randomUUID } from "crypto";
 import { verifyToken, type JWTPayload } from "../../auth";
+import fs from "fs";
+import path from "path";
 
 function parseObjectPath(path: string): {
   bucketName: string;
@@ -27,6 +29,21 @@ function parseObjectPath(path: string): {
 
 export function registerObjectStorageRoutes(app: Express): void {
   const objectStorageService = new ObjectStorageService();
+  const uploadsDir = path.resolve(process.cwd(), "attached_assets", "replit_images", "uploads");
+
+  const tryResolveLegacyUpload = (reqPath: string): string | null => {
+    const match = reqPath.match(/^\/uploads\/([^/?]+)/);
+    if (!match) return null;
+
+    const objectId = match[1];
+    if (!fs.existsSync(uploadsDir)) return null;
+
+    const files = fs.readdirSync(uploadsDir);
+    const matchingFile = files.find((file) => file.includes(objectId) || file.startsWith(objectId));
+    if (!matchingFile) return null;
+
+    return path.join(uploadsDir, matchingFile);
+  };
   const ALLOWED_MIMES = [
     "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp", "image/svg+xml",
     "image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence",
@@ -136,6 +153,13 @@ export function registerObjectStorageRoutes(app: Express): void {
       const objectFile = await objectStorageService.getObjectEntityFile(fullPath);
       await objectStorageService.downloadObject(objectFile, res);
     } catch (error) {
+      // Fallback for migrated deployments that keep legacy /objects/uploads links
+      // but now store files under attached_assets/replit_images/uploads.
+      const localLegacyFile = tryResolveLegacyUpload(req.path);
+      if (localLegacyFile) {
+        return res.sendFile(localLegacyFile);
+      }
+
       if (error instanceof ObjectNotFoundError) {
         return res.status(404).json({ error: "Object not found" });
       }
