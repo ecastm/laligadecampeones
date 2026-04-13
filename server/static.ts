@@ -3,7 +3,19 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
+  const projectRoot = path.resolve(__dirname, "..");
+  const attachedAssetsPath = path.resolve(projectRoot, "attached_assets");
   const distPath = path.resolve(__dirname, "public");
+
+  if (fs.existsSync(attachedAssetsPath)) {
+    app.use(
+      "/attached_assets",
+      express.static(attachedAssetsPath, {
+        maxAge: "7d",
+      }),
+    );
+  }
+
   if (!fs.existsSync(distPath)) {
     throw new Error(
       `Could not find the build directory: ${distPath}, make sure to build the client first`,
