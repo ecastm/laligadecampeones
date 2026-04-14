@@ -77,7 +77,7 @@ export interface IStorage {
   deletePlayer(id: string): Promise<void>;
 
   // Matches
-  getMatches(tournamentId?: string): Promise<Match[]>;
+  getMatches(tournamentId?: string, divisionId?: string): Promise<Match[]>;
   getAllMatchesWithTeams(tournamentId: string): Promise<MatchWithTeams[]>;
   getMatch(id: string): Promise<Match | undefined>;
   getMatchWithTeams(id: string): Promise<MatchWithTeams | undefined>;
@@ -196,7 +196,7 @@ export interface IStorage {
   deleteContactMessage(id: string): Promise<void>;
 
   // Schedule Generation
-  generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean): Promise<Match[]>;
+  generateRoundRobinSchedule(tournamentId: string, doubleRound?: boolean, divisionId?: string): Promise<Match[]>;
 
   // Site Settings
   getSiteSettings(): Promise<SiteSettings | null>;
@@ -248,7 +248,9 @@ export class MemStorage implements IStorage {
   private captainProfiles: Map<string, CaptainProfile>;
   private divisions: Map<string, Division>;
   private tournamentTypes: Map<string, TournamentType>;
+  private tournamentStages: Map<string, TournamentStage>;
   private matchLineups: Map<string, MatchLineup>;
+  private matchAttendanceMap: Map<string, MatchAttendance>;
   private matchEvidence: Map<string, MatchEvidence>;
   private fines: Map<string, Fine>;
   private teamPayments: Map<string, TeamPayment>;
@@ -269,7 +271,9 @@ export class MemStorage implements IStorage {
     this.captainProfiles = new Map();
     this.divisions = new Map();
     this.tournamentTypes = new Map();
+    this.tournamentStages = new Map();
     this.matchLineups = new Map();
+    this.matchAttendanceMap = new Map();
     this.matchEvidence = new Map();
     this.fines = new Map();
     this.teamPayments = new Map();
@@ -450,6 +454,55 @@ export class MemStorage implements IStorage {
     }
   }
 
+  // Tournament Stages
+  async getStagesByTournament(tournamentId: string): Promise<TournamentStage[]> {
+    return Array.from(this.tournamentStages.values())
+      .filter((s) => s.tournamentId === tournamentId)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  async getStage(id: string): Promise<TournamentStage | undefined> {
+    return this.tournamentStages.get(id);
+  }
+
+  async createStage(stage: InsertTournamentStage): Promise<TournamentStage> {
+    const id = randomUUID();
+    const newStage: TournamentStage = {
+      id,
+      tournamentId: stage.tournamentId,
+      name: stage.name,
+      stageType: stage.stageType,
+      sortOrder: stage.sortOrder,
+    };
+    this.tournamentStages.set(id, newStage);
+    return newStage;
+  }
+
+  async updateStage(id: string, data: Partial<InsertTournamentStage>): Promise<TournamentStage | undefined> {
+    const stage = this.tournamentStages.get(id);
+    if (!stage) return undefined;
+    const updated: TournamentStage = {
+      ...stage,
+      ...data,
+    };
+    this.tournamentStages.set(id, updated);
+    return updated;
+  }
+
+  async deleteStage(id: string): Promise<void> {
+    this.tournamentStages.delete(id);
+  }
+
+  async getMatchCountByStage(stageId: string): Promise<number> {
+    return Array.from(this.matches.values()).filter((m) => m.stageId === stageId).length;
+  }
+
+  async getTeamsByTournamentAndCaptain(tournamentId: string, userId: string): Promise<Team[]> {
+    return Array.from(this.teams.values()).filter(
+      (t) => t.tournamentId === tournamentId && t.captainUserId === userId
+    );
+  }
+
   // Teams
   async getTeams(tournamentId?: string): Promise<Team[]> {
     const teams = Array.from(this.teams.values());
@@ -526,12 +579,10 @@ export class MemStorage implements IStorage {
   }
 
   // Matches
-  async getMatches(tournamentId?: string): Promise<Match[]> {
+  async getMatches(tournamentId?: string, divisionId?: string): Promise<Match[]> {
     const matches = Array.from(this.matches.values());
-    if (tournamentId) {
-      return matches.filter(m => m.tournamentId === tournamentId);
-    }
-    return matches;
+    const byTournament = tournamentId ? matches.filter(m => m.tournamentId === tournamentId) : matches;
+    return divisionId ? byTournament.filter(m => m.divisionId === divisionId) : byTournament;
   }
 
   async getMatch(id: string): Promise<Match | undefined> {
@@ -542,16 +593,16 @@ export class MemStorage implements IStorage {
     const match = this.matches.get(id);
     if (!match) return undefined;
 
-    const homeTeam = await this.getTeam(match.homeTeamId);
-    const awayTeam = await this.getTeam(match.awayTeamId);
+    const homeTeam = match.homeTeamId ? await this.getTeam(match.homeTeamId) : null;
+    const awayTeam = match.awayTeamId ? await this.getTeam(match.awayTeamId) : null;
     const referee = match.refereeUserId ? await this.getUser(match.refereeUserId) : undefined;
     const refereeProfile = match.refereeUserId ? await this.getRefereeProfile(match.refereeUserId) : undefined;
     const events = await this.getMatchEvents(id);
 
     return {
       ...match,
-      homeTeam: homeTeam!,
-      awayTeam: awayTeam!,
+      homeTeam: homeTeam || null,
+      awayTeam: awayTeam || null,
       referee: referee ? { ...referee, passwordHash: undefined } as any : undefined,
       refereeProfile,
       events,
@@ -592,7 +643,15 @@ export class MemStorage implements IStorage {
 
   async createMatch(insertMatch: InsertMatch): Promise<Match> {
     const id = randomUUID();
-    const match: Match = { id, ...insertMatch };
+    const match: Match = {
+      id,
+      ...insertMatch,
+      refereeUserId: insertMatch.refereeUserId ?? undefined,
+      homeTeamId: insertMatch.homeTeamId ?? null,
+      awayTeamId: insertMatch.awayTeamId ?? null,
+      stage: (insertMatch.stage as any) ?? undefined,
+      stageId: insertMatch.stageId ?? undefined,
+    };
     this.matches.set(id, match);
     return match;
   }
@@ -600,7 +659,15 @@ export class MemStorage implements IStorage {
   async updateMatch(id: string, data: Partial<InsertMatch>): Promise<Match | undefined> {
     const match = this.matches.get(id);
     if (!match) return undefined;
-    const updated = { ...match, ...data };
+    const updated: Match = {
+      ...match,
+      ...data,
+      refereeUserId: data.refereeUserId === null ? undefined : (data.refereeUserId ?? match.refereeUserId),
+      homeTeamId: data.homeTeamId === undefined ? match.homeTeamId : data.homeTeamId,
+      awayTeamId: data.awayTeamId === undefined ? match.awayTeamId : data.awayTeamId,
+      stage: (data.stage as any) ?? match.stage,
+      stageId: data.stageId === null ? undefined : (data.stageId ?? match.stageId),
+    };
     this.matches.set(id, updated);
     return updated;
   }
@@ -669,6 +736,7 @@ export class MemStorage implements IStorage {
     }
 
     for (const match of matches) {
+      if (!match.homeTeamId || !match.awayTeamId) continue;
       const homeStanding = standings.get(match.homeTeamId);
       const awayStanding = standings.get(match.awayTeamId);
       if (!homeStanding || !awayStanding) continue;
@@ -1011,13 +1079,12 @@ export class MemStorage implements IStorage {
 
   // Match Attendance
   async getMatchAttendance(matchId: string, teamId?: string): Promise<MatchAttendance[]> {
-    let records = Array.from(this.matchAttendanceMap?.values() || []).filter(a => a.matchId === matchId);
+    let records = Array.from(this.matchAttendanceMap.values()).filter(a => a.matchId === matchId);
     if (teamId) records = records.filter(a => a.teamId === teamId);
     return records;
   }
 
   async saveMatchAttendance(matchId: string, teamId: string, attendance: { playerId: string; present: boolean }[]): Promise<MatchAttendance[]> {
-    if (!this.matchAttendanceMap) this.matchAttendanceMap = new Map();
     for (const [key, val] of this.matchAttendanceMap) {
       if (val.matchId === matchId && val.teamId === teamId) {
         this.matchAttendanceMap.delete(key);
@@ -1041,7 +1108,6 @@ export class MemStorage implements IStorage {
   }
 
   async deleteMatchAttendance(matchId: string, teamId: string): Promise<void> {
-    if (!this.matchAttendanceMap) return;
     for (const [key, val] of this.matchAttendanceMap) {
       if (val.matchId === matchId && val.teamId === teamId) {
         this.matchAttendanceMap.delete(key);
@@ -1115,6 +1181,7 @@ export class MemStorage implements IStorage {
     const newFine: Fine = {
       id,
       ...fine,
+      playerId: fine.playerId ?? undefined,
       status: fine.status || "PENDIENTE",
       createdAt: new Date().toISOString(),
     };
@@ -1239,11 +1306,13 @@ export class MemStorage implements IStorage {
   }
 
   // Schedule Generation - Round Robin Circle Method
-  async generateRoundRobinSchedule(tournamentId: string, doubleRound: boolean = false): Promise<Match[]> {
+  async generateRoundRobinSchedule(tournamentId: string, doubleRound: boolean = false, divisionId?: string): Promise<Match[]> {
     const tournament = await this.getTournament(tournamentId);
     if (!tournament) throw new Error("Torneo no encontrado");
 
-    const teams = await this.getTeams(tournamentId);
+    const teams = divisionId
+      ? (await this.getTeams(tournamentId)).filter((t) => t.divisionId === divisionId)
+      : await this.getTeams(tournamentId);
     if (teams.length < 2) throw new Error("Se necesitan al menos 2 equipos");
 
     // Delete existing matches for this tournament

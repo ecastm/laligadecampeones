@@ -49,6 +49,16 @@ interface User {
   role: string;
 }
 
+interface MessageItem {
+  id: string;
+  fromUserId: string;
+  toUserId: string | null;
+  subject: string;
+  content: string;
+  createdAt: string;
+  readAt?: string | null;
+}
+
 export default function MessagingPanel() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -65,18 +75,18 @@ export default function MessagingPanel() {
   });
 
   // Fetch users for admin selector
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
-    queryFn: () => apiRequest("/api/admin/users"),
+    queryFn: async () => (await apiRequest("GET", "/api/admin/users")).json(),
     enabled: user?.role === "ADMIN",
   });
 
   const validRecipients = users.filter((u: any) => u.role === "ARBITRO" || u.role === "CAPITAN");
 
   // Fetch messages with polling
-  const { data: messages = [], isLoading: messagesLoading, refetch } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery<MessageItem[]>({
     queryKey: ["/api/messages"],
-    queryFn: () => apiRequest("/api/messages"),
+    queryFn: async () => (await apiRequest("GET", "/api/messages")).json(),
     refetchInterval: 30000, // Poll every 30 seconds
   });
 
@@ -133,13 +143,10 @@ export default function MessagingPanel() {
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (data: MessageForm) => {
-      return apiRequest("/api/messages", {
-        method: "POST",
-        body: JSON.stringify({
-          toUserIds: data.toUserIds && data.toUserIds.length > 0 ? data.toUserIds : null,
-          subject: data.subject,
-          content: data.content,
-        }),
+      return apiRequest("POST", "/api/messages", {
+        toUserIds: data.toUserIds && data.toUserIds.length > 0 ? data.toUserIds : null,
+        subject: data.subject,
+        content: data.content,
       });
     },
     onSuccess: () => {
@@ -163,9 +170,7 @@ export default function MessagingPanel() {
   // Mark message as read
   const markReadMutation = useMutation({
     mutationFn: async (messageId: string) => {
-      return apiRequest(`/api/messages/${messageId}/read`, {
-        method: "PUT",
-      });
+      return apiRequest("PUT", `/api/messages/${messageId}/read`);
     },
   });
 

@@ -157,7 +157,9 @@ export default function SiteSettingsManagement() {
                 <FormField
                   control={form.control}
                   name="phone"
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const { value, ...rest } = field;
+                    return (
                     <FormItem>
                       <FormLabel className="flex items-center gap-1">
                         <Phone className="h-3.5 w-3.5" />
@@ -167,17 +169,21 @@ export default function SiteSettingsManagement() {
                         <Input
                           placeholder="Ej: +34 600 123 456"
                           data-testid="input-phone"
-                          {...field}
+                          value={value ?? ""}
+                          {...rest}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
+                  );
+                  }}
                 />
                 <FormField
                   control={form.control}
                   name="email"
-                  render={({ field }) => (
+                  render={({ field }) => {
+                    const { value, ...rest } = field;
+                    return (
                     <FormItem>
                       <FormLabel className="flex items-center gap-1">
                         <Mail className="h-3.5 w-3.5" />
@@ -187,18 +193,22 @@ export default function SiteSettingsManagement() {
                         <Input
                           placeholder="Ej: info@laliga.com"
                           data-testid="input-email"
-                          {...field}
+                          value={value ?? ""}
+                          {...rest}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
+                  );
+                  }}
                 />
               </div>
               <FormField
                 control={form.control}
                 name="address"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const { value, ...rest } = field;
+                  return (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <MapPin className="h-3.5 w-3.5" />
@@ -209,12 +219,14 @@ export default function SiteSettingsManagement() {
                         placeholder="Ej: C/ James Joyce 47, Teatinos, 29010 Málaga"
                         rows={2}
                         data-testid="input-address"
-                        {...field}
+                        value={value ?? ""}
+                        {...rest}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                );
+                }}
               />
             </CardContent>
           </Card>
@@ -233,7 +245,9 @@ export default function SiteSettingsManagement() {
               <FormField
                 control={form.control}
                 name="instagramUrl"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const { value, ...rest } = field;
+                  return (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <Instagram className="h-3.5 w-3.5" />
@@ -243,17 +257,21 @@ export default function SiteSettingsManagement() {
                       <Input
                         placeholder="Ej: https://instagram.com/tuliga"
                         data-testid="input-instagram"
-                        {...field}
+                        value={value ?? ""}
+                        {...rest}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                );
+                }}
               />
               <FormField
                 control={form.control}
                 name="facebookUrl"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const { value, ...rest } = field;
+                  return (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <Facebook className="h-3.5 w-3.5" />
@@ -263,17 +281,21 @@ export default function SiteSettingsManagement() {
                       <Input
                         placeholder="Ej: https://facebook.com/tuliga"
                         data-testid="input-facebook"
-                        {...field}
+                        value={value ?? ""}
+                        {...rest}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                );
+                }}
               />
               <FormField
                 control={form.control}
                 name="whatsappNumber"
-                render={({ field }) => (
+                render={({ field }) => {
+                  const { value, ...rest } = field;
+                  return (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <MessageCircle className="h-3.5 w-3.5" />
@@ -283,12 +305,14 @@ export default function SiteSettingsManagement() {
                       <Input
                         placeholder="Ej: +34 600 123 456"
                         data-testid="input-whatsapp"
-                        {...field}
+                        value={value ?? ""}
+                        {...rest}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
-                )}
+                );
+                }}
               />
             </CardContent>
           </Card>

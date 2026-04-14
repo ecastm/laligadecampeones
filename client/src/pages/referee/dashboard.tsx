@@ -552,11 +552,11 @@ function MatchDetailsDialog({
                             </p>
                             <div className="flex items-center gap-2">
                               <span className="text-red-500 text-xs">✖</span>
-                              <span className="truncate">{sub.playerOutName || "Jugador"}</span>
+                              <span className="truncate">{sub.playerOutId || "Jugador"}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span className="text-green-500 text-xs">✓</span>
-                              <span className="truncate">{sub.playerInName || "Jugador"}</span>
+                              <span className="truncate">{sub.playerInId || "Jugador"}</span>
                             </div>
                           </div>
                         </div>

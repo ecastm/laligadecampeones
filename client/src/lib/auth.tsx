@@ -5,7 +5,7 @@ interface AuthContextType {
   user: Omit<User, 'passwordHash'> | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: string) => Promise<void>;
+  register: (name: string, email: string, password: string, role: string, phone?: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
 }

@@ -9,6 +9,7 @@ if (!JWT_SECRET) {
   console.error("ERROR: SESSION_SECRET environment variable is required for JWT security");
   process.exit(1);
 }
+const JWT_SECRET_VALUE = JWT_SECRET as string;
 
 export interface JWTPayload {
   userId: string;
@@ -17,12 +18,12 @@ export interface JWTPayload {
 }
 
 export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(payload, JWT_SECRET_VALUE, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload;
+    return jwt.verify(token, JWT_SECRET_VALUE) as unknown as JWTPayload;
   } catch {
     return null;
   }

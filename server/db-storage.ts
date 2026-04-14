@@ -796,6 +796,7 @@ export class DatabaseStorage implements IStorage {
     }
 
     for (const match of matches) {
+      if (!match.homeTeamId || !match.awayTeamId) continue;
       const homeStanding = standings.get(match.homeTeamId);
       const awayStanding = standings.get(match.awayTeamId);
       if (!homeStanding || !awayStanding) continue;

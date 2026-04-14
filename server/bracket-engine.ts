@@ -151,7 +151,7 @@ export async function advanceBracketWinner(
   const getMatchesByPhase = (phase: string) =>
     allMatches.filter(m => m.phase === phase).sort((a, b) => a.matchOrder - b.matchOrder);
 
-  const placeWinnerInNextMatch = (nextMatches: { id: string; homeTeamId: string | null; awayTeamId: string | null }[], targetIdx: number, asHome: boolean) => {
+  const placeWinnerInNextMatch = (nextMatches: { id: string; homeTeamId?: string | null; awayTeamId?: string | null }[], targetIdx: number, asHome: boolean) => {
     if (targetIdx < nextMatches.length) {
       const target = nextMatches[targetIdx];
       if (asHome) {

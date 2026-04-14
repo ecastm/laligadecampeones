@@ -36,6 +36,10 @@ import { z } from "zod";
 import { sendWelcomeCaptainEmail, sendFineNotificationEmail, sendMatchResultEmail } from "./email-service";
 import { recalculateStandings } from "./standings-engine";
 
+function param(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -499,7 +503,7 @@ export async function registerRoutes(
 
   app.get("/api/matches/:id", async (req, res) => {
     try {
-      const match = await storage.getMatchWithTeams(req.params.id);
+      const match = await storage.getMatchWithTeams(param(req.params.id));
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
@@ -524,7 +528,7 @@ export async function registerRoutes(
          LEFT JOIN teams t ON f.team_id = t.id
          WHERE f.match_id = $1
          ORDER BY f.created_at ASC`,
-        [req.params.id]
+        [param(req.params.id)]
       );
       res.json(result.rows);
     } catch {
@@ -534,7 +538,7 @@ export async function registerRoutes(
 
   app.get("/api/teams/:id/players", async (req, res) => {
     try {
-      const players = await storage.getPlayers(req.params.id);
+      const players = await storage.getPlayers(param(req.params.id));
       res.json(players);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -564,7 +568,7 @@ export async function registerRoutes(
 
   app.get("/api/home/news/:id", async (req, res) => {
     try {
-      const news = await storage.getNewsItem(req.params.id);
+      const news = await storage.getNewsItem(param(req.params.id));
       if (!news) {
         return res.status(404).json({ message: "Noticia no encontrada" });
       }
@@ -586,7 +590,7 @@ export async function registerRoutes(
 
   app.get("/api/tournaments/:id", async (req, res) => {
     try {
-      const tournament = await storage.getTournament(req.params.id);
+      const tournament = await storage.getTournament(param(req.params.id));
       if (!tournament) {
         return res.status(404).json({ message: "Torneo no encontrado" });
       }
@@ -623,7 +627,7 @@ export async function registerRoutes(
   app.put("/api/admin/tournaments/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertTournamentSchema.partial().parse(req.body);
-      const tournament = await storage.updateTournament(req.params.id, data);
+      const tournament = await storage.updateTournament(param(req.params.id), data);
       if (!tournament) {
         return res.status(404).json({ message: "Torneo no encontrado" });
       }
@@ -639,7 +643,7 @@ export async function registerRoutes(
   app.post("/api/admin/tournaments/:id/finish", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = finishTournamentSchema.parse(req.body);
-      const tournament = await storage.finishTournament(req.params.id, data.championTeamId);
+      const tournament = await storage.finishTournament(param(req.params.id), data.championTeamId);
       if (!tournament) {
         return res.status(404).json({ message: "Torneo no encontrado" });
       }
@@ -654,7 +658,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/tournaments/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      await storage.deleteTournament(req.params.id);
+      await storage.deleteTournament(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -664,7 +668,7 @@ export async function registerRoutes(
   // Tournament Stages
   app.get("/api/admin/tournaments/:tournamentId/stages", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      const stages = await storage.getStagesByTournament(param(req.params.tournamentId));
       res.json(stages);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -675,7 +679,7 @@ export async function registerRoutes(
     try {
       const data = insertTournamentStageSchema.parse({
         ...req.body,
-        tournamentId: req.params.tournamentId,
+        tournamentId: param(req.params.tournamentId),
       });
       const stage = await storage.createStage(data);
       res.status(201).json(stage);
@@ -690,7 +694,7 @@ export async function registerRoutes(
   app.put("/api/admin/stages/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertTournamentStageSchema.partial().parse(req.body);
-      const stage = await storage.updateStage(req.params.id, data);
+      const stage = await storage.updateStage(param(req.params.id), data);
       if (!stage) {
         return res.status(404).json({ message: "Fase no encontrada" });
       }
@@ -705,11 +709,11 @@ export async function registerRoutes(
 
   app.delete("/api/admin/stages/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      const matchCount = await storage.getMatchCountByStage(req.params.id);
+      const matchCount = await storage.getMatchCountByStage(param(req.params.id));
       if (matchCount > 0) {
         return res.status(400).json({ message: "No se puede eliminar una fase que tiene partidos asignados" });
       }
-      await storage.deleteStage(req.params.id);
+      await storage.deleteStage(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -725,7 +729,7 @@ export async function registerRoutes(
       for (let i = 0; i < stageIds.length; i++) {
         await storage.updateStage(stageIds[i], { sortOrder: i + 1 });
       }
-      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      const stages = await storage.getStagesByTournament(param(req.params.tournamentId));
       res.json(stages);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -735,7 +739,7 @@ export async function registerRoutes(
   // Public stages endpoint for match forms
   app.get("/api/tournaments/:tournamentId/stages", authenticate, async (req, res) => {
     try {
-      const stages = await storage.getStagesByTournament(req.params.tournamentId);
+      const stages = await storage.getStagesByTournament(param(req.params.tournamentId));
       res.json(stages);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -775,11 +779,11 @@ export async function registerRoutes(
       const data = updateUserSchema.parse(req.body);
       if (data.email) {
         const existing = await storage.getUserByEmail(data.email);
-        if (existing && existing.id !== req.params.id) {
+        if (existing && existing.id !== param(req.params.id)) {
           return res.status(400).json({ message: "El email ya está registrado por otro usuario" });
         }
       }
-      const user = await storage.updateUser(req.params.id, data);
+      const user = await storage.updateUser(param(req.params.id), data);
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado" });
       }
@@ -795,7 +799,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/users/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      await storage.deleteUser(req.params.id);
+      await storage.deleteUser(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -832,7 +836,7 @@ export async function registerRoutes(
   app.put("/api/admin/teams/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertTeamSchema.partial().parse(req.body);
-      const team = await storage.updateTeam(req.params.id, data);
+      const team = await storage.updateTeam(param(req.params.id), data);
       if (!team) {
         return res.status(404).json({ message: "Equipo no encontrado" });
       }
@@ -847,7 +851,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/teams/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      await storage.deleteTeam(req.params.id);
+      await storage.deleteTeam(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -892,7 +896,7 @@ export async function registerRoutes(
   app.put("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertPlayerSchema.partial().parse(req.body);
-      const player = await storage.getPlayer(req.params.id);
+      const player = await storage.getPlayer(param(req.params.id));
       if (!player) {
         return res.status(404).json({ message: "Jugador no encontrado" });
       }
@@ -906,7 +910,7 @@ export async function registerRoutes(
         }
       }
       
-      const updated = await storage.updatePlayer(req.params.id, data);
+      const updated = await storage.updatePlayer(param(req.params.id), data);
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -918,7 +922,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/players/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      const player = await storage.getPlayer(req.params.id);
+      const player = await storage.getPlayer(param(req.params.id));
       if (!player) {
         return res.status(404).json({ message: "Jugador no encontrado" });
       }
@@ -932,7 +936,7 @@ export async function registerRoutes(
         }
       }
       
-      await storage.deletePlayer(req.params.id);
+      await storage.deletePlayer(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -988,13 +992,13 @@ export async function registerRoutes(
         if (!stage) {
           return res.status(400).json({ message: "La fase seleccionada no existe" });
         }
-        const existingMatch = await storage.getMatch(req.params.id);
+        const existingMatch = await storage.getMatch(param(req.params.id));
         const tournamentId = data.tournamentId || existingMatch?.tournamentId;
         if (stage.tournamentId !== tournamentId) {
           return res.status(400).json({ message: "La fase no pertenece al torneo del partido" });
         }
       }
-      const match = await storage.updateMatch(req.params.id, data);
+      const match = await storage.updateMatch(param(req.params.id), data);
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
@@ -1009,7 +1013,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/matches/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
-      await storage.deleteMatch(req.params.id);
+      await storage.deleteMatch(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1020,7 +1024,7 @@ export async function registerRoutes(
   app.put("/api/admin/tournaments/:id", authenticate, authorizeRoles("ADMIN"), async (req, res) => {
     try {
       const data = insertTournamentSchema.partial().parse(req.body);
-      const tournament = await storage.updateTournament(req.params.id, data);
+      const tournament = await storage.updateTournament(param(req.params.id), data);
       if (!tournament) {
         return res.status(404).json({ message: "Torneo no encontrado" });
       }
@@ -1059,7 +1063,7 @@ export async function registerRoutes(
   app.put("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertNewsSchema.partial().parse(req.body);
-      const news = await storage.updateNews(req.params.id, data);
+      const news = await storage.updateNews(param(req.params.id), data);
       if (!news) {
         return res.status(404).json({ message: "Noticia no encontrada" });
       }
@@ -1074,7 +1078,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/news/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req, res) => {
     try {
-      await storage.deleteNews(req.params.id);
+      await storage.deleteNews(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1241,13 +1245,13 @@ export async function registerRoutes(
         }
       }
       
-      const player = await storage.getPlayer(req.params.id);
+      const player = await storage.getPlayer(param(req.params.id));
       if (!player || player.teamId !== user.teamId) {
         return res.status(403).json({ message: "No puedes editar jugadores de otro equipo" });
       }
       const data = insertPlayerSchema.partial().parse(req.body);
       delete (data as any).teamId;
-      const updated = await storage.updatePlayer(req.params.id, data);
+      const updated = await storage.updatePlayer(param(req.params.id), data);
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1277,11 +1281,11 @@ export async function registerRoutes(
         }
       }
       
-      const player = await storage.getPlayer(req.params.id);
+      const player = await storage.getPlayer(param(req.params.id));
       if (!player || player.teamId !== user.teamId) {
         return res.status(403).json({ message: "No puedes eliminar jugadores de otro equipo" });
       }
-      await storage.deletePlayer(req.params.id);
+      await storage.deletePlayer(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1319,7 +1323,7 @@ export async function registerRoutes(
 
   app.get("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const profile = await storage.getRefereeProfileById(req.params.id);
+      const profile = await storage.getRefereeProfileById(param(req.params.id));
       if (!profile) {
         return res.status(404).json({ message: "Perfil de árbitro no encontrado" });
       }
@@ -1336,7 +1340,7 @@ export async function registerRoutes(
   app.put("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const data = insertRefereeProfileSchema.partial().parse(req.body);
-      const profile = await storage.updateRefereeProfileById(req.params.id, data);
+      const profile = await storage.updateRefereeProfileById(param(req.params.id), data);
       if (!profile) {
         return res.status(404).json({ message: "Perfil de árbitro no encontrado" });
       }
@@ -1351,7 +1355,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/referees/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteRefereeProfile(req.params.id);
+      await storage.deleteRefereeProfile(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1460,7 +1464,7 @@ export async function registerRoutes(
         }
       }
 
-      const match = await storage.getMatch(req.params.id);
+      const match = await storage.getMatch(param(req.params.id));
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
@@ -1577,7 +1581,7 @@ export async function registerRoutes(
 
       const updatedMatch = await storage.getMatchWithTeams(match.id);
 
-      if (updatedMatch) {
+      if (updatedMatch && match.homeTeamId && match.awayTeamId) {
         const homeTeamName = updatedMatch.homeTeam?.name || "Local";
         const awayTeamName = updatedMatch.awayTeam?.name || "Visitante";
         notifyMatchResult(
@@ -1660,7 +1664,7 @@ export async function registerRoutes(
 
   app.get("/api/divisions/:id", async (req, res) => {
     try {
-      const division = await storage.getDivision(req.params.id);
+      const division = await storage.getDivision(param(req.params.id));
       if (!division) {
         return res.status(404).json({ message: "División no encontrada" });
       }
@@ -1695,7 +1699,7 @@ export async function registerRoutes(
   app.put("/api/admin/divisions/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const data = insertDivisionSchema.partial().parse(req.body);
-      const division = await storage.updateDivision(req.params.id, data);
+      const division = await storage.updateDivision(param(req.params.id), data);
       if (!division) {
         return res.status(404).json({ message: "División no encontrada" });
       }
@@ -1710,7 +1714,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/divisions/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteDivision(req.params.id);
+      await storage.deleteDivision(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1729,7 +1733,7 @@ export async function registerRoutes(
 
   app.get("/api/tournament-types/:id", async (req, res) => {
     try {
-      const type = await storage.getTournamentType(req.params.id);
+      const type = await storage.getTournamentType(param(req.params.id));
       if (!type) {
         return res.status(404).json({ message: "Tipo de torneo no encontrado" });
       }
@@ -1742,7 +1746,7 @@ export async function registerRoutes(
   // ==================== SCHEDULE GENERATION ====================
   app.post("/api/admin/tournaments/:id/generate-schedule", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const tournamentId = req.params.id;
+      const tournamentId = param(req.params.id);
       const { doubleRound, divisionId } = req.body;
       
       const tournament = await storage.getTournament(tournamentId);
@@ -1771,7 +1775,7 @@ export async function registerRoutes(
 
   app.get("/api/admin/tournaments/:id/schedule-preview", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const tournamentId = req.params.id;
+      const tournamentId = param(req.params.id);
       const { doubleRound } = req.query;
       
       const tournament = await storage.getTournament(tournamentId);
@@ -1813,7 +1817,7 @@ export async function registerRoutes(
   // ==================== MATCH LINEUPS (Referee) ====================
   app.get("/api/referee/matches/:id/lineups", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const lineups = await storage.getMatchLineups(req.params.id);
+      const lineups = await storage.getMatchLineups(param(req.params.id));
       res.json(lineups);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1822,10 +1826,10 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/lineups", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const data = insertMatchLineupSchema.parse({ ...req.body, matchId: req.params.id });
+      const data = insertMatchLineupSchema.parse({ ...req.body, matchId: param(req.params.id) });
       
       // Delete existing lineup for this specific team only (not the other team's lineup)
-      await storage.deleteMatchLineupByTeam(req.params.id, data.teamId);
+      await storage.deleteMatchLineupByTeam(param(req.params.id), data.teamId);
       
       const lineup = await storage.createMatchLineup(data);
       res.status(201).json(lineup);
@@ -1840,7 +1844,7 @@ export async function registerRoutes(
   // ==================== MATCH SUBSTITUTIONS (Referee) ====================
   app.get("/api/referee/matches/:id/substitutions", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const subs = await storage.getMatchSubstitutions(req.params.id);
+      const subs = await storage.getMatchSubstitutions(param(req.params.id));
       res.json(subs);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1849,7 +1853,7 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/substitutions", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const data = insertMatchSubstitutionSchema.parse({ ...req.body, matchId: req.params.id });
+      const data = insertMatchSubstitutionSchema.parse({ ...req.body, matchId: param(req.params.id) });
       const sub = await storage.createMatchSubstitution(data);
       res.status(201).json(sub);
     } catch (error) {
@@ -1862,7 +1866,7 @@ export async function registerRoutes(
 
   app.delete("/api/referee/matches/:id/substitutions/:subId", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteMatchSubstitution(req.params.subId);
+      await storage.deleteMatchSubstitution(param(req.params.subId));
       res.json({ ok: true });
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1872,7 +1876,7 @@ export async function registerRoutes(
   // ==================== MATCH ATTENDANCE (Referee) ====================
   app.get("/api/referee/matches/:id/attendance", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const attendance = await storage.getMatchAttendance(req.params.id);
+      const attendance = await storage.getMatchAttendance(param(req.params.id));
       res.json(attendance);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1882,7 +1886,7 @@ export async function registerRoutes(
   app.post("/api/referee/matches/:id/attendance", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
       const data = saveAttendanceSchema.parse(req.body);
-      const result = await storage.saveMatchAttendance(req.params.id, data.teamId, data.attendance);
+      const result = await storage.saveMatchAttendance(param(req.params.id), data.teamId, data.attendance);
       res.status(201).json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1894,19 +1898,19 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/no-show", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const match = await storage.getMatch(req.params.id);
+      const match = await storage.getMatch(param(req.params.id));
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
       const { teamId } = z.object({ teamId: z.string() }).parse(req.body);
       const existingFines = await storage.getFines(match.tournamentId);
-      const alreadyFined = existingFines.some(f => f.matchId === req.params.id && f.teamId === teamId && f.cardType === "NO_PRESENTADO");
+      const alreadyFined = existingFines.some(f => f.matchId === param(req.params.id) && f.teamId === teamId && f.cardType === "NO_PRESENTADO");
       if (alreadyFined) {
         return res.status(400).json({ message: "Ya se registró la incomparecencia de este equipo" });
       }
       const fine = await storage.createFine({
         tournamentId: match.tournamentId,
-        matchId: req.params.id,
+        matchId: param(req.params.id),
         teamId,
         playerId: null,
         cardType: "NO_PRESENTADO",
@@ -1915,8 +1919,8 @@ export async function registerRoutes(
       });
 
       try {
-        const homeTeam = await storage.getTeam(match.homeTeamId);
-        const awayTeam = await storage.getTeam(match.awayTeamId);
+        const homeTeam = match.homeTeamId ? await storage.getTeam(match.homeTeamId) : undefined;
+        const awayTeam = match.awayTeamId ? await storage.getTeam(match.awayTeamId) : undefined;
         notifyFine(teamId, "No Presentado (Incomparecencia)", 15, undefined, `${homeTeam?.name || "Local"} vs ${awayTeam?.name || "Visitante"}`);
       } catch (emailErr) { console.error("[email] Error notificando no-show:", emailErr); }
 
@@ -1932,7 +1936,7 @@ export async function registerRoutes(
   // Admin: view attendance
   app.get("/api/admin/matches/:id/attendance", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const attendance = await storage.getMatchAttendance(req.params.id);
+      const attendance = await storage.getMatchAttendance(param(req.params.id));
       res.json(attendance);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1942,7 +1946,7 @@ export async function registerRoutes(
   // ==================== MATCH FLOW (Referee) ====================
   app.post("/api/referee/matches/:id/start", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const match = await storage.getMatch(req.params.id);
+      const match = await storage.getMatch(param(req.params.id));
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
@@ -1951,7 +1955,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: "El partido ya fue iniciado o finalizado" });
       }
       
-      const updated = await storage.updateMatch(req.params.id, { status: "EN_CURSO" });
+      const updated = await storage.updateMatch(param(req.params.id), { status: "EN_CURSO" });
       res.json(updated);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -1960,7 +1964,7 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/finalize", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const match = await storage.getMatch(req.params.id);
+      const match = await storage.getMatch(param(req.params.id));
       if (!match) {
         return res.status(404).json({ message: "Partido no encontrado" });
       }
@@ -1979,7 +1983,7 @@ export async function registerRoutes(
 
         const lockResult = await client.query(
           `UPDATE matches SET status = 'JUGADO', home_score = $1, away_score = $2, referee_notes = $3 WHERE id = $4 AND status != 'JUGADO' RETURNING id`,
-          [homeScore, awayScore, refereeNotes || null, req.params.id]
+          [homeScore, awayScore, refereeNotes || null, param(req.params.id)]
         );
         if (lockResult.rowCount === 0) {
           await client.query('ROLLBACK');
@@ -1991,7 +1995,7 @@ export async function registerRoutes(
           for (const url of evidenceUrls) {
             await client.query(
               `INSERT INTO match_evidence (id, match_id, type, url) VALUES (gen_random_uuid(), $1, 'PHOTO', $2)`,
-              [req.params.id, url]
+              [param(req.params.id), url]
             );
           }
         }
@@ -2006,7 +2010,7 @@ export async function registerRoutes(
         );
 
         const existingFinesResult = await client.query(
-          `SELECT id FROM fines WHERE match_id = $1`, [req.params.id]
+          `SELECT id FROM fines WHERE match_id = $1`, [param(req.params.id)]
         );
 
         if (existingFinesResult.rows.length === 0) {
@@ -2014,7 +2018,7 @@ export async function registerRoutes(
           if (tournament) {
             const eventsResult = await client.query(
               `SELECT id, type, minute, team_id AS "teamId", player_id AS "playerId" FROM match_events WHERE match_id = $1`,
-              [req.params.id]
+              [param(req.params.id)]
             );
             for (const event of eventsResult.rows) {
               let amount = 0;
@@ -2031,7 +2035,7 @@ export async function registerRoutes(
               if (cardType && amount > 0) {
                 await client.query(
                   `INSERT INTO fines (id, tournament_id, match_id, match_event_id, team_id, player_id, card_type, amount, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, 'PENDIENTE')`,
-                  [match.tournamentId, req.params.id, event.id, event.teamId, event.playerId, cardType, amount]
+                  [match.tournamentId, param(req.params.id), event.id, event.teamId, event.playerId, cardType, amount]
                 );
                 
                 // Create pending payment record for the card fine
@@ -2044,13 +2048,13 @@ export async function registerRoutes(
               if ((event.type === "RED" || event.type === "RED_DIRECT") && event.playerId) {
                 const suspCheck = await client.query(
                   `SELECT id FROM player_suspensions WHERE match_id = $1 AND player_id = $2 AND status = 'ACTIVO'`,
-                  [req.params.id, event.playerId]
+                  [param(req.params.id), event.playerId]
                 );
                 if (suspCheck.rows.length === 0) {
                   const reason = event.type === "RED_DIRECT" ? "Tarjeta roja directa" : "Doble tarjeta amarilla (roja)";
                   await client.query(
                     `INSERT INTO player_suspensions (id, tournament_id, player_id, team_id, match_id, match_event_id, reason, matches_remaining, status) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 1, 'ACTIVO')`,
-                    [match.tournamentId, event.playerId, event.teamId, req.params.id, event.id, reason]
+                    [match.tournamentId, event.playerId, event.teamId, param(req.params.id), event.id, reason]
                   );
                 }
               }
@@ -2066,20 +2070,22 @@ export async function registerRoutes(
         client.release();
       }
       
-      const updated = await storage.getMatch(req.params.id);
+      const updated = await storage.getMatch(param(req.params.id));
 
       try {
-        const homeTeam = await storage.getTeam(match.homeTeamId);
-        const awayTeam = await storage.getTeam(match.awayTeamId);
+        const homeTeam = match.homeTeamId ? await storage.getTeam(match.homeTeamId) : undefined;
+        const awayTeam = match.awayTeamId ? await storage.getTeam(match.awayTeamId) : undefined;
         const homeTeamName = homeTeam?.name || "Local";
         const awayTeamName = awayTeam?.name || "Visitante";
-        notifyMatchResult(
-          { homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, homeScore, awayScore, dateTime: match.dateTime },
-          homeTeamName, awayTeamName
-        );
+        if (match.homeTeamId && match.awayTeamId) {
+          notifyMatchResult(
+            { homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, homeScore, awayScore, dateTime: match.dateTime },
+            homeTeamName, awayTeamName
+          );
+        }
 
         const finesCreated = await storage.getFines(match.tournamentId);
-        const matchFines = finesCreated.filter(f => f.matchId === req.params.id && f.cardType !== "NO_PRESENTADO");
+        const matchFines = finesCreated.filter(f => f.matchId === param(req.params.id) && f.cardType !== "NO_PRESENTADO");
         for (const fine of matchFines) {
           const playerName = fine.playerId ? await storage.getPlayer(fine.playerId).then(p => p ? `${p.firstName} ${p.lastName}` : undefined) : undefined;
           const fineLabel = fine.cardType === "YELLOW" ? "Tarjeta Amarilla" : fine.cardType === "RED" ? "Tarjeta Roja" : "Roja Directa";
@@ -2103,7 +2109,7 @@ export async function registerRoutes(
     try {
       const result = await pool.query(
         `SELECT id, type, minute, team_id AS "teamId", player_id AS "playerId" FROM match_events WHERE match_id = $1 ORDER BY minute ASC`,
-        [req.params.id]
+        [param(req.params.id)]
       );
       res.json(result.rows);
     } catch {
@@ -2113,7 +2119,7 @@ export async function registerRoutes(
 
   app.get("/api/matches/:id/evidence", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const evidence = await storage.getMatchEvidence(req.params.id);
+      const evidence = await storage.getMatchEvidence(param(req.params.id));
       res.json(evidence);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2122,7 +2128,7 @@ export async function registerRoutes(
 
   app.get("/api/referee/matches/:id/evidence", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const evidence = await storage.getMatchEvidence(req.params.id);
+      const evidence = await storage.getMatchEvidence(param(req.params.id));
       res.json(evidence);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2131,7 +2137,7 @@ export async function registerRoutes(
 
   app.post("/api/referee/matches/:id/evidence", authenticate, authorizeRoles("ARBITRO", "ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const data = insertMatchEvidenceSchema.parse({ ...req.body, matchId: req.params.id });
+      const data = insertMatchEvidenceSchema.parse({ ...req.body, matchId: param(req.params.id) });
       const evidence = await storage.createMatchEvidence(data);
       res.status(201).json(evidence);
     } catch (error) {
@@ -2178,12 +2184,12 @@ export async function registerRoutes(
 
   app.put("/api/admin/fines/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const existingFine = await storage.getFine(req.params.id);
+      const existingFine = await storage.getFine(param(req.params.id));
       if (!existingFine) {
         return res.status(404).json({ message: "Multa no encontrada" });
       }
 
-      const fine = await storage.updateFine(req.params.id, req.body);
+      const fine = await storage.updateFine(param(req.params.id), req.body);
       if (!fine) {
         return res.status(404).json({ message: "Multa no encontrada" });
       }
@@ -2202,7 +2208,7 @@ export async function registerRoutes(
       }
 
       if (req.body.status === "PENDIENTE" && existingFine.status === "PAGADA") {
-        await storage.deleteFinePaymentByFineId(req.params.id);
+        await storage.deleteFinePaymentByFineId(param(req.params.id));
       }
 
       res.json(fine);
@@ -2334,7 +2340,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/expenses/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteExpense(req.params.id);
+      await storage.deleteExpense(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2378,7 +2384,7 @@ export async function registerRoutes(
   app.put("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
       const data = insertMarketingMediaSchema.partial().parse(req.body);
-      const media = await storage.updateMarketingMedia(req.params.id, data);
+      const media = await storage.updateMarketingMedia(param(req.params.id), data);
       if (!media) return res.status(404).json({ message: "Contenido no encontrado" });
       res.json(media);
     } catch (error) {
@@ -2391,7 +2397,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/marketing/:id", authenticate, authorizeRoles("ADMIN", "MARKETING"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteMarketingMedia(req.params.id);
+      await storage.deleteMarketingMedia(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2429,7 +2435,7 @@ export async function registerRoutes(
       if (!["NUEVO", "LEIDO", "RESPONDIDO"].includes(status)) {
         return res.status(400).json({ message: "Estado inválido" });
       }
-      const updated = await storage.updateContactMessageStatus(req.params.id, status);
+      const updated = await storage.updateContactMessageStatus(param(req.params.id), status);
       if (!updated) return res.status(404).json({ message: "Mensaje no encontrado" });
       res.json(updated);
     } catch {
@@ -2439,7 +2445,7 @@ export async function registerRoutes(
 
   app.delete("/api/admin/messages/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      await storage.deleteContactMessage(req.params.id);
+      await storage.deleteContactMessage(param(req.params.id));
       res.status(204).send();
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2454,29 +2460,38 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Se requiere al menos una URL de foto" });
       }
 
-      const OpenAI = (await import("openai")).default;
-      const openai = new OpenAI({
-        apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-        baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-      });
+      const apiKey = process.env.GOOGLE_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ message: "GOOGLE_API_KEY no configurada" });
+      }
+
+      const model = process.env.GOOGLE_MODEL || "gemini-2.5-flash";
 
       const protocol = req.headers["x-forwarded-proto"] || "https";
       const host = req.headers.host || "localhost:5000";
       const baseUrl = `${protocol}://${host}`;
 
-      const imageContents = photoUrls.slice(0, 4).map((url: string) => ({
-        type: "image_url" as const,
-        image_url: { url: url.startsWith("http") ? url : `${baseUrl}${url}` },
-      }));
+      const imageParts = await Promise.all(
+        photoUrls.slice(0, 4).map(async (url: string) => {
+          const normalizedUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+          const imageResponse = await fetch(normalizedUrl);
+          if (!imageResponse.ok) {
+            throw new Error(`No se pudo leer imagen: ${normalizedUrl}`);
+          }
+          const mimeType = imageResponse.headers.get("content-type") || "image/jpeg";
+          const bytes = Buffer.from(await imageResponse.arrayBuffer());
+          return {
+            inlineData: {
+              mimeType,
+              data: bytes.toString("base64"),
+            },
+          };
+        })
+      );
 
       const formatLabel = contentType === "story" ? "Historia de Instagram" : contentType === "reel" ? "Reel de Instagram" : "Post de Instagram (Feed)";
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content: `Eres el community manager de "La Liga de Campeones", una liga de fútbol amateur en Fuengirola, España. Tu trabajo es crear contenido atractivo para redes sociales (Instagram) basado en las fotos que se te proporcionan.
+      const systemPrompt = `Eres el community manager de "La Liga de Campeones", una liga de fútbol amateur en Fuengirola, España. Tu trabajo es crear contenido atractivo para redes sociales (Instagram) basado en las fotos que se te proporcionan.
 
 REGLAS:
 - Escribe SIEMPRE en español (España)
@@ -2499,26 +2514,43 @@ FORMATO DE RESPUESTA (JSON estricto):
   "description": "breve descripción de lo que ves en las fotos (1-2 frases)"
 }
 
-${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 líneas." : contentType === "reel" ? "Para Reels: texto muy corto, 1-2 líneas con gancho." : "Para Posts: texto más desarrollado con emojis, 5-8 líneas con CTA al final."}`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: context
-                  ? `Analiza estas fotos y genera contenido para ${formatLabel}. Contexto adicional: ${context}`
-                  : `Analiza estas fotos y genera contenido para ${formatLabel}.`,
-              },
-              ...imageContents,
-            ],
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 1000,
-      });
 
-      const content = response.choices[0]?.message?.content;
+${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 líneas." : contentType === "reel" ? "Para Reels: texto muy corto, 1-2 líneas con gancho." : "Para Posts: texto más desarrollado con emojis, 5-8 líneas con CTA al final."}`;
+
+      const userText = context
+        ? `Analiza estas fotos y genera contenido para ${formatLabel}. Contexto adicional: ${context}`
+        : `Analiza estas fotos y genera contenido para ${formatLabel}.`;
+
+      const geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [{ text: systemPrompt }],
+            },
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: userText }, ...imageParts],
+              },
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 1000,
+            },
+          }),
+        }
+      );
+
+      if (!geminiResponse.ok) {
+        const errText = await geminiResponse.text();
+        throw new Error(`Google AI error (${geminiResponse.status}): ${errText}`);
+      }
+
+      const geminiJson = await geminiResponse.json() as any;
+      const content = geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!content) {
         return res.status(500).json({ message: "No se pudo generar contenido" });
       }
@@ -2544,7 +2576,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/admin/competition-rules/:categoryId", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const rules = await storage.getCompetitionRules(req.params.categoryId);
+      const rules = await storage.getCompetitionRules(param(req.params.categoryId));
       res.json(rules || null);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2567,7 +2599,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
   app.put("/api/admin/competition-rules/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const data = insertCompetitionRuleSchema.partial().parse(req.body);
-      const rule = await storage.updateCompetitionRule(req.params.id, data);
+      const rule = await storage.updateCompetitionRule(param(req.params.id), data);
       if (!rule) return res.status(404).json({ message: "Regla no encontrada" });
       res.json(rule);
     } catch (error: any) {
@@ -2592,7 +2624,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/admin/seasons/:id", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const season = await storage.getCompetitionSeason(req.params.id);
+      const season = await storage.getCompetitionSeason(param(req.params.id));
       if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
       res.json(season);
     } catch {
@@ -2615,7 +2647,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.post("/api/admin/seasons/:id/activate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const season = await storage.updateCompetitionSeasonStatus(req.params.id, "active");
+      const season = await storage.updateCompetitionSeasonStatus(param(req.params.id), "active");
       if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
       res.json(season);
     } catch {
@@ -2627,7 +2659,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/admin/seasons/:id/standings", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const entries = await storage.getStandingsEntries(req.params.id);
+      const entries = await storage.getStandingsEntries(param(req.params.id));
       res.json(entries);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2637,7 +2669,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
   app.post("/api/admin/seasons/:id/recalculate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const { recalculateStandings } = await import("./standings-engine");
-      const season = await storage.getCompetitionSeason(req.params.id);
+      const season = await storage.getCompetitionSeason(param(req.params.id));
       if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
       if (!season.tournamentId) return res.status(400).json({ message: "La temporada no tiene torneo vinculado" });
       const rules = await storage.getCompetitionRuleById(season.rulesId);
@@ -2653,7 +2685,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/admin/seasons/:id/movements", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const movements = await storage.getDivisionMovements(req.params.id);
+      const movements = await storage.getDivisionMovements(param(req.params.id));
       res.json(movements);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2662,13 +2694,13 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.post("/api/admin/seasons/:id/close", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const season = await storage.getCompetitionSeason(req.params.id);
+      const season = await storage.getCompetitionSeason(param(req.params.id));
       if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
       if (season.status === "closed") return res.status(400).json({ message: "La temporada ya está cerrada" });
       const rules = await storage.getCompetitionRuleById(season.rulesId);
       if (!rules) return res.status(400).json({ message: "No hay reglas configuradas" });
 
-      const standings = await storage.getStandingsEntries(req.params.id);
+      const standings = await storage.getStandingsEntries(param(req.params.id));
       if (standings.length === 0) return res.status(400).json({ message: "Primero recalcula la clasificación" });
 
       const movements: any[] = [];
@@ -2701,7 +2733,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
       if (movements.length > 0) {
         createdMovements = await storage.createDivisionMovements(movements);
       }
-      await storage.updateCompetitionSeasonStatus(req.params.id, "closed");
+      await storage.updateCompetitionSeasonStatus(param(req.params.id), "closed");
       res.json({ movements: createdMovements, status: "closed" });
     } catch (error: any) {
       res.status(500).json({ message: error.message || "Error interno del servidor" });
@@ -2712,7 +2744,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/admin/seasons/:id/bracket", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
-      const matches = await storage.getBracketMatches(req.params.id);
+      const matches = await storage.getBracketMatches(param(req.params.id));
       res.json(matches);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2722,12 +2754,12 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
   app.post("/api/admin/seasons/:id/bracket/generate", authenticate, authorizeRoles("ADMIN"), async (req: AuthRequest, res) => {
     try {
       const { generateBracket } = await import("./bracket-engine");
-      const season = await storage.getCompetitionSeason(req.params.id);
+      const season = await storage.getCompetitionSeason(param(req.params.id));
       if (!season) return res.status(404).json({ message: "Temporada no encontrada" });
       if (!season.tournamentId) return res.status(400).json({ message: "La temporada no tiene torneo vinculado" });
       const rules = await storage.getCompetitionRuleById(season.rulesId);
       if (!rules) return res.status(400).json({ message: "No hay reglas configuradas" });
-      const standings = await storage.getStandingsEntries(req.params.id);
+      const standings = await storage.getStandingsEntries(param(req.params.id));
       if (standings.length === 0) return res.status(400).json({ message: "Primero recalcula la clasificación" });
       await generateBracket(season.id, season.tournamentId, standings, rules);
       const bracket = await storage.getBracketMatches(season.id);
@@ -2745,13 +2777,13 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
         return res.status(400).json({ message: "Se requiere homeScore, awayScore, winnerId y seasonId" });
       }
       const bracketMatches = await storage.getBracketMatches(seasonId);
-      const targetMatch = bracketMatches.find(m => m.id === req.params.id);
+      const targetMatch = bracketMatches.find(m => m.id === param(req.params.id));
       if (!targetMatch) return res.status(404).json({ message: "Partido de bracket no encontrado" });
       if (targetMatch.status === "JUGADO") return res.status(400).json({ message: "Este partido ya fue jugado" });
       if (winnerId !== targetMatch.homeTeamId && winnerId !== targetMatch.awayTeamId) {
         return res.status(400).json({ message: "El ganador debe ser uno de los dos equipos del partido" });
       }
-      await advanceBracketWinner(seasonId, req.params.id, homeScore, awayScore, winnerId);
+      await advanceBracketWinner(seasonId, param(req.params.id), homeScore, awayScore, winnerId);
       const updated = await storage.getBracketMatches(seasonId);
       res.json(updated);
     } catch (error: any) {
@@ -2763,7 +2795,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/seasons/:id/standings", async (req, res) => {
     try {
-      const entries = await storage.getStandingsEntries(req.params.id);
+      const entries = await storage.getStandingsEntries(param(req.params.id));
       res.json(entries);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2772,7 +2804,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.get("/api/seasons/:id/bracket", async (req, res) => {
     try {
-      const matches = await storage.getBracketMatches(req.params.id);
+      const matches = await storage.getBracketMatches(param(req.params.id));
       res.json(matches);
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2861,7 +2893,7 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   app.put("/api/messages/:id/read", authenticate, async (req: AuthRequest, res) => {
     try {
-      await storage.markMessageAsRead(req.params.id);
+      await storage.markMessageAsRead(param(req.params.id));
       res.json({ message: "Mensaje marcado como leído" });
     } catch {
       res.status(500).json({ message: "Error interno del servidor" });
@@ -2870,3 +2902,4 @@ ${contentType === "story" ? "Para Historias: texto corto y directo, máximo 3-4 
 
   return httpServer;
 }
+

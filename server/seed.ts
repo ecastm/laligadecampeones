@@ -59,6 +59,7 @@ export async function seedDatabase() {
     location: "Fuengirola",
     startDate: new Date().toISOString(),
     status: "ACTIVO",
+    registrationOpen: true,
     divisionId: primeraDivision?.id,
   });
   console.log("Torneo creado:", tournament.name);
